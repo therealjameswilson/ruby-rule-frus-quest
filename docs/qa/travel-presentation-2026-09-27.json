@@ -1,0 +1,158 @@
+[
+  {
+    "target": "PresidentialLibraryScene",
+    "library": "reagan",
+    "reduced": false,
+    "copy": {
+      "title": "REAGAN LIBRARY",
+      "caption": "FIND · COMPARE · DOCUMENT"
+    },
+    "layout": [
+      {
+        "text": "REAGAN LIBRARY",
+        "x": 84,
+        "right": 172,
+        "y": 104.5849609375,
+        "bottom": 115.4150390625
+      },
+      {
+        "text": "FIND · COMPARE · DOCUMENT",
+        "x": 77,
+        "right": 179,
+        "y": 138.7509765625,
+        "bottom": 145.2490234375
+      }
+    ],
+    "errors": []
+  },
+  {
+    "target": "PresidentialLibraryScene",
+    "library": "bush41",
+    "reduced": false,
+    "copy": {
+      "title": "BUSH 41 LIBRARY",
+      "caption": "FIND · COMPARE · DOCUMENT"
+    },
+    "layout": [
+      {
+        "text": "BUSH 41 LIBRARY",
+        "x": 84,
+        "right": 172,
+        "y": 104.5849609375,
+        "bottom": 115.4150390625
+      },
+      {
+        "text": "FIND · COMPARE · DOCUMENT",
+        "x": 77,
+        "right": 179,
+        "y": 138.7509765625,
+        "bottom": 145.2490234375
+      }
+    ],
+    "errors": []
+  },
+  {
+    "target": "PresidentialLibraryScene",
+    "library": "clinton",
+    "reduced": false,
+    "copy": {
+      "title": "CLINTON LIBRARY",
+      "caption": "FIND · COMPARE · DOCUMENT"
+    },
+    "layout": [
+      {
+        "text": "CLINTON LIBRARY",
+        "x": 83,
+        "right": 173,
+        "y": 104.5849609375,
+        "bottom": 115.4150390625
+      },
+      {
+        "text": "FIND · COMPARE · DOCUMENT",
+        "x": 77,
+        "right": 179,
+        "y": 138.7509765625,
+        "bottom": 145.2490234375
+      }
+    ],
+    "errors": []
+  },
+  {
+    "target": "PresidentialLibraryScene",
+    "library": "bush43",
+    "reduced": false,
+    "copy": {
+      "title": "BUSH 43 LIBRARY",
+      "caption": "FIND · COMPARE · DOCUMENT"
+    },
+    "layout": [
+      {
+        "text": "BUSH 43 LIBRARY",
+        "x": 84,
+        "right": 172,
+        "y": 104.5849609375,
+        "bottom": 115.4150390625
+      },
+      {
+        "text": "FIND · COMPARE · DOCUMENT",
+        "x": 77,
+        "right": 179,
+        "y": 138.7509765625,
+        "bottom": 145.2490234375
+      }
+    ],
+    "errors": []
+  },
+  {
+    "target": "NscLibraryScene",
+    "library": "bush43",
+    "reduced": true,
+    "copy": {
+      "title": "BUSH 43 LIBRARY\nNSC RESEARCH",
+      "caption": "TRACE SOURCES · CHECK ACCESS"
+    },
+    "layout": [
+      {
+        "text": "BUSH 43 LIBRARY\nNSC RESEARCH",
+        "x": 84,
+        "right": 172,
+        "y": 99.169921875,
+        "bottom": 120.830078125
+      },
+      {
+        "text": "TRACE SOURCES · CHECK ACCESS",
+        "x": 69,
+        "right": 187,
+        "y": 138.7509765625,
+        "bottom": 145.2490234375
+      }
+    ],
+    "errors": []
+  },
+  {
+    "target": "ResearchWorldScene",
+    "library": "reagan",
+    "reduced": false,
+    "copy": {
+      "title": "TEXAS LIBRARIES",
+      "caption": "EXPLORE THE ARCHIVES"
+    },
+    "layout": [
+      {
+        "text": "TEXAS LIBRARIES",
+        "x": 84,
+        "right": 172,
+        "y": 104.5849609375,
+        "bottom": 115.4150390625
+      },
+      {
+        "text": "EXPLORE THE ARCHIVES",
+        "x": 86,
+        "right": 170,
+        "y": 138.7509765625,
+        "bottom": 145.2490234375
+      }
+    ],
+    "errors": []
+  }
+]

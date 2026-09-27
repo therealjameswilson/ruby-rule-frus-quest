@@ -1,0 +1,88 @@
+{
+  "scope": "Seeded initial Reagan library location, request earned through visible controls. Desktop, portrait and landscape Chromium; no physical iPhone/hardware controller claim.",
+  "source": "https://www.reaganlibrary.gov/sites/default/files/finding_aids_pdfs/219646.pdf",
+  "sourceChecked": "2026-09-27",
+  "checks": [
+    "wrong date rejected",
+    "locator invalidated on entry change",
+    "reviewed-online overclaim rejected",
+    "both follow-ups required",
+    "draft saved before closing, restored after reload",
+    "successful request advances stage 0 to 1 only",
+    "completion survives reload",
+    "no horizontal overflow",
+    "desktop simulated gamepad selection",
+    "desktop fullscreen",
+    "no page errors"
+  ],
+  "results": [
+    {
+      "name": "desktop",
+      "stage": 1,
+      "request": {
+        "entry": {
+          "id": 2,
+          "title": "United Kingdom: Prime Minister Thatcher Official Visit",
+          "date": "02/20/1985",
+          "parts": "(1)(2)",
+          "status": "OPEN",
+          "page": 14
+        },
+        "locator": "RAC Box 6; United Kingdom: Prime Minister Thatcher Official Visit, 02/20/1985 (1)(2)",
+        "access": "retrieval-pending",
+        "retrieval": true,
+        "withdrawals": true
+      },
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "stage": 1,
+      "request": {
+        "entry": {
+          "id": 2,
+          "title": "United Kingdom: Prime Minister Thatcher Official Visit",
+          "date": "02/20/1985",
+          "parts": "(1)(2)",
+          "status": "OPEN",
+          "page": 14
+        },
+        "locator": "RAC Box 6; United Kingdom: Prime Minister Thatcher Official Visit, 02/20/1985 (1)(2)",
+        "access": "retrieval-pending",
+        "retrieval": true,
+        "withdrawals": true
+      },
+      "errors": []
+    },
+    {
+      "name": "landscape",
+      "stage": 1,
+      "request": {
+        "entry": {
+          "id": 2,
+          "title": "United Kingdom: Prime Minister Thatcher Official Visit",
+          "date": "02/20/1985",
+          "parts": "(1)(2)",
+          "status": "OPEN",
+          "page": 14
+        },
+        "locator": "RAC Box 6; United Kingdom: Prime Minister Thatcher Official Visit, 02/20/1985 (1)(2)",
+        "access": "retrieval-pending",
+        "retrieval": true,
+        "withdrawals": true
+      },
+      "errors": []
+    }
+  ],
+  "regression": "Reagan lobby first two stations and obstacle clearing pass with new request helper.",
+  "observations": [
+    "Initial fullscreen assertion exposed and fixed library input ordering.",
+    "An intermediate touch run restored entry 1 unexpectedly. Focused rapid-tap repeat and final three-layout run with pre-save assertions passed; cause not established.",
+    "Standard headed skill canvas screenshot black; compositor desk screenshots inspected successfully."
+  ],
+  "tests": {
+    "files": 278,
+    "tests": 2088,
+    "build": "passed"
+  }
+}

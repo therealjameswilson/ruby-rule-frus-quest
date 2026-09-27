@@ -1,0 +1,61 @@
+{
+  "date": "2026-09-27",
+  "scope": "Interactive manuscript selection desk; fixture-based, not full campaign victory",
+  "tests": {
+    "files": 274,
+    "passed": 2070
+  },
+  "build": "passed",
+  "browserCases": [
+    {
+      "name": "desktop",
+      "touch": false,
+      "invalidSelectionsRejected": true,
+      "draftRestored": true,
+      "keyboardAndController": true,
+      "handoff": true,
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "touch": true,
+      "invalidSelectionsRejected": true,
+      "draftRestored": true,
+      "keyboardAndController": false,
+      "handoff": true,
+      "errors": []
+    },
+    {
+      "name": "landscape",
+      "touch": true,
+      "invalidSelectionsRejected": true,
+      "draftRestored": true,
+      "keyboardAndController": false,
+      "handoff": true,
+      "errors": []
+    }
+  ],
+  "additionalChecks": [
+    "Actual emulated touch swipe scrolls packets",
+    "Budget and filing controls remain on screen",
+    "Short-screen controller navigation reveals clipped packet content",
+    "Fullscreen desk remains above canvas",
+    "Escape closes desk and restores touch styles",
+    "Scene shutdown removes modal and restores touch styles",
+    "Old completed selection saves report their earned 1320 pages",
+    "Fullscreen re-entry preserves visibility and previously focused packet; corrected compositor screenshot inspected"
+  ],
+  "visualInspection": [
+    "Desktop selection desk",
+    "Portrait phone with fixed budget and footer",
+    "Landscape phone with scrollable packet area",
+    "Fullscreen"
+  ],
+  "limitations": [
+    "No physical iPhone Safari or controller run",
+    "No fresh campaign victory",
+    "Standard skill-client canvas captures remain black; compositor screenshots display correctly and were inspected",
+    "Broader console-quality campaign overhaul remains open"
+  ],
+  "published": false
+}

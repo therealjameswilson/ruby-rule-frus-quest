@@ -1,0 +1,189 @@
+{
+  "scope": "Seeded initial destinations; request actions earned through visible controls. Chromium touch/gamepad emulation, not physical hardware.",
+  "source": {
+    "url": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files",
+    "checked": "2026-09-27",
+    "retrieval": "Web reader timed out; direct HTTPS retrieval succeeded. Inspected container list fields.",
+    "sha256": "4dfb429cf8dee34cf572fdb70aa58b7b419015d145349b3b650d0d366ffc708a",
+    "entries": [
+      {
+        "title": "Arms Control [1]",
+        "localId": "CF00715-001",
+        "naid": "470424829",
+        "availability": "On Site"
+      },
+      {
+        "title": "Arms Control [2]",
+        "localId": "CF00715-002",
+        "naid": "470424830",
+        "availability": "On Site"
+      },
+      {
+        "title": "Arms Control [3]",
+        "localId": "CF00715-003",
+        "naid": "470424831",
+        "availability": "On Site"
+      }
+    ]
+  },
+  "bush41": [
+    {
+      "name": "desktop",
+      "library": "bush41",
+      "stage": 1,
+      "request": {
+        "entry": {
+          "id": 1,
+          "title": "Arms Control [1]",
+          "date": "CF00715-001",
+          "parts": "NAID 470424829",
+          "status": "On Site",
+          "locator": "Condoleezza Rice 1989\u20131990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829"
+        },
+        "locator": "Condoleezza Rice 1989\u20131990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829",
+        "access": "retrieval-pending",
+        "retrieval": true,
+        "withdrawals": true
+      },
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "library": "bush41",
+      "stage": 1,
+      "request": {
+        "entry": {
+          "id": 1,
+          "title": "Arms Control [1]",
+          "date": "CF00715-001",
+          "parts": "NAID 470424829",
+          "status": "On Site",
+          "locator": "Condoleezza Rice 1989\u20131990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829"
+        },
+        "locator": "Condoleezza Rice 1989\u20131990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829",
+        "access": "retrieval-pending",
+        "retrieval": true,
+        "withdrawals": true
+      },
+      "errors": []
+    },
+    {
+      "name": "landscape",
+      "library": "bush41",
+      "stage": 1,
+      "request": {
+        "entry": {
+          "id": 1,
+          "title": "Arms Control [1]",
+          "date": "CF00715-001",
+          "parts": "NAID 470424829",
+          "status": "On Site",
+          "locator": "Condoleezza Rice 1989\u20131990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829"
+        },
+        "locator": "Condoleezza Rice 1989\u20131990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829",
+        "access": "retrieval-pending",
+        "retrieval": true,
+        "withdrawals": true
+      },
+      "errors": []
+    }
+  ],
+  "reaganRegression": [
+    {
+      "name": "phone",
+      "library": "reagan",
+      "stage": 1,
+      "request": {
+        "entry": {
+          "id": 2,
+          "title": "United Kingdom: Prime Minister Thatcher Official Visit",
+          "date": "02/20/1985",
+          "parts": "(1)(2)",
+          "status": "OPEN",
+          "page": 14
+        },
+        "locator": "RAC Box 6; United Kingdom: Prime Minister Thatcher Official Visit, 02/20/1985 (1)(2)",
+        "access": "retrieval-pending",
+        "retrieval": true,
+        "withdrawals": true
+      },
+      "errors": []
+    }
+  ],
+  "rapidTouchRepeats": [
+    [
+      {
+        "name": "phone",
+        "stage": 1,
+        "request": {
+          "entry": {
+            "id": 2,
+            "title": "United Kingdom: Prime Minister Thatcher Official Visit",
+            "date": "02/20/1985",
+            "parts": "(1)(2)",
+            "status": "OPEN",
+            "page": 14
+          },
+          "locator": "RAC Box 6; United Kingdom: Prime Minister Thatcher Official Visit, 02/20/1985 (1)(2)",
+          "access": "retrieval-pending",
+          "retrieval": true,
+          "withdrawals": true
+        },
+        "errors": []
+      }
+    ],
+    [
+      {
+        "name": "phone",
+        "stage": 1,
+        "request": {
+          "entry": {
+            "id": 2,
+            "title": "United Kingdom: Prime Minister Thatcher Official Visit",
+            "date": "02/20/1985",
+            "parts": "(1)(2)",
+            "status": "OPEN",
+            "page": 14
+          },
+          "locator": "RAC Box 6; United Kingdom: Prime Minister Thatcher Official Visit, 02/20/1985 (1)(2)",
+          "access": "retrieval-pending",
+          "retrieval": true,
+          "withdrawals": true
+        },
+        "errors": []
+      }
+    ],
+    [
+      {
+        "name": "phone",
+        "stage": 1,
+        "request": {
+          "entry": {
+            "id": 2,
+            "title": "United Kingdom: Prime Minister Thatcher Official Visit",
+            "date": "02/20/1985",
+            "parts": "(1)(2)",
+            "status": "OPEN",
+            "page": 14
+          },
+          "locator": "RAC Box 6; United Kingdom: Prime Minister Thatcher Official Visit, 02/20/1985 (1)(2)",
+          "access": "retrieval-pending",
+          "retrieval": true,
+          "withdrawals": true
+        },
+        "errors": []
+      }
+    ]
+  ],
+  "validation": {
+    "testFiles": 278,
+    "tests": 2089,
+    "build": "passed",
+    "bush41": "Desktop, portrait, landscape, draft persistence, invalid requests, fullscreen and simulated controller passed.",
+    "limitations": [
+      "Earlier isolated reload inconsistency not reproduced in three rapid-touch repeats or the post-change regression; cause still unknown.",
+      "Standard skill canvas screenshot remains black; normal compositor screenshots inspected.",
+      "Other libraries and subjective audio/physical-device feel remain outside this check."
+    ]
+  }
+}

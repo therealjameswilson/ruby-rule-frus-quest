@@ -1,0 +1,121 @@
+{
+  "date": "2026-09-27",
+  "runtimeBaselineCommit": "be899bb",
+  "scope": "Earned desktop campaign resumed from the fresh opening checkpoint; no progress injection",
+  "initialSave": "/tmp/frus-fresh-opening/earned-storage.json",
+  "stages": [
+    {
+      "name": "earned-source-note",
+      "exitCode": 0
+    },
+    {
+      "name": "earned-annotation",
+      "exitCode": 0
+    },
+    {
+      "name": "file-annotation",
+      "exitCode": 0
+    },
+    {
+      "name": "earned-network",
+      "exitCode": 0
+    },
+    {
+      "name": "earned-network-routing",
+      "exitCode": 0
+    },
+    {
+      "name": "earned-clearance",
+      "exitCode": 0
+    },
+    {
+      "name": "earned-referral-dispatch",
+      "exitCode": 0
+    },
+    {
+      "name": "earned-referral-manifest",
+      "exitCode": 0
+    },
+    {
+      "name": "earned-editor",
+      "exitCode": 0
+    },
+    {
+      "name": "earned-proof",
+      "exitCode": 0
+    },
+    {
+      "name": "earned-production",
+      "exitCode": 0
+    },
+    {
+      "name": "boss-counter-loop",
+      "exitCode": 0
+    },
+    {
+      "name": "bindery-assembly",
+      "exitCode": 0
+    }
+  ],
+  "compilerCheckpoint": {
+    "completed": 10,
+    "dpdSubmitted": true,
+    "documentPages": 1320,
+    "chapterSubmitted": true,
+    "revisionComplete": true
+  },
+  "ending": {
+    "scene": "EndingScene",
+    "certification": {
+      "status": "published",
+      "nearestGate": true,
+      "checklistComplete": true,
+      "certifiedBy": "Sam",
+      "requiredItem": "Buckram Key",
+      "message": "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
+    },
+    "clock": {
+      "deadlineMissed": false,
+      "sourceBasis": "FRUS statute mandates publication of volumes 30 years after the events they document.",
+      "sourceUrl": "https://history.state.gov/historicaldocuments/frus1989-92v31/abouttheseries",
+      "elapsedYears": 28.5,
+      "deadlineYears": 30,
+      "yearsRemaining": 1.5,
+      "completionRatio": 1,
+      "progressRatio": 0.95,
+      "status": "published",
+      "label": "Published within the 30-year mandate",
+      "missingSummary": [],
+      "shortcutOffered": false,
+      "shortcutViolation": null
+    },
+    "documentPoints": 241,
+    "reloadPreservedCompletion": true
+  },
+  "finalBuild": "passed",
+  "unitSuite": {
+    "files": 276,
+    "testsPassed": 2081
+  },
+  "rewardArtFollowUp": {
+    "texture": "world-item-detail-v2-clearance-token",
+    "width": 24,
+    "height": 24,
+    "sourceWidth": 144
+  },
+  "rewardArtVerification": "Replayed earned clearance checkpoint on rebuilt game; verified detailed pedestal and pickup celebration, inspected screenshot, completed referral arrival/reload",
+  "limitations": [
+    "Desktop scripted campaign with earned save handoffs, not an uninterrupted human or physical-iPhone session",
+    "Opening predates the gallery change, which has separate final-build QA",
+    "Campaign completed before the shared reward-art-only change; clearance replay verifies that final change",
+    "No listening or current comprehensive frame-pacing audit",
+    "Optional overworld/library branches not replayed in this campaign",
+    "Skill-client canvas captures remain black; normal compositor screenshots inspected"
+  ],
+  "publishedToWebsite": false,
+  "initialSaveSha256": "13d09443229b952e4dddea27f871b25aec927fdade9200d6e0d7323ed686c039",
+  "publicationSave": {
+    "path": "/tmp/frus-earned-campaign-0927/14-bindery-assembly/earned-publication-storage.json",
+    "sha256": "acfd83d9c4ac14d88c2a843bf953d66a8cc7f60f3b2a4106afb4be744d3e00af"
+  }
+}

@@ -42,9 +42,19 @@ it("round-trips SOP progress through the real game save without granting publica
 
 it("lets an old assigned save finish both reviews without a required library packet", () => {
   gameState.sceneProgress = {compilerSopVersion:1,compilerVolumeAssignment:3,compilerSop_plan:1,compilerSop_research:1};
+  const showDesk=vi.fn<ChoicePrompt['showManuscriptDesk']>();
+  const showChapter=vi.fn<ChoicePrompt['showChapterDesk']>();
+  const showRevision=vi.fn<ChoicePrompt['showRevisionDesk']>();
   const showChoice=vi.fn<ChoicePrompt['show']>();const showDialog=vi.fn<DialogBox['show']>();const done=vi.fn();
-  runCompilerCheckpoint({show:showChoice} as unknown as ChoicePrompt,{show:showDialog} as unknown as DialogBox,'review_submission',done);
-  for(const task of COMPILER_TASKS.slice(2)){
+  runCompilerCheckpoint({show:showChoice, showManuscriptDesk:showDesk,showChapterDesk:showChapter,showRevisionDesk:showRevision} as unknown as ChoicePrompt,{show:showDialog} as unknown as DialogBox,'review_submission',done);
+  expect(showDesk).toHaveBeenCalledOnce();
+  showDesk.mock.lastCall![2]();
+  showDialog.mock.lastCall![2]?.();
+  expect(showChapter).toHaveBeenCalledOnce();
+  showChapter.mock.lastCall![2]();
+  showDialog.mock.lastCall![2]?.();
+  for(const task of COMPILER_TASKS.slice(4)){
+    if(task.id==="revision"){expect(showRevision).toHaveBeenCalledOnce();showRevision.mock.lastCall![2]();showDialog.mock.lastCall![2]?.();continue;}
     expect(showChoice.mock.lastCall![0]).toContain(task.question);
     showChoice.mock.lastCall![2](task.options.find(o=>o.value===task.correct)!);
     showDialog.mock.lastCall![2]?.();

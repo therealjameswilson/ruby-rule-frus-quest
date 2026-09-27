@@ -1,0 +1,77 @@
+[
+  {
+    "name": "desktop",
+    "stage": 3,
+    "note": {
+      "fields": {
+        "kind": 1,
+        "date": 1,
+        "locator": 1,
+        "scope": 1
+      },
+      "heading": "Research log for FOIA 2017-0023-F, requested scope March 15–April 30, 2001; inventory modified November 17, 2025; individual asset dates pending examination.",
+      "citation": "George W. Bush Presidential Library, inventory for FOIA 2017-0023-F, pages 1–2; George W. Bush Presidential Electronic Records, ARMS.",
+      "qualification": "215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets and markings remain unexamined.",
+      "sourceUrl": "https://www.georgewbushlibrary.gov/media/7324",
+      "lead": true,
+      "followups": true,
+      "researchLog": [
+        "Unexamined release: George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15–April 30, 2001. 215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets and markings remain to be examined.",
+        "Pending: Examine released assets and their withholding markings.",
+        "Pending: Ask about unprocessed and related records; compare other reporting."
+      ]
+    },
+    "reviewPreserved": true,
+    "errors": []
+  },
+  {
+    "name": "phone",
+    "stage": 3,
+    "note": {
+      "fields": {
+        "kind": 1,
+        "date": 1,
+        "locator": 1,
+        "scope": 1
+      },
+      "heading": "Research log for FOIA 2017-0023-F, requested scope March 15–April 30, 2001; inventory modified November 17, 2025; individual asset dates pending examination.",
+      "citation": "George W. Bush Presidential Library, inventory for FOIA 2017-0023-F, pages 1–2; George W. Bush Presidential Electronic Records, ARMS.",
+      "qualification": "215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets and markings remain unexamined.",
+      "sourceUrl": "https://www.georgewbushlibrary.gov/media/7324",
+      "lead": true,
+      "followups": true,
+      "researchLog": [
+        "Unexamined release: George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15–April 30, 2001. 215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets and markings remain to be examined.",
+        "Pending: Examine released assets and their withholding markings.",
+        "Pending: Ask about unprocessed and related records; compare other reporting."
+      ]
+    },
+    "reviewPreserved": true,
+    "errors": []
+  },
+  {
+    "name": "landscape",
+    "stage": 3,
+    "note": {
+      "fields": {
+        "kind": 1,
+        "date": 1,
+        "locator": 1,
+        "scope": 1
+      },
+      "heading": "Research log for FOIA 2017-0023-F, requested scope March 15–April 30, 2001; inventory modified November 17, 2025; individual asset dates pending examination.",
+      "citation": "George W. Bush Presidential Library, inventory for FOIA 2017-0023-F, pages 1–2; George W. Bush Presidential Electronic Records, ARMS.",
+      "qualification": "215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets and markings remain unexamined.",
+      "sourceUrl": "https://www.georgewbushlibrary.gov/media/7324",
+      "lead": true,
+      "followups": true,
+      "researchLog": [
+        "Unexamined release: George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15–April 30, 2001. 215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets and markings remain to be examined.",
+        "Pending: Examine released assets and their withholding markings.",
+        "Pending: Ask about unprocessed and related records; compare other reporting."
+      ]
+    },
+    "reviewPreserved": true,
+    "errors": []
+  }
+]

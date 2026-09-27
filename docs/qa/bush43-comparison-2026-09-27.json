@@ -1,0 +1,89 @@
+[
+  {
+    "name": "desktop",
+    "stage": 2,
+    "comparison": {
+      "cards": [
+        {
+          "id": 1,
+          "lane": 1
+        },
+        {
+          "id": 2,
+          "lane": 2
+        },
+        {
+          "id": 3,
+          "lane": 3
+        },
+        {
+          "id": 4,
+          "lane": 3
+        }
+      ],
+      "followups": [
+        1,
+        2
+      ]
+    },
+    "errors": []
+  },
+  {
+    "name": "phone",
+    "stage": 2,
+    "comparison": {
+      "cards": [
+        {
+          "id": 1,
+          "lane": 1
+        },
+        {
+          "id": 2,
+          "lane": 2
+        },
+        {
+          "id": 3,
+          "lane": 3
+        },
+        {
+          "id": 4,
+          "lane": 3
+        }
+      ],
+      "followups": [
+        1,
+        2
+      ]
+    },
+    "errors": []
+  },
+  {
+    "name": "landscape",
+    "stage": 2,
+    "comparison": {
+      "cards": [
+        {
+          "id": 1,
+          "lane": 1
+        },
+        {
+          "id": 2,
+          "lane": 2
+        },
+        {
+          "id": 3,
+          "lane": 3
+        },
+        {
+          "id": 4,
+          "lane": 3
+        }
+      ],
+      "followups": [
+        1,
+        2
+      ]
+    },
+    "errors": []
+  }
+]

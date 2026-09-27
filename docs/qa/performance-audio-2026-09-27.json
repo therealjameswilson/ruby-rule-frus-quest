@@ -1,0 +1,203 @@
+{
+  "scope": "Local software-rendered Chromium performance and digital audio audit; not physical iPhone validation or listening approval. Desk lifecycle uses a seeded revision save, not earned campaign proof.",
+  "performance": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)",
+    "phases": {
+      "colossus": {
+        "frames": 866,
+        "p99Ms": 20.5,
+        "maxMs": 30.200000002980232,
+        "over33_4ms": 0
+      },
+      "swarm": {
+        "frames": 1265,
+        "p99Ms": 28.200000002980232,
+        "maxMs": 31.5,
+        "over33_4ms": 0
+      },
+      "cloud": {
+        "frames": 1690,
+        "p99Ms": 24.799999997019768,
+        "maxMs": 31.400000005960464,
+        "over33_4ms": 0
+      }
+    },
+    "scope": "Active boss phases; excludes paused menus and dialogue; automation overhead included."
+  },
+  "audio": {
+    "scope": "Six-second synthesized combat stimulus. Digital levels only; not listening approval.",
+    "results": [
+      {
+        "mode": "music",
+        "seconds": 5.973333333333334,
+        "sampleRate": 48000,
+        "peak": 0.3323826789855957,
+        "rms": 0.055266886986344965,
+        "peakDb": -9.567232322125337,
+        "rmsDb": -25.150699944017745,
+        "clipped": 0
+      },
+      {
+        "mode": "effects",
+        "seconds": 5.973333333333334,
+        "sampleRate": 48000,
+        "peak": 0.2895916700363159,
+        "rms": 0.023173479286275975,
+        "peakDb": -10.764278691299749,
+        "rmsDb": -32.70017511928819,
+        "clipped": 0
+      },
+      {
+        "mode": "combat",
+        "seconds": 5.888,
+        "sampleRate": 48000,
+        "peak": 0.4023517370223999,
+        "rms": 0.06045786617519318,
+        "peakDb": -7.907882388163925,
+        "rmsDb": -24.37094370111725,
+        "clipped": 0
+      },
+      {
+        "mode": "stress",
+        "seconds": 5.973333333333334,
+        "sampleRate": 48000,
+        "peak": 0.7751525044441223,
+        "rms": 0.09149182640832572,
+        "peakDb": -2.2122569092839983,
+        "rmsDb": -20.772354054041156,
+        "clipped": 0
+      }
+    ],
+    "cancellation": {
+      "before": 5,
+      "after": 0,
+      "whileMuted": 0,
+      "beforeTones": 2,
+      "afterTones": 0,
+      "mutedTones": 0,
+      "settled": 0,
+      "settledTones": 0
+    },
+    "errors": []
+  },
+  "readingMix": {
+    "checks": [
+      {
+        "reading": true,
+        "enabled": true,
+        "prepared": true,
+        "unlocked": true,
+        "contextState": "running",
+        "currentSceneKey": "ArchiveScene",
+        "currentThemeKey": "archiveDungeon",
+        "currentThemeTitle": "Footnotes in the Stacks",
+        "currentThemeSource": "Original Ruby Rule composition; locally synthesized instruments",
+        "currentThemeStem": "original:archive",
+        "pendingSceneKey": null,
+        "musicTimerActive": true,
+        "musicStep": 5,
+        "readingMixActive": true,
+        "musicGainValue": 0.3602539896965027,
+        "ambienceProfile": "archive",
+        "ambienceSources": 3,
+        "ambienceRiverPresence": 0,
+        "resumePending": false,
+        "hiddenPaused": false,
+        "firstUnlockMs": 1,
+        "lastFirstSampleMs": 1,
+        "lastVisibilityEvent": null,
+        "lastInterruptionEvent": null
+      },
+      {
+        "reading": true,
+        "enabled": true,
+        "prepared": true,
+        "unlocked": true,
+        "contextState": "running",
+        "currentSceneKey": "ArchiveScene",
+        "currentThemeKey": "archiveDungeon",
+        "currentThemeTitle": "Footnotes in the Stacks",
+        "currentThemeSource": "Original Ruby Rule composition; locally synthesized instruments",
+        "currentThemeStem": "original:archive",
+        "pendingSceneKey": null,
+        "musicTimerActive": true,
+        "musicStep": 8,
+        "readingMixActive": true,
+        "musicGainValue": 0.36000001430511475,
+        "ambienceProfile": "archive",
+        "ambienceSources": 3,
+        "ambienceRiverPresence": 0,
+        "resumePending": false,
+        "hiddenPaused": false,
+        "firstUnlockMs": 1,
+        "lastFirstSampleMs": 1,
+        "lastVisibilityEvent": null,
+        "lastInterruptionEvent": null
+      },
+      {
+        "reading": false,
+        "enabled": true,
+        "prepared": true,
+        "unlocked": true,
+        "contextState": "running",
+        "currentSceneKey": "ArchiveScene",
+        "currentThemeKey": "archiveDungeon",
+        "currentThemeTitle": "Footnotes in the Stacks",
+        "currentThemeSource": "Original Ruby Rule composition; locally synthesized instruments",
+        "currentThemeStem": "original:archive",
+        "pendingSceneKey": null,
+        "musicTimerActive": true,
+        "musicStep": 17,
+        "readingMixActive": false,
+        "musicGainValue": 0.7842994332313538,
+        "ambienceProfile": "archive",
+        "ambienceSources": 3,
+        "ambienceRiverPresence": 0,
+        "resumePending": false,
+        "hiddenPaused": false,
+        "firstUnlockMs": 1,
+        "lastFirstSampleMs": 1,
+        "lastVisibilityEvent": null,
+        "lastInterruptionEvent": null
+      },
+      {
+        "reading": false,
+        "enabled": true,
+        "prepared": true,
+        "unlocked": true,
+        "contextState": "running",
+        "currentSceneKey": "OfficeScene",
+        "currentThemeKey": "officeHub",
+        "currentThemeTitle": "A Desk in the Morning",
+        "currentThemeSource": "Original Ruby Rule composition; locally synthesized instruments",
+        "currentThemeStem": "original:office",
+        "pendingSceneKey": null,
+        "musicTimerActive": true,
+        "musicStep": 3,
+        "readingMixActive": false,
+        "musicGainValue": 0.800000011920929,
+        "ambienceProfile": "office",
+        "ambienceSources": 3,
+        "ambienceRiverPresence": 0,
+        "resumePending": false,
+        "hiddenPaused": false,
+        "firstUnlockMs": 1,
+        "lastFirstSampleMs": 1,
+        "lastVisibilityEvent": null,
+        "lastInterruptionEvent": null
+      }
+    ]
+  },
+  "validation": {
+    "unitFiles": 277,
+    "tests": 2084,
+    "build": "passed",
+    "lifecycle": "fullscreen, focus, keyboard, simulated gamepad, cancel, scene exit passed; page errors empty",
+    "skillClient": "Headed run passed text state; canvas capture black. Normal compositor revision screenshot inspected."
+  },
+  "remaining": [
+    "Physical iPhone Safari and hardware controller validation",
+    "Subjective audio listening review",
+    "Broader optional overworld/library visual consistency review"
+  ]
+}

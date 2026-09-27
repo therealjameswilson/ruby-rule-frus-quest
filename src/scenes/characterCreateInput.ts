@@ -12,8 +12,9 @@ export function shouldConfirmCharacterCreateInput(
 }
 
 export function shouldEndCharacterNameEditing(
-  input: Pick<InputState, "confirmJustPressed" | "cancelJustPressed" | "typedText">
+  input: Pick<InputState, "confirmJustPressed" | "cancelJustPressed" | "typedText"> & Partial<Pick<InputState, "startJustPressed">>
 ) {
   // Z/X also produce gameplay edges; in a focused name field they are letters.
-  return !/[a-zA-Z]/.test(input.typedText) && (input.confirmJustPressed || input.cancelJustPressed);
+  // Enter has its own start edge, so a letter buffered in the same frame cannot swallow it.
+  return Boolean(input.startJustPressed) || !/[a-zA-Z]/.test(input.typedText) && (input.confirmJustPressed || input.cancelJustPressed);
 }

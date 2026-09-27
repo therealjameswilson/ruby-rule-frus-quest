@@ -1,0 +1,179 @@
+{
+  "date": "2026-09-27",
+  "scope": "Compiler gallery and a fresh desktop opening through earned Archive entry",
+  "build": "passed",
+  "unitSuite": {
+    "files": 276,
+    "tests": 2081
+  },
+  "galleryCases": [
+    {
+      "name": "desktop",
+      "allSixSelectable": true,
+      "gridNavigation": true,
+      "namePreserved": true,
+      "confirmedAppearance": true,
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "allSixSelectable": true,
+      "gridNavigation": true,
+      "namePreserved": true,
+      "confirmedAppearance": true,
+      "errors": []
+    },
+    {
+      "name": "landscape",
+      "allSixSelectable": true,
+      "gridNavigation": true,
+      "namePreserved": true,
+      "confirmedAppearance": true,
+      "errors": []
+    }
+  ],
+  "additionalChecks": [
+    "Simulated gamepad two-axis gallery navigation",
+    "Gameplay touch controls hidden on picker and restored in Office",
+    "Rapid name typing plus Enter retains final letters and ends editing"
+  ],
+  "freshOpening": {
+    "errors": [],
+    "milestones": [
+      {
+        "label": "opening-warning",
+        "elapsedMs": 1341,
+        "scene": "WarningScene"
+      },
+      {
+        "label": "opening-compiler",
+        "elapsedMs": 4873,
+        "scene": "CharacterCreateScene"
+      },
+      {
+        "label": "intro-1",
+        "elapsedMs": 6040,
+        "scene": "DanneIntroScene"
+      },
+      {
+        "label": "intro-2",
+        "elapsedMs": 6489,
+        "scene": "DanneIntroScene"
+      },
+      {
+        "label": "intro-3",
+        "elapsedMs": 6939,
+        "scene": "DanneIntroScene"
+      },
+      {
+        "label": "intro-4",
+        "elapsedMs": 7397,
+        "scene": "DanneIntroScene"
+      },
+      {
+        "label": "intro-5",
+        "elapsedMs": 7837,
+        "scene": "DanneIntroScene"
+      },
+      {
+        "label": "intro-6",
+        "elapsedMs": 8294,
+        "scene": "DanneIntroScene"
+      },
+      {
+        "label": "intro-7",
+        "elapsedMs": 8743,
+        "scene": "DanneIntroScene"
+      },
+      {
+        "label": "intro-8",
+        "elapsedMs": 9189,
+        "scene": "DanneIntroScene"
+      },
+      {
+        "label": "opening-office",
+        "elapsedMs": 10478,
+        "scene": "OfficeScene"
+      },
+      {
+        "label": "opening-assignment",
+        "elapsedMs": 13279,
+        "scene": "OfficeScene"
+      },
+      {
+        "label": "opening-memo",
+        "elapsedMs": 16478,
+        "scene": "OfficeScene"
+      },
+      {
+        "label": "opening-door-unlocked",
+        "elapsedMs": 21747,
+        "scene": "OfficeScene"
+      },
+      {
+        "label": "01-stamp-earned",
+        "elapsedMs": 25650,
+        "scene": "GuideScene"
+      },
+      {
+        "label": "02-live-bolt",
+        "elapsedMs": 27160,
+        "scene": "GuideScene"
+      },
+      {
+        "label": "03-harmless-miss",
+        "elapsedMs": 28683,
+        "scene": "GuideScene"
+      },
+      {
+        "label": "04-aim-warning",
+        "elapsedMs": 29414,
+        "scene": "GuideScene"
+      },
+      {
+        "label": "05-paused-bolt",
+        "elapsedMs": 33189,
+        "scene": "GuideScene"
+      },
+      {
+        "label": "05-use-swing-button",
+        "elapsedMs": 34437,
+        "scene": "GuideScene"
+      },
+      {
+        "label": "06-returned-bolt",
+        "elapsedMs": 37078,
+        "scene": "GuideScene"
+      },
+      {
+        "label": "07-fragment-revealed",
+        "elapsedMs": 38163,
+        "scene": "GuideScene"
+      },
+      {
+        "label": "07-front-matter-collected",
+        "elapsedMs": 40104,
+        "scene": "GuideScene"
+      },
+      {
+        "label": "08-continued-gate",
+        "elapsedMs": 42907,
+        "scene": "GuideScene"
+      },
+      {
+        "label": "09-archive-entry",
+        "elapsedMs": 45451,
+        "scene": "ArchiveScene"
+      }
+    ],
+    "earnedSave": "/tmp/frus-fresh-opening/earned-storage.json",
+    "beforeGalleryChanges": true
+  },
+  "limitations": [
+    "Physical iPhone and physical gamepad unverified",
+    "Fresh opening predates gallery changes; final gallery tested separately through Office transition",
+    "No full-campaign victory or listening audit",
+    "Skill client canvas capture remains black; ordinary compositor screenshots visually inspected"
+  ],
+  "published": false
+}

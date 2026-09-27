@@ -1,0 +1,17 @@
+.revision-summary{flex-shrink:0;padding:14px 32px;background:#0e1b21;color:#dcc991;font-size:13px;border-bottom:1px solid #ffffff18}
+.revision-desk .assembly-body{display:grid;grid-template-columns:280px 1fr;gap:24px;align-items:start}
+.revision-desk h2{color:#e5d4a7;font-size:14px;margin:0 0 12px}
+.revision-comment{display:block;width:100%;min-height:80px;text-align:left;padding:18px;margin-bottom:14px;border:1px solid #7e7773;border-left:4px solid #d5a48a;border-radius:4px 12px 12px 4px;background:#3c3032;color:#f5e1d2}
+.revision-comment strong{display:block;font-size:12px;color:#eec3a9;margin-bottom:10px}.revision-comment span{display:block;font-size:14px;line-height:1.6}
+.revision-comment[aria-expanded=true]{background:#363836;border-color:#839988}
+.revision-desk .assembly-evidence{grid-template-columns:1fr}.revision-desk .assembly-sources{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.revision-desk .assembly-sources button{font-size:12px!important;min-height:56px}
+.revision-desk .assembly-source-paper h2{color:#364638;font:22px Georgia,serif}
+.revision-changes{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:16px;padding-top:20px;border-top:1px solid #ffffff20}
+.revision-changes>h2,.revision-changes>.assembly-brief{grid-column:1/-1}
+.revision-original,.revision-proposed{border-radius:5px 12px 12px 5px;padding:20px;border-left:4px solid #b8796c;background:#f0e4d9;color:#523a33}
+.revision-proposed{background:#e0ebd8;border-left-color:#85a478;color:#354931}
+.revision-original span,.revision-proposed span{font-size:10px;letter-spacing:.06em;font-weight:700}.revision-original p,.revision-proposed p{font:21px/1.5 Georgia,serif;margin:14px 0 0}
+.revision-action{min-height:54px;padding:14px;text-align:left;border:1px solid #8d9f88;border-radius:10px;background:#293f38;color:#e6eacf;font-size:13px!important}
+.revision-action[aria-pressed=true]{background:#526d49;border-color:#bbd8a4}
+@media(max-width:760px){.revision-desk .assembly-body{grid-template-columns:1fr;gap:20px}.revision-changes{grid-template-columns:1fr}.revision-summary{padding:12px 20px;font-size:11px}.revision-desk .assembly-sources button{padding:10px}.revision-original p,.revision-proposed p{font-size:19px}}
+@media(max-height:550px) and (min-width:761px){.revision-desk .assembly-body{grid-template-columns:230px 1fr;gap:18px}.revision-summary{padding:8px 20px;font-size:11px}.revision-comment{padding:14px}.revision-desk .assembly-sources{display:grid}}

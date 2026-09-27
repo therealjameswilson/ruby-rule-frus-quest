@@ -3,9 +3,10 @@ import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction } from "../game/constants";
 import type { ChapterTravelData } from "../game/chapterTravel";
-import { beginSnesTransition, completeSnesTransition } from "../game/state";
+import { beginSnesTransition, completeSnesTransition, gameState } from "../game/state";
 import { retroAudio } from "./audio";
 import { prefersReducedMotion } from "./motionPreferences";
+import { travelPresentation } from "../game/travelPresentation";
 import { drawDungeonStoneBlock } from "./dungeonWallArt";
 
 function color(hex: string) {
@@ -13,14 +14,16 @@ function color(hex: string) {
 }
 
 export function transitionTo(scene: Phaser.Scene, target: string, data?: ChapterTravelData) {
+  const destinationCopy = travelPresentation(target, gameState.sceneProgress);
   retroAudio.transition();
   beginSnesTransition({
     fromScene: scene.scene.key,
     toScene: target,
-    label: sceneLabel(target)
+    label: destinationCopy.title
   });
   playRubyMosaicTransition(scene, {
-    label: sceneLabel(target),
+    label: destinationCopy.title,
+    caption: destinationCopy.caption,
     onCovered: () => {
       completeSnesTransition();
       const destination = scene.scene.get(target);
@@ -34,19 +37,13 @@ export function transitionTo(scene: Phaser.Scene, target: string, data?: Chapter
 
 interface RubyMosaicTransitionOptions {
   label: string;
+  caption?: string;
   direction?: Direction;
   fromRoomId?: string;
   toRoomId?: string;
   onCovered: () => void;
   revealAfterCovered?: boolean;
   onComplete?: () => void;
-}
-
-function sceneLabel(target: string) {
-  return target
-    .replace("Scene", "")
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .toUpperCase();
 }
 
 // Retain the exported name for existing callers and saved campaign tooling.
@@ -62,8 +59,8 @@ export function playRubyMosaicTransition(scene: Phaser.Scene, options: RubyMosai
     align: "center", wordWrap: { width: 224 }
   }).setOrigin(0.5);
   const subtitle = scene.add.text(128, 142,
-    options.fromRoomId && options.toRoomId ? `${options.fromRoomId}  /  ${options.toRoomId}` : "THE FRUS QUEST",
-    { fontFamily: "monospace", fontSize: "6px", color: "#d9b66f", letterSpacing: 2 }
+    options.fromRoomId && options.toRoomId ? `${options.fromRoomId}  /  ${options.toRoomId}` : options.caption ?? "THE FRUS QUEST",
+    { fontFamily: "monospace", fontSize: "6px", color: "#d9b66f", letterSpacing: 0.5 }
   ).setOrigin(0.5);
   overlay.add([curtain, band, rule, title, subtitle]);
   const offset = options.direction === "east" ? { x: GAME_WIDTH + 2, y: 0 }

@@ -1,0 +1,84 @@
+{
+  "date": "2026-09-27",
+  "scope": "Illustrative manuscript revision and selection-to-DPD integration; seeded Archive scenes, not full campaign",
+  "unitSuite": {
+    "files": 276,
+    "passed": 2080
+  },
+  "build": "passed",
+  "revisionCases": [
+    {
+      "name": "desktop",
+      "wrongEvidenceRejected": true,
+      "originalPreserved": true,
+      "reload": true,
+      "evidenceChangeInvalidates": true,
+      "keyboardAndController": true,
+      "frontMatterReached": true,
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "wrongEvidenceRejected": true,
+      "originalPreserved": true,
+      "reload": true,
+      "evidenceChangeInvalidates": true,
+      "keyboardAndController": false,
+      "frontMatterReached": true,
+      "errors": []
+    },
+    {
+      "name": "landscape",
+      "wrongEvidenceRejected": true,
+      "originalPreserved": true,
+      "reload": true,
+      "evidenceChangeInvalidates": true,
+      "keyboardAndController": false,
+      "frontMatterReached": true,
+      "errors": []
+    }
+  ],
+  "combinedRouteCases": [
+    {
+      "name": "desktop",
+      "touch": false,
+      "invalidSelectionsRejected": true,
+      "draftRestored": true,
+      "keyboardAndController": true,
+      "handoff": true,
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "touch": true,
+      "invalidSelectionsRejected": true,
+      "draftRestored": true,
+      "keyboardAndController": false,
+      "handoff": true,
+      "errors": []
+    },
+    {
+      "name": "landscape",
+      "touch": true,
+      "invalidSelectionsRejected": true,
+      "draftRestored": true,
+      "keyboardAndController": false,
+      "handoff": true,
+      "errors": []
+    }
+  ],
+  "lifecycle": "Fullscreen, focus retention, keyboard, simulated gamepad, cancellation, scene shutdown, and touch-style restoration passed",
+  "visualChecks": [
+    "Desktop reviewer notes",
+    "Portrait phone revision",
+    "Fullscreen highlighted evidence",
+    "Final fullscreen original and corrected copies with accurate applied label"
+  ],
+  "limitations": [
+    "No physical iPhone or controller test",
+    "Skill client produced black canvas capture despite valid scene state; ordinary compositor captures inspected",
+    "First and second review routing retains existing choice encounters",
+    "Full campaign pacing, movement, audio, and presentation audit remains open"
+  ],
+  "published": false
+}

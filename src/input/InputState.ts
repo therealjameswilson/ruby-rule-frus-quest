@@ -183,6 +183,7 @@ const ACTION_LATCH_CODES = new Set<string>([
   "KeyB",
   "KeyV",
   "KeyM",
+  "KeyF",
   "ShiftLeft",
   "ShiftRight",
   "Escape",
@@ -610,7 +611,7 @@ export function tickInput() {
   const menu = isActionActive("KeyM") || isTouchDown("m", "start") || isGamepadButtonDown([9], gamepadSnapshot);
   const reliability = isKeyboardDown("KeyR") || isTouchDown("r");
   const sound = isKeyboardDown("KeyN") || isTouchDown("n");
-  const fullscreen = isKeyboardDown("KeyF");
+  const fullscreen = isActionActive("KeyF");
   // Physically-held Escape drives the suppress-until-release bookkeeping, while
   // the latched form drives the pause edge so a too-short ESC tap still toggles
   // the pause/overlay-close.
@@ -672,7 +673,7 @@ export function tickInput() {
     sound,
     soundJustPressed: justPressed(sound, previousState.sound),
     fullscreen,
-    fullscreenJustPressed: justPressed(fullscreen, previousState.fullscreen),
+    fullscreenJustPressed: pendingActionPresses.has("KeyF") || justPressed(fullscreen, previousState.fullscreen),
     pause,
     pauseJustPressed: suppressEscEdgesUntilRelease && escDown ? false : freshEscape || justPressed(pause, previousState.pause),
     choiceAJustPressed: justPressed(choiceA, isKeyboardDownFromPrevious("choiceA")),

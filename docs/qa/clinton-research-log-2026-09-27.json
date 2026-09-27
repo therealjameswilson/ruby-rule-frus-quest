@@ -1,0 +1,77 @@
+[
+  {
+    "name": "desktop",
+    "stage": 3,
+    "note": {
+      "fields": {
+        "kind": 1,
+        "date": 1,
+        "locator": 1,
+        "scope": 1
+      },
+      "heading": "Research log for MDR 2015-0782-M-2, listed conversations April 21, 1996–December 31, 1999; catalog available July 13, 2018; individual dates pending examination.",
+      "citation": "Clinton Digital Library, item 57569, Declassified Documents Concerning Russian President Boris Yeltsin; MDR 2015-0782-M-2; Clinton Presidential Records: NSC Cable, Email, and Records Management System.",
+      "qualification": "Scans are available; individual conversations, redactions, omissions and cross-repository comparisons have not yet been examined.",
+      "sourceUrl": "https://clinton.presidentiallibraries.us/items/show/57569",
+      "lead": true,
+      "followups": true,
+      "researchLog": [
+        "Unexamined release: Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton–Yeltsin memcons and telcons, April 21, 1996–December 31, 1999. Scans are available; individual contents, dates and redactions remain to be examined.",
+        "Pending: Examine each conversation and record its date and limits.",
+        "Pending: Check gaps and compare with other contemporaneous records."
+      ]
+    },
+    "reviewPreserved": true,
+    "errors": []
+  },
+  {
+    "name": "phone",
+    "stage": 3,
+    "note": {
+      "fields": {
+        "kind": 1,
+        "date": 1,
+        "locator": 1,
+        "scope": 1
+      },
+      "heading": "Research log for MDR 2015-0782-M-2, listed conversations April 21, 1996–December 31, 1999; catalog available July 13, 2018; individual dates pending examination.",
+      "citation": "Clinton Digital Library, item 57569, Declassified Documents Concerning Russian President Boris Yeltsin; MDR 2015-0782-M-2; Clinton Presidential Records: NSC Cable, Email, and Records Management System.",
+      "qualification": "Scans are available; individual conversations, redactions, omissions and cross-repository comparisons have not yet been examined.",
+      "sourceUrl": "https://clinton.presidentiallibraries.us/items/show/57569",
+      "lead": true,
+      "followups": true,
+      "researchLog": [
+        "Unexamined release: Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton–Yeltsin memcons and telcons, April 21, 1996–December 31, 1999. Scans are available; individual contents, dates and redactions remain to be examined.",
+        "Pending: Examine each conversation and record its date and limits.",
+        "Pending: Check gaps and compare with other contemporaneous records."
+      ]
+    },
+    "reviewPreserved": true,
+    "errors": []
+  },
+  {
+    "name": "landscape",
+    "stage": 3,
+    "note": {
+      "fields": {
+        "kind": 1,
+        "date": 1,
+        "locator": 1,
+        "scope": 1
+      },
+      "heading": "Research log for MDR 2015-0782-M-2, listed conversations April 21, 1996–December 31, 1999; catalog available July 13, 2018; individual dates pending examination.",
+      "citation": "Clinton Digital Library, item 57569, Declassified Documents Concerning Russian President Boris Yeltsin; MDR 2015-0782-M-2; Clinton Presidential Records: NSC Cable, Email, and Records Management System.",
+      "qualification": "Scans are available; individual conversations, redactions, omissions and cross-repository comparisons have not yet been examined.",
+      "sourceUrl": "https://clinton.presidentiallibraries.us/items/show/57569",
+      "lead": true,
+      "followups": true,
+      "researchLog": [
+        "Unexamined release: Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton–Yeltsin memcons and telcons, April 21, 1996–December 31, 1999. Scans are available; individual contents, dates and redactions remain to be examined.",
+        "Pending: Examine each conversation and record its date and limits.",
+        "Pending: Check gaps and compare with other contemporaneous records."
+      ]
+    },
+    "reviewPreserved": true,
+    "errors": []
+  }
+]

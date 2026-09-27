@@ -25,6 +25,9 @@ describe("CharacterCreateScene input helpers", () => {
     expect(shouldEndCharacterNameEditing({ confirmJustPressed: false, cancelJustPressed: true, typedText: "" })).toBe(true);
     expect(shouldEndCharacterNameEditing({ confirmJustPressed: false, cancelJustPressed: false, typedText: "" })).toBe(false);
   });
+  it("accepts Enter arriving with buffered name letters", () => {
+    expect(shouldEndCharacterNameEditing({confirmJustPressed:true,cancelJustPressed:false,startJustPressed:true,typedText:"Ruby"})).toBe(true);
+  });
   it("presents one clear FRUS Compiler identity", () => {
     expect(FRUS_COMPILER_ROLE_ID).toBe("compiler");
     expect(CHARACTER_CREATE_TITLE).toBe("CREATE YOUR FRUS COMPILER");

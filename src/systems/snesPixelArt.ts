@@ -1,3 +1,4 @@
+import { worldItemImage } from './worldItemArt';
 import { prefersReducedMotion } from './motionPreferences';
 import { gateCaptionTexture } from './gateCaptionArt';
 import { dungeonGateTexture } from "./dungeonGateArt";
@@ -442,7 +443,7 @@ export function addSnesTreasurePedestal(scene: Phaser.Scene, options: SnesTreasu
   }).setOrigin(0.5, 0).setDepth(depth + 3), "snes-treasure-label", track);
 
   if (scene.textures.exists(options.textureKey)) {
-    pickupArt.push(keepTagged(scene.add.image(options.x, options.y - 1, options.textureKey).setDepth(depth + 1), "snes-treasure-icon", track));
+    pickupArt.push(keepTagged(worldItemImage(scene, options.x, options.y - 1, options.textureKey).setDepth(depth + 1), "snes-treasure-icon", track));
   } else {
     pickupArt.push(keepTagged(scene.add.rectangle(options.x, options.y - 1, 16, 16, color(accent), 1).setDepth(depth + 1), "snes-treasure-icon-fallback", track));
   }
@@ -464,7 +465,7 @@ export function addSnesRewardBurst(scene: Phaser.Scene, x: number, y: number, te
   const displayTexture = rewardDisplayTexture(scene, 'reward', PALETTE.goldStamp);
   if (displayTexture) container.add(scene.add.image(0,-5,displayTexture).setDisplaySize(72,44).setName('detailed-reward-panel'));
   else container.add(scene.add.rectangle(0, -8, 46, 28, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.goldStamp)));
-  if (scene.textures.exists(textureKey)) container.add(scene.add.image(0, -10, textureKey));
+  if (scene.textures.exists(textureKey)) container.add(worldItemImage(scene, 0, -10, textureKey));
   else container.add(scene.add.rectangle(0, -10, 18, 18, color(PALETTE.goldStamp)));
   container.add(scene.add.text(0, 10, label.slice(0, 18).toUpperCase(), {
     fontFamily: "Arial",

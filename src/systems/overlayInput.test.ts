@@ -143,3 +143,17 @@ describe("handleOpenOverlays", () => {
     expect(inventory.active).toBe(false);
   });
 });
+
+it('closes a library-style frozen overlay with touch MENU and consumes the close edge', () => {
+  resetInput();
+  const inventory = makeInventory(true);
+  setTouchControl('start', true); tickInput();
+  expect(getInput().menuJustPressed).toBe(true);
+  expect(handleOpenOverlays(inventory, undefined, true)).toBe(true);
+  expect(inventory.active).toBe(false);
+  tickInput();
+  expect(getInput().menuJustPressed).toBe(false);
+  setTouchControl('start', false); tickInput();
+  expect(getInput().menuJustPressed).toBe(false);
+  resetInput();
+});

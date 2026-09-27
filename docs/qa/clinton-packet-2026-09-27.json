@@ -1,0 +1,318 @@
+[
+  {
+    "name": "desktop",
+    "legacy": false,
+    "stage": 4,
+    "reward": 8,
+    "returned": true,
+    "packet": {
+      "filed": true,
+      "parts": [
+        {
+          "id": 1,
+          "label": "Release record",
+          "station": 0,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Clinton Library · Clinton Presidential Records: NSC Cable, Email, and Records Management System",
+            "Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton–Yeltsin memcons and telcons, April 21, 1996–December 31, 1999",
+            "MDR scans available. Individual conversations, dates and redactions remain to be examined.",
+            "Preserve MDR provenance and investigate gaps and other perspectives."
+          ],
+          "sources": [
+            {
+              "label": "Official release catalog",
+              "url": "https://clinton.presidentiallibraries.us/items/show/57569"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "label": "Evidence comparison",
+          "station": 1,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "How this release reached the catalog: Release provenance.\nIdentifier 2015-0782-M-2 belongs to a Mandatory Declassification Review. The catalog distinguishes these scans from a FOIA request.\nClinton Digital Library · item 57569.",
+            "The listed conversation span: Dates and coverage.\nThe entry describes Clinton–Yeltsin memcons and telcons spanning April 21, 1996 through December 31, 1999.\nCatalog Description field.",
+            "When the catalog made it available: Dates and coverage.\nThe catalog gives July 13, 2018 as the date available.\nCatalog Date Available field.",
+            "Does this release settle the account?: Unresolved question.\nWhich positions, disagreements, redactions, or missing exchanges become visible when the conversations are examined alongside other records?\nCompiler’s question · no individual record examined."
+          ],
+          "sources": [
+            {
+              "label": "Official release catalog",
+              "url": "https://clinton.presidentiallibraries.us/items/show/57569"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "label": "Research log",
+          "station": 2,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Research log for MDR 2015-0782-M-2, listed conversations April 21, 1996–December 31, 1999; catalog available July 13, 2018; individual dates pending examination.",
+            "Source: Clinton Digital Library, item 57569, Declassified Documents Concerning Russian President Boris Yeltsin; MDR 2015-0782-M-2; Clinton Presidential Records: NSC Cable, Email, and Records Management System.",
+            "Scans are available; individual conversations, redactions, omissions and cross-repository comparisons have not yet been examined."
+          ],
+          "sources": [
+            {
+              "label": "Cited source",
+              "url": "https://clinton.presidentiallibraries.us/items/show/57569"
+            }
+          ]
+        }
+      ],
+      "openWork": [
+        "Unexamined release: Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton–Yeltsin memcons and telcons, April 21, 1996–December 31, 1999. Scans are available; individual contents, dates and redactions remain to be examined.",
+        "Pending: Examine each conversation and record its date and limits.",
+        "Pending: Check gaps and compare with other contemporaneous records."
+      ],
+      "purpose": "Research in progress · for supervisor review",
+      "limit": "This packet preserves a source trail and unresolved questions. It is not a completed chapter or a cleared volume."
+    },
+    "errors": []
+  },
+  {
+    "name": "phone",
+    "legacy": false,
+    "stage": 4,
+    "reward": 8,
+    "returned": false,
+    "packet": {
+      "filed": true,
+      "parts": [
+        {
+          "id": 1,
+          "label": "Release record",
+          "station": 0,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Clinton Library · Clinton Presidential Records: NSC Cable, Email, and Records Management System",
+            "Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton–Yeltsin memcons and telcons, April 21, 1996–December 31, 1999",
+            "MDR scans available. Individual conversations, dates and redactions remain to be examined.",
+            "Preserve MDR provenance and investigate gaps and other perspectives."
+          ],
+          "sources": [
+            {
+              "label": "Official release catalog",
+              "url": "https://clinton.presidentiallibraries.us/items/show/57569"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "label": "Evidence comparison",
+          "station": 1,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "How this release reached the catalog: Release provenance.\nIdentifier 2015-0782-M-2 belongs to a Mandatory Declassification Review. The catalog distinguishes these scans from a FOIA request.\nClinton Digital Library · item 57569.",
+            "The listed conversation span: Dates and coverage.\nThe entry describes Clinton–Yeltsin memcons and telcons spanning April 21, 1996 through December 31, 1999.\nCatalog Description field.",
+            "When the catalog made it available: Dates and coverage.\nThe catalog gives July 13, 2018 as the date available.\nCatalog Date Available field.",
+            "Does this release settle the account?: Unresolved question.\nWhich positions, disagreements, redactions, or missing exchanges become visible when the conversations are examined alongside other records?\nCompiler’s question · no individual record examined."
+          ],
+          "sources": [
+            {
+              "label": "Official release catalog",
+              "url": "https://clinton.presidentiallibraries.us/items/show/57569"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "label": "Research log",
+          "station": 2,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Research log for MDR 2015-0782-M-2, listed conversations April 21, 1996–December 31, 1999; catalog available July 13, 2018; individual dates pending examination.",
+            "Source: Clinton Digital Library, item 57569, Declassified Documents Concerning Russian President Boris Yeltsin; MDR 2015-0782-M-2; Clinton Presidential Records: NSC Cable, Email, and Records Management System.",
+            "Scans are available; individual conversations, redactions, omissions and cross-repository comparisons have not yet been examined."
+          ],
+          "sources": [
+            {
+              "label": "Cited source",
+              "url": "https://clinton.presidentiallibraries.us/items/show/57569"
+            }
+          ]
+        }
+      ],
+      "openWork": [
+        "Unexamined release: Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton–Yeltsin memcons and telcons, April 21, 1996–December 31, 1999. Scans are available; individual contents, dates and redactions remain to be examined.",
+        "Pending: Examine each conversation and record its date and limits.",
+        "Pending: Check gaps and compare with other contemporaneous records."
+      ],
+      "purpose": "Research in progress · for supervisor review",
+      "limit": "This packet preserves a source trail and unresolved questions. It is not a completed chapter or a cleared volume."
+    },
+    "errors": []
+  },
+  {
+    "name": "landscape",
+    "legacy": false,
+    "stage": 4,
+    "reward": 8,
+    "returned": false,
+    "packet": {
+      "filed": true,
+      "parts": [
+        {
+          "id": 1,
+          "label": "Release record",
+          "station": 0,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Clinton Library · Clinton Presidential Records: NSC Cable, Email, and Records Management System",
+            "Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton–Yeltsin memcons and telcons, April 21, 1996–December 31, 1999",
+            "MDR scans available. Individual conversations, dates and redactions remain to be examined.",
+            "Preserve MDR provenance and investigate gaps and other perspectives."
+          ],
+          "sources": [
+            {
+              "label": "Official release catalog",
+              "url": "https://clinton.presidentiallibraries.us/items/show/57569"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "label": "Evidence comparison",
+          "station": 1,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "How this release reached the catalog: Release provenance.\nIdentifier 2015-0782-M-2 belongs to a Mandatory Declassification Review. The catalog distinguishes these scans from a FOIA request.\nClinton Digital Library · item 57569.",
+            "The listed conversation span: Dates and coverage.\nThe entry describes Clinton–Yeltsin memcons and telcons spanning April 21, 1996 through December 31, 1999.\nCatalog Description field.",
+            "When the catalog made it available: Dates and coverage.\nThe catalog gives July 13, 2018 as the date available.\nCatalog Date Available field.",
+            "Does this release settle the account?: Unresolved question.\nWhich positions, disagreements, redactions, or missing exchanges become visible when the conversations are examined alongside other records?\nCompiler’s question · no individual record examined."
+          ],
+          "sources": [
+            {
+              "label": "Official release catalog",
+              "url": "https://clinton.presidentiallibraries.us/items/show/57569"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "label": "Research log",
+          "station": 2,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Research log for MDR 2015-0782-M-2, listed conversations April 21, 1996–December 31, 1999; catalog available July 13, 2018; individual dates pending examination.",
+            "Source: Clinton Digital Library, item 57569, Declassified Documents Concerning Russian President Boris Yeltsin; MDR 2015-0782-M-2; Clinton Presidential Records: NSC Cable, Email, and Records Management System.",
+            "Scans are available; individual conversations, redactions, omissions and cross-repository comparisons have not yet been examined."
+          ],
+          "sources": [
+            {
+              "label": "Cited source",
+              "url": "https://clinton.presidentiallibraries.us/items/show/57569"
+            }
+          ]
+        }
+      ],
+      "openWork": [
+        "Unexamined release: Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton–Yeltsin memcons and telcons, April 21, 1996–December 31, 1999. Scans are available; individual contents, dates and redactions remain to be examined.",
+        "Pending: Examine each conversation and record its date and limits.",
+        "Pending: Check gaps and compare with other contemporaneous records."
+      ],
+      "purpose": "Research in progress · for supervisor review",
+      "limit": "This packet preserves a source trail and unresolved questions. It is not a completed chapter or a cleared volume."
+    },
+    "errors": []
+  },
+  {
+    "name": "legacy-completed",
+    "legacy": true,
+    "stage": 4,
+    "reward": 0,
+    "returned": false,
+    "packet": {
+      "filed": true,
+      "parts": [
+        {
+          "id": 1,
+          "label": "Release record",
+          "station": 0,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Clinton Library · Clinton Presidential Records: NSC Cable, Email, and Records Management System",
+            "Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton–Yeltsin memcons and telcons, April 21, 1996–December 31, 1999",
+            "MDR scans available. Individual conversations, dates and redactions remain to be examined.",
+            "Preserve MDR provenance and investigate gaps and other perspectives."
+          ],
+          "sources": [
+            {
+              "label": "Official release catalog",
+              "url": "https://clinton.presidentiallibraries.us/items/show/57569"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "label": "Evidence comparison",
+          "station": 1,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "How this release reached the catalog: Release provenance.\nIdentifier 2015-0782-M-2 belongs to a Mandatory Declassification Review. The catalog distinguishes these scans from a FOIA request.\nClinton Digital Library · item 57569.",
+            "The listed conversation span: Dates and coverage.\nThe entry describes Clinton–Yeltsin memcons and telcons spanning April 21, 1996 through December 31, 1999.\nCatalog Description field.",
+            "When the catalog made it available: Dates and coverage.\nThe catalog gives July 13, 2018 as the date available.\nCatalog Date Available field.",
+            "Does this release settle the account?: Unresolved question.\nWhich positions, disagreements, redactions, or missing exchanges become visible when the conversations are examined alongside other records?\nCompiler’s question · no individual record examined."
+          ],
+          "sources": [
+            {
+              "label": "Official release catalog",
+              "url": "https://clinton.presidentiallibraries.us/items/show/57569"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "label": "Research log",
+          "station": 2,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Research log for MDR 2015-0782-M-2, listed conversations April 21, 1996–December 31, 1999; catalog available July 13, 2018; individual dates pending examination.",
+            "Source: Clinton Digital Library, item 57569, Declassified Documents Concerning Russian President Boris Yeltsin; MDR 2015-0782-M-2; Clinton Presidential Records: NSC Cable, Email, and Records Management System.",
+            "Scans are available; individual conversations, redactions, omissions and cross-repository comparisons have not yet been examined."
+          ],
+          "sources": [
+            {
+              "label": "Cited source",
+              "url": "https://clinton.presidentiallibraries.us/items/show/57569"
+            }
+          ]
+        }
+      ],
+      "openWork": [
+        "Unexamined release: Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton–Yeltsin memcons and telcons, April 21, 1996–December 31, 1999. Scans are available; individual contents, dates and redactions remain to be examined.",
+        "Pending: Examine each conversation and record its date and limits.",
+        "Pending: Check gaps and compare with other contemporaneous records."
+      ],
+      "purpose": "Research in progress · for supervisor review",
+      "limit": "This packet preserves a source trail and unresolved questions. It is not a completed chapter or a cleared volume."
+    },
+    "errors": []
+  }
+]

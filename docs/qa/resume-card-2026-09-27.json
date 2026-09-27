@@ -1,0 +1,236 @@
+{
+  "results": [
+    {
+      "name": "desktop",
+      "info": {
+        "resume-name": {
+          "text": "Sam",
+          "key": "8c263a58-9f42-4634-abe5-a77b30fdd81c",
+          "x": 80,
+          "y": 68,
+          "right": 108,
+          "bottom": 82.17431640625,
+          "width": 28,
+          "height": 14.17431640625
+        },
+        "resume-location": {
+          "text": "ARCHIVE CAVERN",
+          "key": "dce6237d-a87a-403b-9251-bf43ac273f1a",
+          "x": 80,
+          "y": 87,
+          "right": 160,
+          "bottom": 96.7470703125,
+          "width": 80,
+          "height": 9.7470703125
+        },
+        "resume-progress": {
+          "text": "0 / 6 CHECKPOINTS",
+          "key": "5f8c4d38-c315-426a-a76d-c1b0d5d78415",
+          "x": 80,
+          "y": 113,
+          "right": 156,
+          "bottom": 121.6640625,
+          "width": 76,
+          "height": 8.6640625
+        },
+        "resume-objective": {
+          "text": "TAKE SOURCE NOTE",
+          "key": "0bb48fd7-88b6-43e3-b97e-17e2422632d7",
+          "x": 28,
+          "y": 193,
+          "right": 120,
+          "bottom": 202.7470703125,
+          "width": 92,
+          "height": 9.7470703125
+        },
+        "resume-compiler": {
+          "key": "compiler_hd",
+          "x": 29,
+          "y": 61,
+          "right": 69,
+          "bottom": 121,
+          "width": 40,
+          "height": 60
+        },
+        "resume-continue-button": {
+          "x": 47,
+          "y": 138,
+          "right": 125,
+          "bottom": 170,
+          "width": 78,
+          "height": 32
+        },
+        "resume-new-button": {
+          "x": 131,
+          "y": 138,
+          "right": 209,
+          "bottom": 170,
+          "width": 78,
+          "height": 32
+        }
+      },
+      "continued": true,
+      "cancelPreservedSave": true,
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "info": {
+        "resume-name": {
+          "text": "Sam",
+          "key": "21141edd-743c-4647-b890-9a9bf35387ed",
+          "x": 80,
+          "y": 68,
+          "right": 108,
+          "bottom": 82.17431640625,
+          "width": 28,
+          "height": 14.17431640625
+        },
+        "resume-location": {
+          "text": "ARCHIVE CAVERN",
+          "key": "578e9779-097c-4308-a75b-7f0927507f32",
+          "x": 80,
+          "y": 87,
+          "right": 160,
+          "bottom": 96.7470703125,
+          "width": 80,
+          "height": 9.7470703125
+        },
+        "resume-progress": {
+          "text": "0 / 6 CHECKPOINTS",
+          "key": "d87318b1-7d65-447c-a9d5-2bad86ef94fd",
+          "x": 80,
+          "y": 113,
+          "right": 156,
+          "bottom": 121.6640625,
+          "width": 76,
+          "height": 8.6640625
+        },
+        "resume-objective": {
+          "text": "TAKE SOURCE NOTE",
+          "key": "a896caee-79d9-436e-8421-1ac2b03f0ff5",
+          "x": 28,
+          "y": 193,
+          "right": 120,
+          "bottom": 202.7470703125,
+          "width": 92,
+          "height": 9.7470703125
+        },
+        "resume-compiler": {
+          "key": "compiler_hd",
+          "x": 29,
+          "y": 61,
+          "right": 69,
+          "bottom": 121,
+          "width": 40,
+          "height": 60
+        },
+        "resume-continue-button": {
+          "x": 47,
+          "y": 138,
+          "right": 125,
+          "bottom": 170,
+          "width": 78,
+          "height": 32
+        },
+        "resume-new-button": {
+          "x": 131,
+          "y": 138,
+          "right": 209,
+          "bottom": 170,
+          "width": 78,
+          "height": 32
+        }
+      },
+      "continued": true,
+      "cancelPreservedSave": true,
+      "errors": []
+    },
+    {
+      "name": "landscape",
+      "info": {
+        "resume-name": {
+          "text": "Sam",
+          "key": "c60d5df9-cd75-4551-a430-926a4d5e48d1",
+          "x": 80,
+          "y": 68,
+          "right": 108,
+          "bottom": 82.17431640625,
+          "width": 28,
+          "height": 14.17431640625
+        },
+        "resume-location": {
+          "text": "ARCHIVE CAVERN",
+          "key": "020c6714-03da-4447-bb08-6c32a6cd08ab",
+          "x": 80,
+          "y": 87,
+          "right": 160,
+          "bottom": 96.7470703125,
+          "width": 80,
+          "height": 9.7470703125
+        },
+        "resume-progress": {
+          "text": "0 / 6 CHECKPOINTS",
+          "key": "2df4a807-00e9-42de-a0eb-79873c297d01",
+          "x": 80,
+          "y": 113,
+          "right": 156,
+          "bottom": 121.6640625,
+          "width": 76,
+          "height": 8.6640625
+        },
+        "resume-objective": {
+          "text": "TAKE SOURCE NOTE",
+          "key": "e494d0ca-85b6-4f45-9ee7-bbdb235b2cc5",
+          "x": 28,
+          "y": 193,
+          "right": 120,
+          "bottom": 202.7470703125,
+          "width": 92,
+          "height": 9.7470703125
+        },
+        "resume-compiler": {
+          "key": "compiler_hd",
+          "x": 29,
+          "y": 61,
+          "right": 69,
+          "bottom": 121,
+          "width": 40,
+          "height": 60
+        },
+        "resume-continue-button": {
+          "x": 47,
+          "y": 138,
+          "right": 125,
+          "bottom": 170,
+          "width": 78,
+          "height": 32
+        },
+        "resume-new-button": {
+          "x": 131,
+          "y": 138,
+          "right": 209,
+          "bottom": 170,
+          "width": 78,
+          "height": 32
+        }
+      },
+      "continued": true,
+      "cancelPreservedSave": true,
+      "errors": []
+    }
+  ],
+  "replacementConfirmed": true,
+  "appearanceAndLongObjective": {
+    "portrait": "compiler_clara_hd",
+    "objective": "Embassy cable copied into the collection notes. Finish formal collection at the Office desk.",
+    "bottom": 212.328125
+  },
+  "desktopChecks": [
+    "fullscreen",
+    "simulated gamepad selection and cancel",
+    "keyboard down, confirm, cancel, continue"
+  ],
+  "artifactDirectory": "/tmp/frus-resume-card-final3",
+  "scope": "Chromium simulations; not physical iPhone or controller validation."
+}

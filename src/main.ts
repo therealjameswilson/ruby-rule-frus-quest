@@ -1,3 +1,7 @@
+import { libraryPacketReadout } from './game/libraryPacket';
+import { sourceNoteReadout } from './game/librarySourceNote';
+import { comparisonReadout } from './game/libraryComparison';
+import { REQUEST_CATALOGS, libraryRequestReadout } from './game/libraryRequest';
 import { installRenderDensity } from "./systems/renderDensity";
 import { libraryResearchReadout } from "./game/libraryResearch";
 import Phaser from "phaser";
@@ -122,6 +126,14 @@ function renderConciseGameToText() {
       questCounters: gameState.questCounters,
       compilerMission: getCompilerMissionReadout(gameState.sceneProgress),
       libraryResearch: libraryResearchReadout(gameState.sceneProgress),
+      libraryPacket: libraryPacketReadout(gameState.sceneProgress),
+      libraryPackets: {reagan:libraryPacketReadout(gameState.sceneProgress),bush41:libraryPacketReadout(gameState.sceneProgress,'bush41'),clinton:libraryPacketReadout(gameState.sceneProgress,'clinton'),bush43:libraryPacketReadout(gameState.sceneProgress,'bush43')},
+      librarySourceNote: sourceNoteReadout(gameState.sceneProgress),
+      librarySourceNotes: {reagan:sourceNoteReadout(gameState.sceneProgress),bush41:sourceNoteReadout(gameState.sceneProgress,'bush41'),clinton:sourceNoteReadout(gameState.sceneProgress,'clinton'),bush43:sourceNoteReadout(gameState.sceneProgress,'bush43')},
+      libraryComparison: comparisonReadout(gameState.sceneProgress),
+      libraryComparisons: {reagan:comparisonReadout(gameState.sceneProgress),bush41:comparisonReadout(gameState.sceneProgress,'bush41'),clinton:comparisonReadout(gameState.sceneProgress,'clinton'),bush43:comparisonReadout(gameState.sceneProgress,'bush43')},
+      libraryRequest: libraryRequestReadout(gameState.sceneProgress),
+      libraryRequests: Object.fromEntries(Object.keys(REQUEST_CATALOGS).map(id=>[id,libraryRequestReadout(gameState.sceneProgress,id)])),
       researchWorld: gameState.currentScene === "ResearchWorldScene" ? {
         zone: RESEARCH_ZONES[researchZone(gameState.sceneProgress.researchWorldZone)].name,
         danneDisguise: DANNE_DISGUISES[disguiseIndex(gameState.sceneProgress.researchDanneDisguise)].movie,

@@ -1,3 +1,7 @@
+import { libraryPacketReadout } from '../game/libraryPacket';
+import { comparisonCatalog, evaluateComparison } from '../game/libraryComparison';
+import { evaluateSourceNote } from '../game/librarySourceNote';
+import { requestCatalog, evaluateLibraryRequest } from '../game/libraryRequest';
 import { activeDossier } from "../game/activeCompilation";
 import { researchDoorway } from '../systems/researchDoorway';
 import { prefersReducedMotion } from '../systems/motionPreferences';
@@ -31,6 +35,7 @@ const STATIONS = [
 ] as const;
 
 export class PresidentialLibraryScene extends Phaser.Scene {
+  private get stations() { return ['bush41','clinton','bush43'].includes(this.assignment?.library) ? STATIONS.map((s,i)=>i===2?{...s,name:'RESEARCH LOG',label:'3 RESEARCH LOG'}:s) : STATIONS; }
   private player!: Player;
   private dialog!: DialogBox;
   private choice!: ChoicePrompt;
@@ -56,7 +61,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     setSceneState('PresidentialLibraryScene','explore','RESEARCH THE VOLUME');
     setRoomTraversalState({currentRoomId:`library-${id}`,roomTitle:library.name,roomType:'puzzle',visitedRoomIds:[`library-${id}`],revealedRoomIds:[`library-${id}`],exits:{south:'ResearchWorldScene'},lockedExits:{},requiredItems:{}});
     setVisibleThreats([]);
-    setVisibleEntities([library.name, this.assignment.topic, ...STATIONS.map(s=>s.name),...(nscDungeon(id)?['North-center: NSC research wing']:[]),'DANN-E misfiled-record barriers','South: return to library grounds']);
+    setVisibleEntities([library.name, this.assignment.topic, ...this.stations.map(s=>s.name),...(nscDungeon(id)?['North-center: NSC research wing']:[]),'DANN-E misfiled-record barriers','South: return to library grounds']);
     drawRoomFrame(this, library.label, '#d6a23a', {showLegacyHud:false});
     this.cameras.main.setBackgroundColor('#29343e');
     addLibraryRoomFloor(this);
@@ -67,7 +72,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     this.add.text(128,49,library.label,{fontFamily:'monospace',fontSize:'7px',color:'#ffe0a3'}).setOrigin(.5).setDepth(50);
     this.add.text(128,61,this.assignment.topic,{fontFamily:'monospace',fontSize:'6px',color:'#f6efdb'}).setOrigin(.5).setDepth(50);
     this.stageText=this.add.text(128,73,'',{fontFamily:'monospace',fontSize:'6px',color:'#75e4db'}).setOrigin(.5).setDepth(50);
-    STATIONS.forEach((s,i)=>{
+    this.stations.forEach((s,i)=>{
       const desk=libraryStationArt(this,i,s.x,s.y);
       if(desk)desk.setDepth(12).setName(`library-desk-${i}`);
       else this.add.rectangle(s.x,s.y,47,22,0x5d392c).setStrokeStyle(2,0xad8c5d).setDepth(12);
@@ -97,7 +102,8 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     setLatestMessage(`${this.assignment.topic}. ${this.assignment.task}`);
     if (!gameState.sceneProgress[`libraryBriefed_v2_${id}`]) {
       gameState.sceneProgress[`libraryBriefed_v2_${id}`]=1;
-      this.dialog.show('ARCHIVAL RESEARCH',[
+      if(requestCatalog(id))this.toast.show('START: FINDING AID · NORTHWEST',this.player.position,'info');
+      else this.dialog.show('ARCHIVAL RESEARCH',[
         this.assignment.topic,
         this.assignment.task,
         'Explore this optional source trail. The holdings here do not define your volume’s topic or date range.',
@@ -109,6 +115,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   }
   update(_:number,delta:number) {
     tickInput();const input=getInput();if(this.leaving)return;
+    if(input.fullscreenJustPressed)this.scale.toggleFullscreen();
     if(gameState.mode==='explore') {
       this.toast.update(delta,this.player.position);
       this.clearing=this.clearing.filter(clear=>{
@@ -122,9 +129,8 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     }
     if(this.dialog.active){this.player.update(delta,false);this.prompt.setVisible(false);if(input.aJustPressed||input.bJustPressed)this.dialog.advance();return;}
     if(this.choice.active){this.player.update(delta,false);this.prompt.setVisible(false);this.choice.updateInput();return;}
-    if(handleOpenOverlays(this.inventory)){this.player.update(delta,false);this.prompt.setVisible(false);return;}
+    if(handleOpenOverlays(this.inventory,undefined,true)){this.player.update(delta,false);this.prompt.setVisible(false);return;}
     if(input.menuJustPressed||input.pauseJustPressed){this.inventory.toggle();return;}
-    if(input.fullscreenJustPressed)this.scale.toggleFullscreen();
     const stage=libraryStage(gameState.sceneProgress,this.assignment.library);
     const gates = [new Phaser.Geom.Rectangle(114,94,28,20),new Phaser.Geom.Rectangle(166,130,54,8)].filter((_,i)=>stage<i+1);
     this.player.update(delta,true,{bounds:{left:19,right:237,top:82,bottom:218},solids:[...this.solids,...gates]});
@@ -134,14 +140,18 @@ export class PresidentialLibraryScene extends Phaser.Scene {
       this.prompt.setVisible(true).setText('ENTER NSC WING');setNearestInteractable('NSC research wing');
       if(input.aJustPressed){this.leaving=true;saveGameNow();transitionTo(this,'NscLibraryScene');}return;
     }
-    const nearest=STATIONS.map((s,i)=>({s,i,d:Math.hypot(p.x-s.x,p.y-(s.y+23))})).filter(o=>o.d<25).sort((a,b)=>a.d-b.d)[0];
-    this.prompt.setVisible(Boolean(nearest)).setText(nearest?(nearest.i<stage?'SAVED — REVIEW':nearest.i>stage?`FIRST: ${STATIONS[stage].name}`:nearest.s.name):'');setNearestInteractable(nearest?.s.name??null);
+    const nearest=this.stations.map((s,i)=>({s,i,d:Math.hypot(p.x-s.x,p.y-(s.y+23))})).filter(o=>o.d<25).sort((a,b)=>a.d-b.d)[0];
+    this.prompt.setVisible(Boolean(nearest)).setText(nearest?(nearest.i<stage?'SAVED — REVIEW':nearest.i>stage?`FIRST: ${this.stations[stage].name}`:nearest.s.name):'');setNearestInteractable(nearest?.s.name??null);
     if(nearest&&input.aJustPressed)this.research(nearest.i);
   }
   private refresh(animateClearing=false) {
     const stage=libraryStage(gameState.sceneProgress,this.assignment.library);
-    this.stageText.setText(`${this.assignment.backgroundOnly?'BACKGROUND':'RESEARCH'} PACKET ${stage}/4`);
-    this.marks.forEach((m,i)=>m.setText(`${STATIONS[i].label} · ${i<stage?'FILED':i===stage?'NEXT':'LOCKED'}`)
+    const packet=['reagan','bush41','clinton','bush43'].includes(this.assignment.library)?libraryPacketReadout(gameState.sceneProgress,this.assignment.library):null;
+    this.stageText.setText(stage===4&&packet&&!packet.filed?'REVISIT PACKET · PROGRESS KEPT':`${this.assignment.backgroundOnly?'BACKGROUND':'RESEARCH'} PACKET ${stage}/4`);
+    const revisit=packet?[...packet.parts.map(p=>!p.ready),!packet.filed]:[];
+    if(comparisonCatalog(this.assignment.library))revisit[1]=!evaluateComparison(gameState.sceneProgress,this.assignment.library).ok;
+    if(['bush41','clinton','bush43'].includes(this.assignment.library))revisit[2]=!evaluateSourceNote(gameState.sceneProgress,this.assignment.library).ok;
+    this.marks.forEach((m,i)=>m.setText(`${this.stations[i].label} · ${i<stage&&revisit[i]?'REVISIT':i<stage?'FILED':i===stage?'NEXT':'LOCKED'}`)
       .setColor(i===stage?'#fff3bf':i<stage?'#a7bfb4':'#a5afbd')
       .setBackgroundColor(i===stage?'#49371d':'#192630'));
     this.receipts.forEach((paper,i)=>paper.setVisible(i<stage));
@@ -151,12 +161,46 @@ export class PresidentialLibraryScene extends Phaser.Scene {
         if(!this.clearing.some(c=>c.sprite===b))this.clearing.push({sprite:b,x:b.x,y:b.y,elapsed:0});
       } else if(!this.clearing.some(c=>c.sprite===b))b.setVisible(blocked);
     });
-    setObjective(stage===4?'PACKET FILED':STATIONS[stage].label);
+    setObjective(stage===4?(packet&&!packet.filed?'REVIEW RESEARCH PACKET':'PACKET FILED'):this.stations[stage].label);
   }
   private research(station:number) {
     const a=this.assignment,stage=libraryStage(gameState.sceneProgress,a.library);
-    if(station<stage){this.dialog.show('FILED',activeDossier(a.library)?.questions[station].receipt ?? `This step is saved. Next: ${stage===4?'return south':STATIONS[stage].name}.`,()=>{if(stage===4)this.offerManuscriptReturn();});return;}
-    if(station!==stage){this.dialog.show('RESEARCH ORDER',`First complete ${STATIONS[stage].name}. DANN-E cannot replace a source trail with a shortcut.`);return;}
+    if(comparisonCatalog(a.library)&&station===1&&station<stage&&evaluateComparison(gameState.sceneProgress,a.library).ok){
+      this.choice.showLibraryComparison(gameState.sceneProgress,()=>{},()=>{},()=>{},true,a.library);return;
+    }
+    if(['reagan','bush41','clinton','bush43'].includes(a.library)&&station===2&&station<stage&&evaluateSourceNote(gameState.sceneProgress,a.library).ok){
+      this.choice.showLibrarySourceNote(gameState.sceneProgress,()=>{},()=>{},()=>{},true,a.library);return;
+    }
+    const comparisonRepair=Boolean(comparisonCatalog(a.library))&&station===1&&station<stage&&!evaluateComparison(gameState.sceneProgress,a.library).ok;
+    const noteRepair=['reagan','bush41','clinton','bush43'].includes(a.library)&&station===2&&station<stage&&!evaluateSourceNote(gameState.sceneProgress,a.library).ok;
+    const repair=noteRepair||comparisonRepair||['reagan','bush41','clinton','bush43'].includes(a.library)&&station<stage&&[!evaluateLibraryRequest(gameState.sceneProgress,a.library).ok,!evaluateComparison(gameState.sceneProgress,a.library).ok,!evaluateSourceNote(gameState.sceneProgress,a.library).ok,false][station];
+    if(['reagan','bush41','clinton','bush43'].includes(a.library)&&station===3&&stage>=3){
+      this.choice.showLibraryPacket(gameState.sceneProgress,()=>saveGameNow(),()=>{
+        if(fileLibraryStage(gameState.sceneProgress,a.library,3,true))addDocumentPoints(8,`${a.library}: research packet filed: ${a.topic}`);
+        this.refresh(true);saveGameNow();
+        this.dialog.show('PACKET FILED','Research packet filed for supervisor review. Unfinished research stays in the log.',()=>this.offerManuscriptReturn());
+      },()=>{if(stage===4)this.offerManuscriptReturn();},a.library);return;
+    }
+    if(station<stage&&!repair){this.dialog.show('FILED',activeDossier(a.library)?.questions[station].receipt ?? `This step is saved. Next: ${stage===4?'return south':this.stations[stage].name}.`,()=>{if(stage===4)this.offerManuscriptReturn();});return;}
+    if(station!==stage&&!repair){this.dialog.show('RESEARCH ORDER',`First complete ${this.stations[stage].name}. DANN-E cannot replace a source trail with a shortcut.`);return;}
+    if(requestCatalog(a.library)&&station===0){
+      this.choice.showLibraryRequest(gameState.sceneProgress,()=>saveGameNow(),()=>{
+        if(!repair&&!fileLibraryStage(gameState.sceneProgress,a.library,0,true))return;
+        this.researchReceipt(requestCatalog(a.library)?.accessState?'Release metadata saved. Individual document examination and evidence gaps remain open.':'Exact archival lead saved. Retrieval and withdrawal checks remain pending.', 'FILED · NEXT: COMPARE');
+      },()=>{},a.library);return;
+    }
+    if(comparisonCatalog(a.library)&&station===1){
+      this.choice.showLibraryComparison(gameState.sceneProgress,()=>saveGameNow(),()=>{
+        if(!repair&&!fileLibraryStage(gameState.sceneProgress,a.library,1,true))return;
+        this.researchReceipt(comparisonCatalog(a.library)!.receipt, ['bush41','clinton','bush43'].includes(a.library)?'FILED · NEXT: RESEARCH LOG':'FILED · NEXT: SOURCE NOTE');
+      },()=>{},false,a.library);return;
+    }
+    if(['reagan','bush41','clinton','bush43'].includes(a.library)&&station===2){
+      this.choice.showLibrarySourceNote(gameState.sceneProgress,()=>saveGameNow(),()=>{
+        if(!repair&&!fileLibraryStage(gameState.sceneProgress,a.library,2,true))return;
+        this.researchReceipt(evaluateSourceNote(gameState.sceneProgress,a.library).message, 'SAVED · NEXT: FILE PACKET');
+      },()=>{},false,a.library);return;
+    }
     const questions=[
       {q:a.task, good:`Log the finding-aid lead, dates, access limits, and request trail.`,bad:'Treat the catalog title as a retrieved document.'},
       {q:a.comparison,good:`Keep ${a.selection}.`,bad:'Use DANN-E’s summary and discard conflicting evidence.'},
@@ -173,8 +217,11 @@ export class PresidentialLibraryScene extends Phaser.Scene {
       this.refresh(true);saveGameNow();retroAudio.fileDocket();
       if(complete)this.dialog.show('PACKET FILED',detail?.receipt ?? 'Research packet saved for human review.',()=>this.offerManuscriptReturn());
       else if(detail)this.dialog.show('RESEARCH NOTE FILED',detail.receipt);
-      else this.toast.show(`FILED · NEXT: ${STATIONS[station+1].name}`,this.player.position,'info');
+      else this.toast.show(`FILED · NEXT: ${this.stations[station+1].name}`,this.player.position,'info');
     },6,()=>{});
+  }
+  private researchReceipt(message:string, cue:string) {
+    this.refresh(true);setLatestMessage(message);this.toast.show(cue,this.player.position,'info');saveGameNow();
   }
   private offerManuscriptReturn() {
     if (!gameState.sceneProgress.compilerLibraryReturn) return;

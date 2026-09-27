@@ -27,7 +27,7 @@ function fixture(settleMs = 300, onCancel?: () => void, cancelOnBack = false) {
   const clock = { now: 1000 };
   const scene = {
     time: clock,
-    events: { emit: vi.fn() },
+    events: { emit: vi.fn(), once: vi.fn() },
     add: { rectangle: () => new Visual(), text: () => new Visual(), container: () => new Visual() }
   } as unknown as Phaser.Scene;
   const prompt = new ChoicePrompt(scene, { settleMs, cancelOnBack });

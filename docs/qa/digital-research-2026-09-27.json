@@ -1,0 +1,200 @@
+{
+  "scope": "First-station logs earned through visible UI from seeded library locations. Chromium desktop/touch/gamepad emulation; not physical hardware or complete library campaigns.",
+  "sources": [
+    {
+      "url": "https://clinton.presidentiallibraries.us/items/show/57569",
+      "checked": "2026-09-27",
+      "verified": "MDR 2015-0782-M-2; not a FOIA request; April 21, 1996\u2013December 31, 1999; scanned memcons/telcons."
+    },
+    {
+      "url": "https://www.georgewbushlibrary.gov/media/7324",
+      "checked": "2026-09-27",
+      "verified": "FOIA 2017-0023-F; ARMS; 215 assets, 177 full release, 22 partial withholding, 16 full withholding; some related classified material unprocessed."
+    }
+  ],
+  "clinton": [
+    {
+      "name": "desktop",
+      "library": "clinton",
+      "stage": 1,
+      "request": {
+        "entry": {
+          "id": 1,
+          "title": "Declassified Documents Concerning Russian President Boris Yeltsin",
+          "date": "April 21, 1996\u2013December 31, 1999",
+          "parts": "2015-0782-M-2 \u00b7 item 57569",
+          "status": "Scanned MDR documents",
+          "locator": "Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton\u2013Yeltsin memcons and telcons, April 21, 1996\u2013December 31, 1999"
+        },
+        "locator": "Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton\u2013Yeltsin memcons and telcons, April 21, 1996\u2013December 31, 1999",
+        "provenance": "verified",
+        "releaseLogged": false,
+        "access": "released-not-reviewed",
+        "retrieval": true,
+        "withdrawals": true
+      },
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "library": "clinton",
+      "stage": 1,
+      "request": {
+        "entry": {
+          "id": 1,
+          "title": "Declassified Documents Concerning Russian President Boris Yeltsin",
+          "date": "April 21, 1996\u2013December 31, 1999",
+          "parts": "2015-0782-M-2 \u00b7 item 57569",
+          "status": "Scanned MDR documents",
+          "locator": "Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton\u2013Yeltsin memcons and telcons, April 21, 1996\u2013December 31, 1999"
+        },
+        "locator": "Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton\u2013Yeltsin memcons and telcons, April 21, 1996\u2013December 31, 1999",
+        "provenance": "verified",
+        "releaseLogged": false,
+        "access": "released-not-reviewed",
+        "retrieval": true,
+        "withdrawals": true
+      },
+      "errors": []
+    },
+    {
+      "name": "landscape",
+      "library": "clinton",
+      "stage": 1,
+      "request": {
+        "entry": {
+          "id": 1,
+          "title": "Declassified Documents Concerning Russian President Boris Yeltsin",
+          "date": "April 21, 1996\u2013December 31, 1999",
+          "parts": "2015-0782-M-2 \u00b7 item 57569",
+          "status": "Scanned MDR documents",
+          "locator": "Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton\u2013Yeltsin memcons and telcons, April 21, 1996\u2013December 31, 1999"
+        },
+        "locator": "Clinton Digital Library item 57569; MDR 2015-0782-M-2; Clinton\u2013Yeltsin memcons and telcons, April 21, 1996\u2013December 31, 1999",
+        "provenance": "verified",
+        "releaseLogged": false,
+        "access": "released-not-reviewed",
+        "retrieval": true,
+        "withdrawals": true
+      },
+      "errors": []
+    }
+  ],
+  "bush43": [
+    {
+      "name": "desktop",
+      "library": "bush43",
+      "stage": 1,
+      "request": {
+        "entry": {
+          "id": 1,
+          "title": "NSC records on the April 2001 EP-3 collision",
+          "date": "March 15\u2013April 30, 2001",
+          "parts": "FOIA 2017-0023-F \u00b7 ARMS",
+          "status": "215 processed assets \u00b7 partial withholding",
+          "page": 2,
+          "locator": "George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15\u2013April 30, 2001"
+        },
+        "locator": "George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15\u2013April 30, 2001",
+        "provenance": "verified",
+        "releaseLogged": true,
+        "access": "partial-release-not-reviewed",
+        "retrieval": true,
+        "withdrawals": true
+      },
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "library": "bush43",
+      "stage": 1,
+      "request": {
+        "entry": {
+          "id": 1,
+          "title": "NSC records on the April 2001 EP-3 collision",
+          "date": "March 15\u2013April 30, 2001",
+          "parts": "FOIA 2017-0023-F \u00b7 ARMS",
+          "status": "215 processed assets \u00b7 partial withholding",
+          "page": 2,
+          "locator": "George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15\u2013April 30, 2001"
+        },
+        "locator": "George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15\u2013April 30, 2001",
+        "provenance": "verified",
+        "releaseLogged": true,
+        "access": "partial-release-not-reviewed",
+        "retrieval": true,
+        "withdrawals": true
+      },
+      "errors": []
+    },
+    {
+      "name": "landscape",
+      "library": "bush43",
+      "stage": 1,
+      "request": {
+        "entry": {
+          "id": 1,
+          "title": "NSC records on the April 2001 EP-3 collision",
+          "date": "March 15\u2013April 30, 2001",
+          "parts": "FOIA 2017-0023-F \u00b7 ARMS",
+          "status": "215 processed assets \u00b7 partial withholding",
+          "page": 2,
+          "locator": "George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15\u2013April 30, 2001"
+        },
+        "locator": "George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15\u2013April 30, 2001",
+        "provenance": "verified",
+        "releaseLogged": true,
+        "access": "partial-release-not-reviewed",
+        "retrieval": true,
+        "withdrawals": true
+      },
+      "errors": []
+    }
+  ],
+  "bush43LatestPhone": [
+    {
+      "name": "phone",
+      "library": "bush43",
+      "stage": 1,
+      "request": {
+        "entry": {
+          "id": 1,
+          "title": "NSC records on the April 2001 EP-3 collision",
+          "date": "March 15\u2013April 30, 2001",
+          "parts": "FOIA 2017-0023-F \u00b7 ARMS",
+          "status": "215 processed assets \u00b7 partial withholding",
+          "page": 2,
+          "locator": "George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15\u2013April 30, 2001"
+        },
+        "locator": "George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15\u2013April 30, 2001",
+        "provenance": "verified",
+        "releaseLogged": true,
+        "access": "partial-release-not-reviewed",
+        "retrieval": true,
+        "withdrawals": true
+      },
+      "errors": []
+    }
+  ],
+  "checks": [
+    "wrong provenance rejected",
+    "reviewed-online overclaim rejected",
+    "Bush release breakdown required",
+    "both follow-ups required",
+    "draft and completed-stage reload",
+    "desktop fullscreen and simulated controller",
+    "portrait and landscape tap controls",
+    "no horizontal overflow or page errors in passing runs"
+  ],
+  "tests": {
+    "files": 278,
+    "tests": 2091,
+    "build": "passed"
+  },
+  "observations": [
+    "Initial Clinton run timed out waiting for TapToStartScene on reload; a build overlapped the run. Subsequent three-layout run passed.",
+    "A separate Bush phone rerun also timed out at startup while multiple browsers were active. Standalone phone rerun passed. Cause not established; startup failure snapshots added to QA for diagnosis.",
+    "Single-entry cards expanded to full width; identifiers separated from titles. Latest phone compositor inspected.",
+    "Standard headed skill capture remains black; compositor desk screenshots inspected."
+  ]
+}
