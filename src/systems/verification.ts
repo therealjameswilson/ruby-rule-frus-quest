@@ -133,10 +133,10 @@ export class ChoicePrompt {
       () => { this.hide(); onCancel(); });
   }
 
-  showLibraryRequest(progress: Record<string,number>, onSave:()=>void, onSubmit:()=>void, onCancel:()=>void) {
+  showLibraryRequest(progress: Record<string,number>, onSave:()=>void, onSubmit:()=>void, onCancel:()=>void, library='reagan') {
     this.hide();this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
     this.manuscriptDesk = new LibraryRequestDesk(progress,onSave,
-      () => {this.hide();onSubmit();}, () => {this.hide();onCancel();});
+      () => {this.hide();onSubmit();}, () => {this.hide();onCancel();},library);
   }
 
   updateInput() {

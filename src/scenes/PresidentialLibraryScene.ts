@@ -1,3 +1,4 @@
+import { requestCatalog } from '../game/libraryRequest';
 import { activeDossier } from "../game/activeCompilation";
 import { researchDoorway } from '../systems/researchDoorway';
 import { prefersReducedMotion } from '../systems/motionPreferences';
@@ -157,12 +158,12 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     const a=this.assignment,stage=libraryStage(gameState.sceneProgress,a.library);
     if(station<stage){this.dialog.show('FILED',activeDossier(a.library)?.questions[station].receipt ?? `This step is saved. Next: ${stage===4?'return south':STATIONS[stage].name}.`,()=>{if(stage===4)this.offerManuscriptReturn();});return;}
     if(station!==stage){this.dialog.show('RESEARCH ORDER',`First complete ${STATIONS[stage].name}. DANN-E cannot replace a source trail with a shortcut.`);return;}
-    if(a.library==='reagan'&&station===0){
+    if(requestCatalog(a.library)&&station===0){
       this.choice.showLibraryRequest(gameState.sceneProgress,()=>saveGameNow(),()=>{
         if(!fileLibraryStage(gameState.sceneProgress,a.library,0,true))return;
         this.refresh(true);saveGameNow();
-        this.dialog.show('REQUEST FILED','RAC Box 6 lead saved. Retrieval and withdrawal checks remain pending. Next: compare access claims at the second desk.');
-      },()=>{});return;
+        this.dialog.show('REQUEST FILED','Exact archival lead saved. Retrieval and withdrawal checks remain pending. Next: compare evidence at the second desk.');
+      },()=>{},a.library);return;
     }
     const questions=[
       {q:a.task, good:`Log the finding-aid lead, dates, access limits, and request trail.`,bad:'Treat the catalog title as a retrieved document.'},

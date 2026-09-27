@@ -8336,3 +8336,13 @@ Build and 278 files / 2,088 tests pass. Final browser run passes desktop, portra
 Intermediate test observations: a mocked connected controller hid phone touch controls as designed; corrected fixture. One touch run unexpectedly restored entry 1 after choosing 2. Cause not established; a focused 80ms rapid-tap repeat and final three-layout run with explicit pre-close in-memory/localStorage assertions passed. Keep this observation if a similar save issue recurs. Evidence: docs/qa/library-request-2026-09-27.{md,json}, /tmp/frus-library-request, /tmp/frus-request-rapid.log.
 
 Local only. Broader goal active. Next extend the request interaction to Bush 41, Clinton and Bush 43 using verified repository-specific metadata and access states, and evaluate hands-on record comparison instead of obvious binary answers. No physical-device or subjective listening approval yet.
+
+## Repository-specific Bush 41 request desk — 2026-09-27
+
+Previous goal turn was progress: 77d1526 introduced the Reagan request interaction. First revisited its isolated reload inconsistency: three complete phone repetitions at 80ms inter-tap pause passed draft-save, reload, submission and completed-stage restore. Cause of earlier one-off observation remains unknown; no save fix claimed.
+
+Verified Bush 41 Rice container list by direct HTTPS retrieval after the web reader timed out. Container CF00715 has Arms Control [1]/[2]/[3], local IDs CF00715-001/002/003 and NAIDs 470424829/830/831, each listed On Site. Refactored catalog metadata and per-library draft keys, retained backward-compatible Reagan defaults, and enabled Bush 41 station 1. Its task distinguishes similar file-unit titles by exact identifiers and rejects an unsupported online-review claim. No specific volume assignment introduced. Draft isolation covered by unit test.
+
+Build and full 278-file / 2,089-test suite pass. Bush 41 desktop, portrait and landscape native desks pass wrong selection/access feedback, saved draft and completion reload, fullscreen/controller and touch checks; no page errors. Reagan phone regression also passes. Inspected desktop catalog and phone/landscape compositor views. Standard headed skill run completed with known black canvas capture; normal screenshots render. Evidence/source hash: docs/qa/bush41-request-2026-09-27.json; /tmp/frus-bush-request and /tmp/frus-rice-source.html.
+
+Local only. Goal stays active. Next: Clinton MDR and Bush 43 electronic-records request interactions need distinct verified metadata/access handling; do not label their releases as merely on-site folders. Then make comparison/source-note work more physical and evidence-driven. Physical hardware and subjective sound quality remain unverified.
