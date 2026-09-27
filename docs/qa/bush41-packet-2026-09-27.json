@@ -1,0 +1,318 @@
+[
+  {
+    "name": "desktop",
+    "legacy": false,
+    "stage": 4,
+    "reward": 8,
+    "returned": true,
+    "packet": {
+      "filed": true,
+      "parts": [
+        {
+          "id": 1,
+          "label": "Archival request",
+          "station": 0,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "George H. W. Bush Library · Records of the National Security Council: Condoleezza Rice 1989–1990 Subject Files",
+            "Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829",
+            "On-site folder lead. Retrieval and document inspection remain pending.",
+            "Keep the archivist retrieval and withdrawal checks open."
+          ],
+          "sources": [
+            {
+              "label": "Official finding aid",
+              "url": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "label": "Evidence comparison",
+          "station": 1,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Arms Control [1]: Archival lead.\nThe library lists a file unit titled Arms Control [1], local ID CF00715-001, National Archives ID 470424829.\nRice Subject Files · Container CF00715.",
+            "On Site: Availability metadata.\nThe availability field for Arms Control [1] reads On Site.\nRepository availability field.",
+            "A neighboring file unit: Archival lead.\nArms Control [2] is a separate file unit: CF00715-002, NAID 470424830. Its similar title is a reason to investigate its relationship, not to assume identical contents.\nSame inventory · distinct local ID.",
+            "What did Rice recommend?: Unresolved question.\nWhich positions, alternatives, or disagreements appear in the records, and how do they compare with State Department reporting?\nCompiler’s question · no document examined."
+          ],
+          "sources": [
+            {
+              "label": "Official finding aid",
+              "url": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "label": "Research log",
+          "station": 2,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Research-log entry for unexamined Rice subject files, collection titled 1989–1990 Subject Files; individual document dates pending.",
+            "Source: George H. W. Bush Presidential Library inventory: Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829; Condoleezza Rice 1989–1990 Subject Files; CF00715-002, Arms Control [2]; NAID 470424830.",
+            "On-site availability is recorded. Document contents, recommendations, disagreements, and withdrawals remain unverified."
+          ],
+          "sources": [
+            {
+              "label": "Cited source",
+              "url": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files"
+            }
+          ]
+        }
+      ],
+      "openWork": [
+        "Unexamined leads: Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829; Condoleezza Rice 1989–1990 Subject Files; CF00715-002, Arms Control [2]; NAID 470424830. The inventory lists On Site; retrieval and individual record inspection remain pending.",
+        "Pending: Request both file units and examine individual records.",
+        "Pending: Compare the resulting evidence with State reporting."
+      ],
+      "purpose": "Research in progress · for supervisor review",
+      "limit": "This packet preserves a source trail and unresolved questions. It is not a completed chapter or a cleared volume."
+    },
+    "errors": []
+  },
+  {
+    "name": "phone",
+    "legacy": false,
+    "stage": 4,
+    "reward": 8,
+    "returned": false,
+    "packet": {
+      "filed": true,
+      "parts": [
+        {
+          "id": 1,
+          "label": "Archival request",
+          "station": 0,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "George H. W. Bush Library · Records of the National Security Council: Condoleezza Rice 1989–1990 Subject Files",
+            "Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829",
+            "On-site folder lead. Retrieval and document inspection remain pending.",
+            "Keep the archivist retrieval and withdrawal checks open."
+          ],
+          "sources": [
+            {
+              "label": "Official finding aid",
+              "url": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "label": "Evidence comparison",
+          "station": 1,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Arms Control [1]: Archival lead.\nThe library lists a file unit titled Arms Control [1], local ID CF00715-001, National Archives ID 470424829.\nRice Subject Files · Container CF00715.",
+            "On Site: Availability metadata.\nThe availability field for Arms Control [1] reads On Site.\nRepository availability field.",
+            "A neighboring file unit: Archival lead.\nArms Control [2] is a separate file unit: CF00715-002, NAID 470424830. Its similar title is a reason to investigate its relationship, not to assume identical contents.\nSame inventory · distinct local ID.",
+            "What did Rice recommend?: Unresolved question.\nWhich positions, alternatives, or disagreements appear in the records, and how do they compare with State Department reporting?\nCompiler’s question · no document examined."
+          ],
+          "sources": [
+            {
+              "label": "Official finding aid",
+              "url": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "label": "Research log",
+          "station": 2,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Research-log entry for unexamined Rice subject files, collection titled 1989–1990 Subject Files; individual document dates pending.",
+            "Source: George H. W. Bush Presidential Library inventory: Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829; Condoleezza Rice 1989–1990 Subject Files; CF00715-002, Arms Control [2]; NAID 470424830.",
+            "On-site availability is recorded. Document contents, recommendations, disagreements, and withdrawals remain unverified."
+          ],
+          "sources": [
+            {
+              "label": "Cited source",
+              "url": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files"
+            }
+          ]
+        }
+      ],
+      "openWork": [
+        "Unexamined leads: Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829; Condoleezza Rice 1989–1990 Subject Files; CF00715-002, Arms Control [2]; NAID 470424830. The inventory lists On Site; retrieval and individual record inspection remain pending.",
+        "Pending: Request both file units and examine individual records.",
+        "Pending: Compare the resulting evidence with State reporting."
+      ],
+      "purpose": "Research in progress · for supervisor review",
+      "limit": "This packet preserves a source trail and unresolved questions. It is not a completed chapter or a cleared volume."
+    },
+    "errors": []
+  },
+  {
+    "name": "landscape",
+    "legacy": false,
+    "stage": 4,
+    "reward": 8,
+    "returned": false,
+    "packet": {
+      "filed": true,
+      "parts": [
+        {
+          "id": 1,
+          "label": "Archival request",
+          "station": 0,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "George H. W. Bush Library · Records of the National Security Council: Condoleezza Rice 1989–1990 Subject Files",
+            "Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829",
+            "On-site folder lead. Retrieval and document inspection remain pending.",
+            "Keep the archivist retrieval and withdrawal checks open."
+          ],
+          "sources": [
+            {
+              "label": "Official finding aid",
+              "url": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "label": "Evidence comparison",
+          "station": 1,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Arms Control [1]: Archival lead.\nThe library lists a file unit titled Arms Control [1], local ID CF00715-001, National Archives ID 470424829.\nRice Subject Files · Container CF00715.",
+            "On Site: Availability metadata.\nThe availability field for Arms Control [1] reads On Site.\nRepository availability field.",
+            "A neighboring file unit: Archival lead.\nArms Control [2] is a separate file unit: CF00715-002, NAID 470424830. Its similar title is a reason to investigate its relationship, not to assume identical contents.\nSame inventory · distinct local ID.",
+            "What did Rice recommend?: Unresolved question.\nWhich positions, alternatives, or disagreements appear in the records, and how do they compare with State Department reporting?\nCompiler’s question · no document examined."
+          ],
+          "sources": [
+            {
+              "label": "Official finding aid",
+              "url": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "label": "Research log",
+          "station": 2,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Research-log entry for unexamined Rice subject files, collection titled 1989–1990 Subject Files; individual document dates pending.",
+            "Source: George H. W. Bush Presidential Library inventory: Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829; Condoleezza Rice 1989–1990 Subject Files; CF00715-002, Arms Control [2]; NAID 470424830.",
+            "On-site availability is recorded. Document contents, recommendations, disagreements, and withdrawals remain unverified."
+          ],
+          "sources": [
+            {
+              "label": "Cited source",
+              "url": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files"
+            }
+          ]
+        }
+      ],
+      "openWork": [
+        "Unexamined leads: Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829; Condoleezza Rice 1989–1990 Subject Files; CF00715-002, Arms Control [2]; NAID 470424830. The inventory lists On Site; retrieval and individual record inspection remain pending.",
+        "Pending: Request both file units and examine individual records.",
+        "Pending: Compare the resulting evidence with State reporting."
+      ],
+      "purpose": "Research in progress · for supervisor review",
+      "limit": "This packet preserves a source trail and unresolved questions. It is not a completed chapter or a cleared volume."
+    },
+    "errors": []
+  },
+  {
+    "name": "legacy-completed",
+    "legacy": true,
+    "stage": 4,
+    "reward": 0,
+    "returned": false,
+    "packet": {
+      "filed": true,
+      "parts": [
+        {
+          "id": 1,
+          "label": "Archival request",
+          "station": 0,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "George H. W. Bush Library · Records of the National Security Council: Condoleezza Rice 1989–1990 Subject Files",
+            "Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829",
+            "On-site folder lead. Retrieval and document inspection remain pending.",
+            "Keep the archivist retrieval and withdrawal checks open."
+          ],
+          "sources": [
+            {
+              "label": "Official finding aid",
+              "url": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "label": "Evidence comparison",
+          "station": 1,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Arms Control [1]: Archival lead.\nThe library lists a file unit titled Arms Control [1], local ID CF00715-001, National Archives ID 470424829.\nRice Subject Files · Container CF00715.",
+            "On Site: Availability metadata.\nThe availability field for Arms Control [1] reads On Site.\nRepository availability field.",
+            "A neighboring file unit: Archival lead.\nArms Control [2] is a separate file unit: CF00715-002, NAID 470424830. Its similar title is a reason to investigate its relationship, not to assume identical contents.\nSame inventory · distinct local ID.",
+            "What did Rice recommend?: Unresolved question.\nWhich positions, alternatives, or disagreements appear in the records, and how do they compare with State Department reporting?\nCompiler’s question · no document examined."
+          ],
+          "sources": [
+            {
+              "label": "Official finding aid",
+              "url": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "label": "Research log",
+          "station": 2,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Research-log entry for unexamined Rice subject files, collection titled 1989–1990 Subject Files; individual document dates pending.",
+            "Source: George H. W. Bush Presidential Library inventory: Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829; Condoleezza Rice 1989–1990 Subject Files; CF00715-002, Arms Control [2]; NAID 470424830.",
+            "On-site availability is recorded. Document contents, recommendations, disagreements, and withdrawals remain unverified."
+          ],
+          "sources": [
+            {
+              "label": "Cited source",
+              "url": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files"
+            }
+          ]
+        }
+      ],
+      "openWork": [
+        "Unexamined leads: Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829; Condoleezza Rice 1989–1990 Subject Files; CF00715-002, Arms Control [2]; NAID 470424830. The inventory lists On Site; retrieval and individual record inspection remain pending.",
+        "Pending: Request both file units and examine individual records.",
+        "Pending: Compare the resulting evidence with State reporting."
+      ],
+      "purpose": "Research in progress · for supervisor review",
+      "limit": "This packet preserves a source trail and unresolved questions. It is not a completed chapter or a cleared volume."
+    },
+    "errors": []
+  }
+]

@@ -16,22 +16,22 @@ export class LibraryPacketDesk {
   private leave: HTMLButtonElement;
   private selected = 1;
   get active() { return this.controls?.active ?? false; }
-  constructor(private progress: Record<string, number>, private onSave: () => void, onSubmit: () => void, private onCancel: () => void) {
+  constructor(private progress: Record<string, number>, private onSave: () => void, onSubmit: () => void, private onCancel: () => void, private library='reagan') {
     this.root.className = 'manuscript-desk chapter-desk library-packet';
     this.root.setAttribute('aria-labelledby', 'library-packet-title');
     this.root.innerHTML = `<section class="manuscript-panel"><header class="manuscript-heading"><div><p class="manuscript-eyebrow">THE READING ROOM <span>04 / RESEARCH PACKET</span></p><h1 id="library-packet-title">Put the evidence in the packet.</h1><p>Inspect your saved work, attach each part, and carry unfinished research forward.</p></div><button class="manuscript-close" data-focus-key="leave">Save &amp; leave</button></header><div class="manuscript-body assembly-body"></div><footer class="manuscript-footer"><p data-status role="status">DANN-E: “Three papers! Surely that means the entire volume is done.”</p><button class="manuscript-submit" data-focus-key="submit">Send for review →</button><small>Arrows / D-pad to move · A / Enter to act · B / Esc to leave</small></footer></section>`;
     this.body = this.root.querySelector('.manuscript-body')!; this.status = this.root.querySelector('[data-status]')!;
     this.submit = this.root.querySelector('.manuscript-submit')!; this.leave = this.root.querySelector('.manuscript-close')!;
-    if (libraryPacketReadout(progress).filed) {
+    if (libraryPacketReadout(progress,this.library).filed) {
       this.root.querySelector('h1')!.textContent = 'Your filed research packet.';
       this.leave.textContent = 'Close'; this.submit.textContent = 'Return to room';
       this.status.textContent = 'Filed for supervisor review. The open research remains visible below.';
     }
     this.leave.addEventListener('click', onCancel);
     this.submit.addEventListener('click', () => {
-      if (libraryPacketReadout(this.progress).filed) { this.onCancel(); return; }
-      const result = evaluateLibraryPacket(this.progress); this.status.textContent = result.message; this.status.dataset.error = String(!result.ok);
-      if (result.ok && fileLibraryPacket(this.progress)) { this.onSave(); retroAudio.fileDocket(); onSubmit(); }
+      if (libraryPacketReadout(this.progress,this.library).filed) { this.onCancel(); return; }
+      const result = evaluateLibraryPacket(this.progress,this.library); this.status.textContent = result.message; this.status.dataset.error = String(!result.ok);
+      if (result.ok && fileLibraryPacket(this.progress,this.library)) { this.onSave(); retroAudio.fileDocket(); onSubmit(); }
       else retroAudio.warning();
     });
     this.render(); this.controls = new DeskControls(this.root, () => [...this.body.querySelectorAll<HTMLButtonElement>('button'), this.submit, this.leave], onCancel);
@@ -40,7 +40,7 @@ export class LibraryPacketDesk {
     const b = document.createElement('button'); b.type = 'button'; b.textContent = text; b.dataset.focusKey = key; b.addEventListener('click', action); return b;
   }
   private render(focus?: string) {
-    const packet = libraryPacketReadout(this.progress); this.body.replaceChildren();
+    const packet = libraryPacketReadout(this.progress,this.library); this.body.replaceChildren();
     const cover = document.createElement('section'); cover.className = 'library-packet-cover';
     const title = document.createElement('h2'); title.textContent = packet.purpose;
     const count = document.createElement('strong'); count.dataset.packetCount = ''; count.textContent = `${packet.parts.filter(p => p.attached).length} / 3 attached`;
@@ -65,7 +65,7 @@ export class LibraryPacketDesk {
       const missing = document.createElement('p'); missing.className = 'library-packet-missing'; missing.textContent = `Return to desk ${part.station + 1}: ${part.problem}`; paper.append(missing);
     }
     if (!packet.filed) {
-      const attach = this.button(part.attached ? 'Remove from packet' : 'Attach this saved work', 'attach', () => { togglePacketPart(this.progress, part.id); this.onSave(); retroAudio.paperPickup(); this.status.textContent = 'Packet draft saved. The attached papers keep their original limits and pending work.'; this.status.dataset.error = 'false'; this.render('attach'); });
+      const attach = this.button(part.attached ? 'Remove from packet' : 'Attach this saved work', 'attach', () => { togglePacketPart(this.progress, part.id,this.library); this.onSave(); retroAudio.paperPickup(); this.status.textContent = 'Packet draft saved. The attached papers keep their original limits and pending work.'; this.status.dataset.error = 'false'; this.render('attach'); });
       attach.dataset.attach = ''; attach.disabled = !part.ready; paper.append(attach);
     }
     const inspect = this.button('Read this paper from the top', 'read', () => paper.scrollIntoView({ block: 'start', behavior: 'instant' })); paper.append(inspect);

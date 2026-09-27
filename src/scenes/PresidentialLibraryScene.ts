@@ -146,7 +146,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   }
   private refresh(animateClearing=false) {
     const stage=libraryStage(gameState.sceneProgress,this.assignment.library);
-    const packet=this.assignment.library==='reagan'?libraryPacketReadout(gameState.sceneProgress):null;
+    const packet=['reagan','bush41'].includes(this.assignment.library)?libraryPacketReadout(gameState.sceneProgress,this.assignment.library):null;
     this.stageText.setText(stage===4&&packet&&!packet.filed?'REVISIT PACKET · PROGRESS KEPT':`${this.assignment.backgroundOnly?'BACKGROUND':'RESEARCH'} PACKET ${stage}/4`);
     const revisit=packet?[...packet.parts.map(p=>!p.ready),!packet.filed]:[];
     if(comparisonCatalog(this.assignment.library))revisit[1]=!evaluateComparison(gameState.sceneProgress,this.assignment.library).ok;
@@ -173,13 +173,13 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     }
     const comparisonRepair=Boolean(comparisonCatalog(a.library))&&station===1&&station<stage&&!evaluateComparison(gameState.sceneProgress,a.library).ok;
     const noteRepair=['reagan','bush41'].includes(a.library)&&station===2&&station<stage&&!evaluateSourceNote(gameState.sceneProgress,a.library).ok;
-    const repair=noteRepair||comparisonRepair||a.library==='reagan'&&station<stage&&[!evaluateLibraryRequest(gameState.sceneProgress).ok,!evaluateComparison(gameState.sceneProgress).ok,!evaluateSourceNote(gameState.sceneProgress).ok,false][station];
-    if(a.library==='reagan'&&station===3&&stage>=3){
+    const repair=noteRepair||comparisonRepair||['reagan','bush41'].includes(a.library)&&station<stage&&[!evaluateLibraryRequest(gameState.sceneProgress,a.library).ok,!evaluateComparison(gameState.sceneProgress,a.library).ok,!evaluateSourceNote(gameState.sceneProgress,a.library).ok,false][station];
+    if(['reagan','bush41'].includes(a.library)&&station===3&&stage>=3){
       this.choice.showLibraryPacket(gameState.sceneProgress,()=>saveGameNow(),()=>{
         if(fileLibraryStage(gameState.sceneProgress,a.library,3,true))addDocumentPoints(8,`${a.library}: research packet filed: ${a.topic}`);
         this.refresh(true);saveGameNow();
         this.dialog.show('PACKET FILED','Research packet filed for supervisor review. Unfinished research stays in the log.',()=>this.offerManuscriptReturn());
-      },()=>{if(stage===4)this.offerManuscriptReturn();});return;
+      },()=>{if(stage===4)this.offerManuscriptReturn();},a.library);return;
     }
     if(station<stage&&!repair){this.dialog.show('FILED',activeDossier(a.library)?.questions[station].receipt ?? `This step is saved. Next: ${stage===4?'return south':this.stations[stage].name}.`,()=>{if(stage===4)this.offerManuscriptReturn();});return;}
     if(station!==stage&&!repair){this.dialog.show('RESEARCH ORDER',`First complete ${this.stations[stage].name}. DANN-E cannot replace a source trail with a shortcut.`);return;}

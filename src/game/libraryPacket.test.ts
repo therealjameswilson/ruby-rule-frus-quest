@@ -33,3 +33,24 @@ it('allows partial packet drafts but never treats legacy stage credit as researc
  expect(evaluateLibraryPacket(restored).ok).toBe(false);
  toggleSourceNoteLog(restored,'followups');expect(libraryPacketReadout(restored).openWork).toHaveLength(3);
 });
+
+it('files Bush41 work independently and preserves unexamined holdings after filing',()=>{
+ const p:Record<string,number>={libraryResearch_v2_bush41:3};
+ selectRequestEntry(p,1,'bush41');attachRequestLocator(p,'bush41');setRequestAccess(p,1,'bush41');
+ toggleRequestFollowup(p,'retrieval','bush41');toggleRequestFollowup(p,'withdrawals','bush41');
+ for(const [id,lane] of [[1,1],[2,2],[3,1],[4,3]])classifyComparisonCard(p,id,lane,'bush41');
+ toggleComparisonFollowup(p,1,'bush41');toggleComparisonFollowup(p,2,'bush41');
+ for(const field of ['kind','date','locator','scope'] as const)chooseSourceNoteField(p,field,1,'bush41');
+ toggleSourceNoteLog(p,'lead','bush41');toggleSourceNoteLog(p,'followups','bush41');
+ for(const id of [1,2,3])togglePacketPart(p,id,'bush41');
+ expect(evaluateLibraryPacket(p,'bush41').ok).toBe(true);
+ chooseSourceNoteField(p,'date',2,'bush41');expect(fileLibraryPacket(p,'bush41')).toBe(false);
+ chooseSourceNoteField(p,'date',1,'bush41');expect(fileLibraryPacket(p,'bush41')).toBe(true);
+ const packet=libraryPacketReadout(p,'bush41');
+ expect(packet.parts[2].label).toBe('Research log');expect(packet.openWork.join(' ')).toContain('Unexamined leads');
+ expect(packet.parts[0].contents.join(' ')).toContain('On-site folder lead');
+ expect(packet.parts[1].sources).toHaveLength(1);
+ expect(libraryPacketReadout(p).filed).toBe(false);expect(evaluateLibraryPacket(p).ok).toBe(false);
+ const saved=JSON.stringify(p);togglePacketPart(p,1,'bush41');expect(fileLibraryPacket(p,'bush41')).toBe(false);
+ expect(JSON.stringify(p)).toBe(saved);expect(p.libraryResearch_v2_bush41).toBe(3);
+});

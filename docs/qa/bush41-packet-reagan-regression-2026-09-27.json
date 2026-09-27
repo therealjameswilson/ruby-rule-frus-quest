@@ -1,0 +1,85 @@
+[
+  {
+    "name": "desktop",
+    "legacy": false,
+    "stage": 4,
+    "reward": 8,
+    "returned": true,
+    "packet": {
+      "filed": true,
+      "parts": [
+        {
+          "id": 1,
+          "label": "Archival request",
+          "station": 0,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Reagan Library · Executive Secretariat, NSC: VIP Visits: Records, 1981–1985",
+            "RAC Box 6; United Kingdom: Prime Minister Thatcher Official Visit, 02/20/1985 (1)(2)",
+            "Open folder lead. Retrieval and document inspection remain pending.",
+            "Keep the archivist retrieval and withdrawal checks open."
+          ],
+          "sources": [
+            {
+              "label": "Official finding aid",
+              "url": "https://www.reaganlibrary.gov/sites/default/files/finding_aids_pdfs/219646.pdf"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "label": "Evidence comparison",
+          "station": 1,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "A folder for the visit: Archival lead.\nThe inventory lists Thatcher’s February 20, 1985 visit folder as OPEN. It does not mark this entry DIGITIZED.\nFinding aid · RAC Box 6 · p. 14.",
+            "Reagan on INF deployments: Public statement.\nReagan publicly said he and Thatcher agreed that NATO’s INF deployments should continue on schedule under the 1979 alliance decision.\nPublic remarks · February 20, 1985 · Reagan paragraph 3.",
+            "Thatcher on arms reductions: Public statement.\nThatcher described a shared wish to reduce nuclear weapons while maintaining balance and security.\nSame public appearance · Thatcher paragraph 4.",
+            "Did their private discussions match?: Unresolved question.\nDid the private exchanges reveal qualifications or disagreements absent from the public remarks?\nCompiler’s research question · not a document."
+          ],
+          "sources": [
+            {
+              "label": "Official finding aid",
+              "url": "https://www.reaganlibrary.gov/sites/default/files/finding_aids_pdfs/219646.pdf"
+            },
+            {
+              "label": "Official public remarks",
+              "url": "https://www.reaganlibrary.gov/archives/speech/remarks-following-discussions-prime-minister-margaret-thatcher-united-kingdom"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "label": "Working source note",
+          "station": 2,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Public remarks by President Ronald Reagan and Prime Minister Margaret Thatcher, February 20, 1985.",
+            "Source: Ronald Reagan Presidential Library, Public Papers, “Remarks Following Discussions With Prime Minister Margaret Thatcher of the United Kingdom,” February 20, 1985 (online transcript).",
+            "The remarks record public positions at one appearance; they do not establish the full private discussion."
+          ],
+          "sources": [
+            {
+              "label": "Cited source",
+              "url": "https://www.reaganlibrary.gov/archives/speech/remarks-following-discussions-prime-minister-margaret-thatcher-united-kingdom"
+            }
+          ]
+        }
+      ],
+      "openWork": [
+        "Unexamined lead: Reagan Library, Executive Secretariat, NSC: VIP Visits: Records, 1981–1985; RAC Box 6; United Kingdom: Prime Minister Thatcher Official Visit, 02/20/1985 (1)(2). The finding aid lists OPEN; retrieval, contents, and withdrawals remain to be checked.",
+        "Pending: Locate and examine the February 20 meeting record.",
+        "Pending: Seek contemporaneous State and embassy reporting."
+      ],
+      "purpose": "Research in progress · for supervisor review",
+      "limit": "This packet preserves a source trail and unresolved questions. It is not a completed chapter or a cleared volume."
+    },
+    "errors": []
+  }
+]
