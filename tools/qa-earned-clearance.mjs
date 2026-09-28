@@ -67,10 +67,11 @@ try{
  await move(96,96);await key();await shot('release-filed');assert.equal((await state()).sceneProgress.classNetVaultReviewStep,2);
  await move(164,96);await move(176,150);await key();await shot('ledger');
  console.log(JSON.stringify((await state()).choice));
- await key('ArrowDown');await key();await shot('missing-entry');
+ const ledger=async(key)=>{const target=page.locator(`.chronology-desk [data-focus-key=${key}]`);await target.scrollIntoViewIfNeeded();if(mobile)await target.tap();else await target.click();await page.waitForTimeout(150);};
+ await ledger('file');await shot('missing-entry');
  assert(!(await state()).sceneProgress.classNetVaultReviewComplete);
- await key('ArrowRight');await key('ArrowRight');await shot('chronology-corrected');
- await key('ArrowDown');await key();await page.waitForTimeout(600);await shot('review-complete');
+ await ledger('later');await ledger('later');await shot('chronology-corrected');
+ await ledger('file');await page.waitForTimeout(600);await shot('review-complete');
  if(process.argv.includes('--reward-art')){
   const art=await page.evaluate(()=>{const icon=window.game.scene.getScene('NetworkScene').clearanceTokenIcon;return {texture:icon.texture.key,width:icon.displayWidth,height:icon.displayHeight,sourceWidth:icon.texture.getSourceImage().width};});
   assert.equal(art.texture,'world-item-detail-v2-clearance-token');assert.equal(art.width,24);assert.equal(art.height,24);assert.equal(art.sourceWidth,144);

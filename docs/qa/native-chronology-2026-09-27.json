@@ -1,0 +1,78 @@
+{
+  "boards": {
+    "scope": "Bounded board fixtures; no campaign reward claims.",
+    "results": [
+      {
+        "name": "desktop",
+        "scene": "NetworkScene",
+        "wrongOrderRejected": true,
+        "explicitFiling": true,
+        "draftRestored": true,
+        "touchKeyboardController": true,
+        "backgroundResume": true,
+        "shutdownClean": true
+      },
+      {
+        "name": "desktop",
+        "scene": "SilentReadScene",
+        "wrongOrderRejected": true,
+        "explicitFiling": true,
+        "draftRestored": true,
+        "touchKeyboardController": true,
+        "backgroundResume": true,
+        "shutdownClean": true
+      },
+      {
+        "name": "phone",
+        "scene": "NetworkScene",
+        "wrongOrderRejected": true,
+        "explicitFiling": true,
+        "draftRestored": true,
+        "touchKeyboardController": true,
+        "backgroundResume": true,
+        "shutdownClean": true
+      },
+      {
+        "name": "phone",
+        "scene": "SilentReadScene",
+        "wrongOrderRejected": true,
+        "explicitFiling": true,
+        "draftRestored": true,
+        "touchKeyboardController": true,
+        "backgroundResume": true,
+        "shutdownClean": true
+      },
+      {
+        "name": "landscape",
+        "scene": "NetworkScene",
+        "wrongOrderRejected": true,
+        "explicitFiling": true,
+        "draftRestored": true,
+        "touchKeyboardController": true,
+        "backgroundResume": true,
+        "shutdownClean": true
+      },
+      {
+        "name": "landscape",
+        "scene": "SilentReadScene",
+        "wrongOrderRejected": true,
+        "explicitFiling": true,
+        "draftRestored": true,
+        "touchKeyboardController": true,
+        "backgroundResume": true,
+        "shutdownClean": true
+      }
+    ]
+  },
+  "earnedTouchContinuation": {
+    "mobile": true,
+    "reviewFiled": true,
+    "missingEntryRejected": true,
+    "chronologyRepaired": true,
+    "tokenEarned": true,
+    "reviewNotPublication": true,
+    "referralEntered": true,
+    "reloadedWithoutDuplicateReward": true,
+    "errors": []
+  }
+}
