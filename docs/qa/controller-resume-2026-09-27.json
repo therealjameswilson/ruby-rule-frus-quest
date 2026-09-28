@@ -1,0 +1,28 @@
+{
+  "scope": "Simulated controller and browser visibility; not physical hardware.",
+  "rows": [
+    {
+      "mode": "explore",
+      "heldIgnored": true,
+      "resumed": true,
+      "taskPreserved": true
+    },
+    {
+      "mode": "dialog",
+      "heldIgnored": true,
+      "resumed": true,
+      "taskPreserved": true
+    },
+    {
+      "input": "touch",
+      "resumed": true
+    },
+    {
+      "input": "keyboard",
+      "resumed": true
+    }
+  ],
+  "startDidNotOpenMenu": true,
+  "movement": true,
+  "errors": []
+}

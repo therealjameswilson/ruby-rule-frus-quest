@@ -204,11 +204,12 @@ canvas {
 }
 
 #tap-resume-overlay::after {
-  content: "SAVE READY";
+  content: "TAP · ANY KEY · A / START";
   display: block;
   margin-top: 12px;
   color: #e8d8a8;
-  font-size: 8px;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 #tap-resume-overlay[hidden] {

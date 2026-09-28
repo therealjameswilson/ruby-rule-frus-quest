@@ -556,9 +556,16 @@ export function getSecondaryActionBadge() {
   return useConsoleActionLabels() ? "B" : "X";
 }
 
+let backgroundInputSuspended = false;
+
+export function setBackgroundInputSuspended(suspended: boolean) {
+  backgroundInputSuspended = suspended;
+  swallowNextInputFrame();
+}
+
 export function tickInput() {
   previousState = cloneState(currentState);
-  if (nativeTextEntryActive || swallowNextFrame) {
+  if (backgroundInputSuspended || nativeTextEntryActive || swallowNextFrame) {
     swallowNextFrame = false;
     pendingActionPresses.clear();
     pendingTouchPresses.clear();
