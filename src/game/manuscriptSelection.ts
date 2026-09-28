@@ -6,6 +6,11 @@ export const SELECTION_PACKETS = [
     id: 'decision', title: 'The decision trail', pages: 220,
     tag: 'Decision · dissent · implementation',
     description: 'A policy instruction, the objections it overruled, and reports showing what happened next.',
+    evidence: [
+      {label: 'Instruction', excerpt: 'Proceed with the proposal despite the unresolved objections.'},
+      {label: 'Dissent', excerpt: 'Our partners may reject the terms; consultation is incomplete.'},
+      {label: 'Follow-up', excerpt: 'Partners rejected the terms. Negotiators requested revised instructions.'}
+    ],
     value: 'Preserves the decision and evidence of its shortcomings.',
     flag: 'compilerDeskDecision'
   },
@@ -13,6 +18,11 @@ export const SELECTION_PACKETS = [
     id: 'routine', title: 'The supporting file', pages: 180,
     tag: 'Routine reports · repeated detail',
     description: 'Daily summaries repeat facts already established in the manuscript. A few details may help an annotation.',
+    evidence: [
+      {label: 'Daily summary', excerpt: 'The proposal remains under discussion. No new instructions received.'},
+      {label: 'Next summary', excerpt: 'Discussions continue. The instructions remain unchanged.'},
+      {label: 'Useful detail', excerpt: 'The next meeting was postponed until Friday.'}
+    ],
     value: 'Keep the file traceable as supporting research, even if it is not printed.',
     flag: 'compilerDeskRoutine'
   }

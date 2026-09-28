@@ -39,6 +39,15 @@ export class ManuscriptDesk {
       button.querySelector('.manuscript-packet-tag')!.textContent=packet.tag;
       button.querySelector('strong')!.textContent=packet.title;
       button.querySelector('.manuscript-description')!.textContent=packet.description;
+      const evidence=document.createElement('span');evidence.className='manuscript-evidence';
+      const heading=document.createElement('span');heading.className='manuscript-evidence-heading';heading.textContent='Fictional sample excerpts';evidence.append(heading);
+      for(const record of packet.evidence){
+        const row=document.createElement('span');row.className='manuscript-record';
+        const label=document.createElement('b');label.textContent=record.label;
+        const excerpt=document.createElement('span');excerpt.textContent=`“${record.excerpt}”`;
+        row.append(label,excerpt);evidence.append(row);
+      }
+      button.querySelector('.manuscript-description')!.after(evidence);
       button.querySelector('.manuscript-value')!.textContent=packet.value;
       button.addEventListener('click',()=>{toggleSelectionPacket(this.progress,packet.id);this.onSave();retroAudio.paperPickup();this.status.textContent='Draft saved. File the selection when the manuscript is ready.';this.status.dataset.error='false';this.refresh();});
       packetHost.append(button);this.buttons.push(button);
