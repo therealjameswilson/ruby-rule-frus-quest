@@ -1,0 +1,68 @@
+{
+  "scope": "Bounded approach-placement fixtures with real movement/B input; held and failed image requests.",
+  "waiting": {
+    "active": true,
+    "zone": 0,
+    "loading": true,
+    "children": 42,
+    "disguise": 0,
+    "texture": "danne-disguise-0",
+    "player": {
+      "x": 17,
+      "y": 135
+    }
+  },
+  "movement": {
+    "before": 17,
+    "after": 32
+  },
+  "loaded": {
+    "active": true,
+    "zone": 0,
+    "loading": false,
+    "children": 42,
+    "disguise": 1,
+    "texture": "danne-disguise-1",
+    "player": {
+      "x": 32,
+      "y": 135
+    }
+  },
+  "rapid": {
+    "active": true,
+    "zone": 0,
+    "loading": true,
+    "children": 42,
+    "disguise": 1,
+    "texture": "danne-disguise-1",
+    "player": {
+      "x": 17,
+      "y": 135
+    }
+  },
+  "failed": {
+    "active": true,
+    "zone": 1,
+    "loading": false,
+    "children": 48,
+    "disguise": 2,
+    "texture": "danne-disguise-2",
+    "player": {
+      "x": 239,
+      "y": 135
+    }
+  },
+  "retried": {
+    "active": true,
+    "zone": 1,
+    "loading": false,
+    "children": 48,
+    "disguise": 3,
+    "texture": "danne-disguise-3",
+    "player": {
+      "x": 130,
+      "y": 153
+    }
+  },
+  "errors": []
+}
