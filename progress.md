@@ -8588,3 +8588,7 @@ Previous goal turn was progress:82e6d01 added optional process recap and recorde
 ## James Graham Wilson likeness — 2026-09-27
 
 User supplied a photo and requested James match it. Generated a new stationary NPC with built-in image_gen: brown hair, clean-shaven smile, navy blazer, open pale-blue collar, ruby-red FRUS volume held in both hands. Copied selected RGBA output unchanged as research-world/presentation/james-v3.png; prompts and source recorded in JAMES-V3-PROVENANCE.md. Updated Sweetgreen preload/frame, preserving 42px height, anchor and behavior. Production build and diff check passed. Standard game client verified movement (native screenshot black as previously observed); inspected compositor desktop and 375x667 mobile screenshots instead. Bounded placement fixtures plus real keyboard/touch A input successfully opened James's dialogue on both layouts, zero page errors. Evidence /tmp/frus-james-results.json, /tmp/frus-james-{desktop,phone}.png. Local change, not published.
+
+## James name — 2026-09-27
+
+User requested first name only. All in-game James speaker headings, visible-entity name and warning prefix now use James; photo likeness and behavior unchanged. Historical generation prompt remains verbatim in provenance. Diff check passed. Local only.

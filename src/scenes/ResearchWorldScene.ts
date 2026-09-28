@@ -135,7 +135,7 @@ export class ResearchWorldScene extends Phaser.Scene {
     const closeText=this.add.text(232,36,'CLOSE',{fontFamily:'Arial',fontSize:'7px',color:'#fff6cf'}).setOrigin(.5);
     this.travelClose=this.add.container(0,0,[closeBox,closeText]).setDepth(1000).setVisible(false);
     bindPointerDown(closeBox,()=>{this.choice.hide();swallowNextInputFrame();});
-    setVisibleEntities([zone.name,...landmarks.map(l=>l.name),...(this.zone===1?['Sweetgreen','James at Sweetgreen']:[]),'DANN-E (civilian disguise)','Rail station','Discovery journal','Return to office / Washington']);
+    setVisibleEntities([zone.name,...landmarks.map(l=>l.name),...(this.zone===1?['Sweetgreen','James']:[]),'DANN-E (civilian disguise)','Rail station','Discovery journal','Return to office / Washington']);
     setLatestMessage('Walk freely. Approach a landmark and press A to discover it. Rail travel is free.');
     this.refreshTally(); swallowNextInputFrame();
   }
@@ -201,8 +201,8 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.stop('Order a salad',64,183,16,()=>this.orderSalad());
     this.stop('Talk to James',91,199,19,()=>{
       gameState.sceneProgress.researchJamesWarningHeard=1;
-      setLatestMessage("James at Sweetgreen: Don't trust DANN-E. His helpful act hides an effort to derail your FRUS volume.");
-      this.dialog.show('JAMES AT SWEETGREEN',[
+      setLatestMessage("James: Don't trust DANN-E. His helpful act hides an effort to derail your FRUS volume.");
+      this.dialog.show('JAMES',[
         "Don't trust DANN-E. He acts mild-mannered out here, but he wants to get in the way of your FRUS volume.",
         "He'll offer a shortcut, misplace a folder, or send you down the wrong path. Check his advice against the finding aids and your own notes.",
         "Keep your source trail, talk to Kathy, and keep compiling. Don't let his friendly smile fool you.",
@@ -225,7 +225,7 @@ export class ResearchWorldScene extends Phaser.Scene {
       retroAudio.confirm();
       setLatestMessage(`${salads[index]} ordered. James paid for your salad.`);
       saveGameNow();
-      this.dialog.show('JAMES — LUNCH IS ON ME',[
+      this.dialog.show('JAMES',[
         `Your ${salads[index].toLowerCase()} is ready. James picks up the tab.`,
         'Enjoy your lunch! Then back to compiling that FRUS volume. And remember: do not trust DANN-E.'
       ]);
