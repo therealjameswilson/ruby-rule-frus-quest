@@ -14,10 +14,12 @@ export class ReleaseScopeDesk {
     this.root.className='manuscript-desk release-scope-desk';this.root.setAttribute('aria-labelledby','release-scope-title');
     this.root.innerHTML=`<section class="manuscript-panel">
       <header class="manuscript-heading"><div><p class="manuscript-eyebrow">PROOF CHECK · FICTIONAL FILE C</p><h1 id="release-scope-title">Match the release note.</h1><p>Correct the draft markings against the reviewer’s recorded authorization.</p></div><button class="manuscript-close" data-focus-key="leave">Save &amp; leave</button></header>
+      <aside class="desk-evidence-strip" aria-label="Recorded authorization"><span>Recorded authorization</span><strong data-evidence-summary></strong></aside>
       <div class="manuscript-body"><section class="release-authorization" data-reading-start><h2>Reviewer’s recorded scope</h2><strong></strong><p>Parent record: classified. Changing a draft marking does not grant clearance.</p></section><section class="release-parts" aria-label="Draft print markings"></section></div>
       <footer class="manuscript-footer"><p data-status role="status" aria-live="polite"></p><button class="manuscript-submit" data-focus-key="file">File markings →</button><small>Arrows / D-pad to read and move · A / Enter to change a marking · B / Esc to save and leave</small></footer>
     </section>`;
     this.root.querySelector('.release-authorization strong')!.textContent=RELEASE_SCOPE_EVIDENCE;
+    this.root.querySelector('[data-evidence-summary]')!.textContent = RELEASE_SCOPE_EVIDENCE;
     this.status=this.root.querySelector('[data-status]')!;
     const host=this.root.querySelector('.release-parts')!;
     for(const [index,part] of RELEASE_SCOPE_PARTS.entries()){

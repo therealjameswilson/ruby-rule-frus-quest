@@ -41,3 +41,10 @@
 .manuscript-coverage small{font-size:10px;color:#a7bcb8}
 .manuscript-coverage [data-printed=true] span{color:#b6e6c5}
 @media(max-width:760px){.manuscript-coverage{margin-bottom:22px;padding:12px}.manuscript-coverage h2{flex-wrap:wrap;gap:4px}.manuscript-coverage [data-coverage]{gap:8px}}
+
+/* Keep the comparison criterion in view while long evidence cards scroll. */
+.desk-evidence-strip{flex-shrink:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 14px;padding:10px 32px;background:#0e1b21;border-bottom:1px solid #728a7b55}
+.desk-evidence-strip span{font-size:12px;color:#b7cbc5}
+.desk-evidence-strip strong{font-size:14px;line-height:1.4;color:#edd496}
+@media(max-width:760px){.desk-evidence-strip{padding:10px 22px}}
+@media(max-height:550px){.desk-evidence-strip{padding:7px 20px}}

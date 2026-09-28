@@ -17,10 +17,12 @@ export class CrossReferenceDesk {
     this.root.setAttribute('aria-labelledby', 'cross-reference-title');
     this.root.innerHTML = `<section class="manuscript-panel">
       <header class="manuscript-heading"><div><p class="manuscript-eyebrow">PROOF CHECK · FICTIONAL CATALOG</p><h1 id="cross-reference-title">Find the cited record.</h1><p>A matching subject is only the start. Check the date and record type.</p></div><button class="manuscript-close" data-focus-key="leave">Save &amp; leave</button></header>
+      <aside class="desk-evidence-strip" aria-label="Cited record"><span>Cited record</span><strong data-evidence-summary></strong></aside>
       <div class="manuscript-body"><section class="reference-target" data-reading-start><h2>The manuscript cites</h2><strong></strong><p>Memcon means memorandum of conversation. A cable on the same date is a different record.</p></section><section class="reference-catalog" aria-label="Catalog candidates"></section></div>
       <footer class="manuscript-footer"><p data-status role="status" aria-live="polite"></p><button class="manuscript-submit" data-focus-key="file">File reference →</button><small>Arrows / D-pad to read and move · A / Enter to pin · B / Esc to save and leave</small></footer>
     </section>`;
     this.root.querySelector('.reference-target strong')!.textContent = CROSS_REFERENCE_TARGET;
+    this.root.querySelector('[data-evidence-summary]')!.textContent = CROSS_REFERENCE_TARGET;
     this.status = this.root.querySelector('[data-status]')!;
     const host = this.root.querySelector('.reference-catalog')!;
     for (const [index, entry] of CROSS_REFERENCE_CATALOG.entries()) {

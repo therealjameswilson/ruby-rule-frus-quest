@@ -8666,3 +8666,10 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 - Updated earned-proof and focused cross-reference touch selectors (latter syntax only). Earned production touch-only route passes wrong drafts, chronology draft reload, Proof Lens and saved handoff, no browser errors. Earlier dev run interrupted by development reload; production rerun passed.
 - Evidence docs/qa/cross-reference-native-2026-09-28.{md,json}, cross-reference-earned-proof-2026-09-28.json. Earned final checkpoint /tmp/frus-cross-reference-production-proof/earned-storage.json (origin5221).
 - Local only. Full goal remains active; physical hardware, listening and novice learning unverified. Next consider full proofing surfaces and modern production presentation; legacy qa-proof-comparison has outdated canvas coordinates across several native desks, so do not claim it passes.
+
+## 2026-09-28 — persistent evidence while comparing
+- Previous goal turn was progress: 28b97f8 made cross-reference decisions readable and passed earned production proof route.
+- Reproduced from phone screenshot that scrolling to candidates hides the citation; release authorization likewise scrolls away. Added compact fixed evidence strips above both scrolling bodies, populated from existing authoritative constants, so comparisons do not require remembering a hidden target.
+- Build passes. Eight production browser visibility cases (two desks x desktop/375 portrait/844 landscape/320 phone) pass evidence, candidate, File visibility and unchanged evidence after wrong filing. Small-phone and landscape compositor screenshots inspected.
+- Existing native cross-reference and release-scope decision/input/lifecycle suites pass all three layouts with touch/keyboard/simulated controller. Standard client state inspected; known black native canvas capture persists. No new game logic; full unit suite not repeated.
+- Evidence docs/qa/persistent-desk-evidence-2026-09-28.{md,json}; screenshots /tmp/frus-desk-evidence-visible. Local only; not published. Goal active, physical hardware/listening and novice learning unverified.
