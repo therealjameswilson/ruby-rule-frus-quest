@@ -61,16 +61,21 @@ export class ManuscriptRevisionDesk {
       source.lines.forEach((line,i)=>{const b=this.button(line,`line-${source.id}-${i}`,()=>{markRevisionPassage(this.progress,i as 0|1);this.changed(`line-${source.id}-${i}`);});b.dataset.line=String(i);b.dataset.readable='';b.setAttribute('aria-pressed',String(state.highlightedLine===i));paper.append(b);});
     }else paper.innerHTML='<p class="assembly-open-record">Open a record to inspect its contents.</p>';
     this.body.append(research);
-    const changes=document.createElement('section');changes.className='revision-changes';changes.innerHTML='<h2>Footnote 2 · revision copy</h2>';
+    const changes=document.createElement('section');changes.className='revision-changes';changes.dataset.readable='';changes.innerHTML='<h2>Footnote 2 · revision copy</h2>';
     const original=document.createElement('div');original.className='revision-original';original.innerHTML='<span>ORIGINAL REVIEW COPY · RETAINED</span>';const old=document.createElement('p');old.textContent=ORIGINAL_REVIEW_NOTE;original.append(old);changes.append(original);
+    const evidence=document.createElement('div');evidence.className='revision-marked-evidence';evidence.dataset.markedEvidence='';
+    const evidenceHeading=document.createElement('strong');evidenceHeading.textContent='MARKED SOURCE PASSAGE';
+    const citation=document.createElement('span');citation.textContent=state.markedEvidence?`${state.markedEvidence.locator} · passage ${state.markedEvidence.line}`:'No passage marked';
+    const quote=document.createElement('p');quote.textContent=state.markedEvidence?`“${state.markedEvidence.text}”`:'Open a record and mark a passage to compare it with the proposed wording.';
+    evidence.append(evidenceHeading,citation,quote);changes.append(evidence);
     const proposed=document.createElement('div');proposed.className='revision-proposed';proposed.innerHTML='<span></span>';proposed.querySelector('span')!.textContent=state.applied?'REVISION COPY · CORRECTION APPLIED':'PROPOSED CORRECTION · CHECK BEFORE APPLYING';const edit=document.createElement('p');edit.textContent=REVISED_REVIEW_NOTE;proposed.append(edit);changes.append(proposed);
     const apply=this.button(state.applied?'✓ Correction applied · undo':'Apply supported correction','apply',()=>{
       if(state.applied){delete this.progress.compilerRevisionApplied;this.changed('apply');return;}
       const result=applyManuscriptRevision(this.progress);this.feedback(result);if(result.ok)this.changed('apply','Correction applied to the revision copy; the review copy is unchanged.');
-    });apply.className='revision-action';apply.dataset.apply='';apply.dataset.readable='';apply.setAttribute('aria-pressed',String(state.applied));changes.append(apply);
+    });apply.className='revision-action';apply.dataset.apply='';apply.setAttribute('aria-pressed',String(state.applied));changes.append(apply);
     const backup=this.button(state.backupAttached?'✓ Backup 2 attached · remove':'Attach backup 2 · Exercise E, page 2, passage 2','backup',()=>{
       this.progress.compilerRevisionBackup=state.backupAttached?0:1;this.changed('backup');
-    });backup.className='revision-action';backup.dataset.backup='';backup.dataset.readable='';backup.setAttribute('aria-pressed',String(state.backupAttached));changes.append(backup);
+    });backup.className='revision-action';backup.dataset.backup='';backup.setAttribute('aria-pressed',String(state.backupAttached));changes.append(backup);
     const note=document.createElement('p');note.className='assembly-brief';note.textContent='Illustrative records and annotation. This correction addresses the gap and unsupported claim; publication comes later.';changes.append(note);
     this.body.append(changes);
     setChoiceState('MANUSCRIPT REVISION',[{key:'A',label:'Check evidence and revise footnote 2',value:'work'},{key:'B',label:'Save draft and leave',value:'leave'}]);

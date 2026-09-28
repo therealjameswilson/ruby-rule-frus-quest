@@ -19,9 +19,9 @@ try{
   await p.goto(base+'?text=full');await p.waitForFunction(()=>window.game?.scene.isActive('TapToStartScene'));await tap(86,154);await p.waitForFunction(()=>window.game.scene.isActive('ArchiveScene'));await enter();
   const original=(await desk()).originalReviewCopy;const player=(await state()).player;await p.keyboard.press('ArrowRight');await p.keyboard.press('ArrowLeft');assert.deepEqual((await state()).player,player);
   await click('[data-apply]');assert.equal((await desk()).applied,false);await click('[data-comment=coverage]');await click('[data-comment=support]');await p.locator('.manuscript-body').evaluate(e=>e.scrollTop=0);await p.screenshot({path:`${out}/${name}-comments.png`});
-  await click('[data-source="3"]');await click('[data-line="0"]');await click('[data-apply]');assert.equal((await desk()).applied,false);
+  await click('[data-source="3"]');await click('[data-line="0"]');assert((await p.locator('[data-marked-evidence]').innerText()).includes('Implementation correspondence, Days 1–9.'));await click('[data-apply]');assert.equal((await desk()).applied,false);
   await click('[data-source="2"]');assert.equal((await desk()).highlightedLine,null);await click('[data-line="0"]');await click('[data-apply]');assert.equal((await desk()).applied,false);
-  await click('[data-line="1"]');await reload();assert.equal((await desk()).highlightedLine,1);assert((await desk()).comments.every(c=>c.read));
+  await click('[data-line="1"]');await reload();assert.equal((await desk()).highlightedLine,1);assert((await desk()).comments.every(c=>c.read));assert((await p.locator('[data-marked-evidence]').innerText()).includes((await desk()).markedEvidence.text));
   await click('[data-apply]');assert.equal((await desk()).applied,true);await click('.manuscript-submit');assert.equal((await state()).compilerMission.completed,6);assert((await p.locator('[data-status]').innerText()).includes('backup'));
   await click('[data-backup]');await reload();assert.equal((await desk()).applied,true);assert.equal((await desk()).backupAttached,true);
   await click('[data-source="1"]');assert.equal((await desk()).applied,false);await click('.manuscript-submit');assert.equal((await state()).compilerMission.completed,6);
@@ -30,6 +30,13 @@ try{
    await p.locator('[data-backup]').focus();await pad(0);assert.equal((await desk()).backupAttached,false);await pad(0);assert.equal((await desk()).backupAttached,true);await pad(1);await p.waitForSelector('.revision-desk',{state:'detached'});await enter();
    await p.locator('[data-apply]').focus();await p.keyboard.press('Enter');assert.equal((await desk()).applied,false);await p.keyboard.press('Enter');assert.equal((await desk()).applied,true);
   }
+  // From Apply, read upward through the comparison without changing evidence.
+  await p.locator('[data-apply]').focus();await p.locator('[data-apply]').scrollIntoViewIfNeeded();
+  const evidenceVisible=()=>p.evaluate(()=>{const e=document.querySelector('[data-marked-evidence]').getBoundingClientRect(),v=document.querySelector('.revision-desk .manuscript-body').getBoundingClientRect();return e.top>=v.top-1&&e.bottom<=v.bottom+1;});
+  for(let n=0;n<16&&!(await evidenceVisible());n++){if(name==='desktop')await pad(12);else await p.keyboard.press('ArrowUp');}
+  assert(await evidenceVisible(),'Up must reveal the marked passage from the Apply control');
+  assert.equal((await desk()).applied,true);assert.equal((await desk()).highlightedLine,1);
+  await p.screenshot({path:`${out}/${name}-marked-evidence.png`});
   await p.locator('[data-apply]').scrollIntoViewIfNeeded();await p.screenshot({path:`${out}/${name}-revision.png`});
   const r=await p.locator('.manuscript-submit').boundingBox();assert(r.y>=0&&r.y+r.height<=height,'submit remains visible');
   await click('.manuscript-submit');await p.waitForSelector('.revision-desk',{state:'detached'});assert.equal((await state()).compilerMission.completed,7);assert.equal((await state()).compilerMission.dpdSubmitted,false);

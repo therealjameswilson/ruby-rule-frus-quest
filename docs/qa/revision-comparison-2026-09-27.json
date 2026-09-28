@@ -1,0 +1,32 @@
+[
+  {
+    "name": "desktop",
+    "wrongEvidenceRejected": true,
+    "originalPreserved": true,
+    "reload": true,
+    "evidenceChangeInvalidates": true,
+    "keyboardAndController": true,
+    "frontMatterReached": true,
+    "errors": []
+  },
+  {
+    "name": "phone",
+    "wrongEvidenceRejected": true,
+    "originalPreserved": true,
+    "reload": true,
+    "evidenceChangeInvalidates": true,
+    "keyboardAndController": false,
+    "frontMatterReached": true,
+    "errors": []
+  },
+  {
+    "name": "landscape",
+    "wrongEvidenceRejected": true,
+    "originalPreserved": true,
+    "reload": true,
+    "evidenceChangeInvalidates": true,
+    "keyboardAndController": false,
+    "frontMatterReached": true,
+    "errors": []
+  }
+]
