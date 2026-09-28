@@ -28,11 +28,16 @@ try {
   }
   await p.screenshot({path:`${out}/${name}-open.png`});
   assert.equal(await p.locator('.manuscript-record').count(),6);
+  assert.equal(await p.locator('[data-coverage-id]').count(),3);
+  assert.equal(await p.locator('[data-printed=true]').count(),0);
+  assert((await p.locator('.manuscript-coverage').innerText()).includes('Exercise C · page 2'));
+  const coverageBox=await p.locator('.manuscript-coverage').boundingBox();assert(coverageBox.width<=width);
+
   assert.equal(await p.locator('.manuscript-evidence-heading').first().textContent(),'Fictional sample excerpts');
   const before=(await state()).player;await p.keyboard.press('ArrowDown');await p.keyboard.press('ArrowUp');assert.deepEqual((await state()).player,before);
   await click('.manuscript-submit');assert((await p.locator('[data-status]').innerText()).includes('missing the decision'));
-  await click('[data-packet=routine]');assert.equal((await state()).compilerMission.selectionDesk.pages,1280);await click('.manuscript-submit');assert((await p.locator('[data-status]').innerText()).includes('missing the decision'));
-  await click('[data-packet=decision]');assert.equal((await state()).compilerMission.selectionDesk.pages,1500);await click('.manuscript-submit');assert((await p.locator('[data-status]').innerText()).includes('100 pages over'));assert.equal((await state()).compilerMission.completed,2);
+  await click('[data-packet=routine]');assert.equal((await state()).compilerMission.selectionDesk.pages,1280);assert.equal(await p.locator('[data-printed=true]').count(),0);await click('.manuscript-submit');assert((await p.locator('[data-status]').innerText()).includes('missing the decision'));
+  await click('[data-packet=decision]');assert.equal((await state()).compilerMission.selectionDesk.pages,1500);assert.equal(await p.locator('[data-printed=true]').count(),3);await click('.manuscript-submit');assert((await p.locator('[data-status]').innerText()).includes('100 pages over'));assert.equal((await state()).compilerMission.completed,2);
   await p.screenshot({path:`${out}/${name}-over-budget.png`});
   await click('[data-packet=routine]');assert.equal((await state()).compilerMission.selectionDesk.pages,1320);
   await click('.manuscript-close');await p.waitForSelector('.manuscript-desk',{state:'detached'});assert.equal((await state()).compilerMission.completed,2);
@@ -43,6 +48,11 @@ try {
    // Down reads a tall packet before leaving it. Right moves directly between
    // controls regardless of how many evidence lines the packet contains.
    await pressPad(13);assert(await p.locator('.manuscript-body').evaluate(e=>e.scrollTop>0));
+   const coverageVisible=()=>p.evaluate(()=>{const card=document.querySelector('.manuscript-coverage').getBoundingClientRect(),body=document.querySelector('.manuscript-body').getBoundingClientRect();return card.top>=body.top-1&&card.bottom<=body.bottom+1;});
+   for(let read=0;read<15&&!(await coverageVisible());read++)await pressPad(12);
+   assert(await coverageVisible(),'Controller Up must reveal the packet coverage check');
+   assert.equal(await p.locator('[data-packet=decision]').getAttribute('aria-pressed'),'true');
+   await p.screenshot({path:`${out}/${name}-coverage-controller.png`});
    await pressPad(15);await pressPad(15);assert(await p.locator('.manuscript-submit').evaluate(e=>e===document.activeElement));await pressPad(0);
   }else{await p.screenshot({path:`${out}/${name}-ready.png`});await click('.manuscript-submit');}
   await p.waitForSelector('.manuscript-desk',{state:'detached'});assert.equal((await state()).compilerMission.completed,3);

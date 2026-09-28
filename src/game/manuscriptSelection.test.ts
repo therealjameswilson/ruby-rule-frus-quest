@@ -21,6 +21,19 @@ describe('manuscript selection desk',()=>{
   toggleSelectionPacket(p,'routine');expect(manuscriptSelectionReadout(p).pages).toBe(1320);expect(evaluateManuscriptSelection(p).ok).toBe(true);
   expect(p.compilerSop_selection).toBeUndefined();expect(p.finalGatePublished).toBeUndefined();
  });
+ it('distinguishes printed evidence from retained source material independently of page compliance',()=>{
+  const p:Record<string,number>={};
+  toggleSelectionPacket(p,'routine');
+  expect(manuscriptSelectionReadout(p).coverage.every(row=>!row.inManuscript)).toBe(true);
+  toggleSelectionPacket(p,'decision');
+  const readout=manuscriptSelectionReadout(p);
+  expect(readout.remaining).toBe(-100);
+  expect(readout.coverage.every(row=>row.inManuscript)).toBe(true);
+  expect(readout.coverage.map(row=>row.locator)).toEqual(CHAPTER_EXHIBITS.map(row=>row.locator));
+  toggleSelectionPacket(p,'decision');
+  expect(manuscriptSelectionReadout(p).coverage.every(row=>!row.inManuscript)).toBe(true);
+  expect(evaluateManuscriptSelection(p).message).toContain('daily summaries do not replace');
+ });
  it('reports the decision packet already earned in older completed saves',()=>{
   const progress={compilerSop_selection:1,compilerSopDocumentPages:1320};
   expect(manuscriptSelectionReadout(progress).pages).toBe(1320);
