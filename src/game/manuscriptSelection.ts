@@ -1,17 +1,23 @@
 /** An illustrative selection exercise; these packets are not historical documents. */
+import {CHAPTER_EXHIBITS, type ExhibitId} from './chapterAssembly';
+
+function chapterSample(id:ExhibitId, line:0|1, label:string) {
+  const exhibit=CHAPTER_EXHIBITS.find(record=>record.id===id)!;
+  return {label:`${label} · ${exhibit.locator}`,excerpt:exhibit.lines[line]};
+}
 export const MANUSCRIPT_BASE_PAGES = 1100;
 export const MANUSCRIPT_PAGE_LIMIT = 1400;
 export const SELECTION_PACKETS = [
   {
     id: 'decision', title: 'The decision trail', pages: 220,
-    tag: 'Decision · dissent · implementation',
-    description: 'A policy instruction, the objections it overruled, and reports showing what happened next.',
+    tag: 'Discussion · decision · implementation',
+    description: 'The discussion, instruction, and implementation report you will arrange and annotate next.',
     evidence: [
-      {label: 'Instruction', excerpt: 'Proceed with the proposal despite the unresolved objections.'},
-      {label: 'Dissent', excerpt: 'Our partners may reject the terms; consultation is incomplete.'},
-      {label: 'Follow-up', excerpt: 'Partners rejected the terms. Negotiators requested revised instructions.'}
+      chapterSample('A',0,'Discussion'),
+      chapterSample('B',0,'Instruction'),
+      chapterSample('C',1,'Implementation')
     ],
-    value: 'Preserves the decision and evidence of its shortcomings.',
+    value: 'Preserves the decision, objections, and an implementation problem.',
     flag: 'compilerDeskDecision'
   },
   {

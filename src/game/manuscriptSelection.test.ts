@@ -1,6 +1,16 @@
 import {describe,it,expect} from 'vitest';
-import {evaluateManuscriptSelection, manuscriptSelectionReadout, toggleSelectionPacket} from './manuscriptSelection';
+import {SELECTION_PACKETS,evaluateManuscriptSelection, manuscriptSelectionReadout, toggleSelectionPacket} from './manuscriptSelection';
+import {CHAPTER_EXHIBITS} from './chapterAssembly';
 describe('manuscript selection desk',()=>{
+ it('carries the same locators and passages into the next chapter exercise',()=>{
+  const evidence=SELECTION_PACKETS[0].evidence;
+  expect(evidence).toHaveLength(CHAPTER_EXHIBITS.length);
+  for(const exhibit of CHAPTER_EXHIBITS){
+   const sample=evidence.find(record=>record.label.includes(exhibit.locator));
+   expect(sample).toBeDefined();expect(exhibit.lines).toContain(sample!.excerpt);
+  }
+  expect(evidence[2].excerpt).toContain('resource shortfall');
+ });
  it('requires substantive evidence even when a smaller packet fits',()=>{
   const p:Record<string,number>={};expect(evaluateManuscriptSelection(p).ok).toBe(false);
   toggleSelectionPacket(p,'routine');expect(manuscriptSelectionReadout(p).pages).toBe(1280);expect(evaluateManuscriptSelection(p).ok).toBe(false);

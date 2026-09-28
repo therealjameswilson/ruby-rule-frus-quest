@@ -1,0 +1,29 @@
+[
+  {
+    "name": "desktop",
+    "touch": false,
+    "invalidSelectionsRejected": true,
+    "draftRestored": true,
+    "keyboardAndController": true,
+    "handoff": true,
+    "errors": []
+  },
+  {
+    "name": "phone",
+    "touch": true,
+    "invalidSelectionsRejected": true,
+    "draftRestored": true,
+    "keyboardAndController": false,
+    "handoff": true,
+    "errors": []
+  },
+  {
+    "name": "landscape",
+    "touch": true,
+    "invalidSelectionsRejected": true,
+    "draftRestored": true,
+    "keyboardAndController": false,
+    "handoff": true,
+    "errors": []
+  }
+]
