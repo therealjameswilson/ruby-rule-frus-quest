@@ -49,10 +49,11 @@ try {
  await key();await shot('reference-stamped');
  assert.equal((await state()).sceneProgress.silentReadReviewStep,2);
  await move(96,132);await move(208,132);await key();await shot('release');
- await key('ArrowLeft');await key();await shot('over-release-rejected');
+ const release=async(selector)=>{const target=page.locator('.release-scope-desk '+selector);await target.scrollIntoViewIfNeeded();if(mobile)await target.tap();else await target.click();await page.waitForTimeout(150);};
+ await release('[data-focus-key=file]');await shot('over-release-rejected');
  assert.equal((await state()).sceneProgress.silentReadReviewStep,2);
- await key('ArrowRight');await key();await key('ArrowRight');await key('ArrowRight');await key();
- await key('ArrowRight');await key();await key();await shot('release-stamped');
+ await release('[data-part="0"]');await release('[data-part="2"]');await release('[data-focus-key=file]');
+ await key();await shot('release-stamped');
  assert.equal((await state()).sceneProgress.silentReadReviewStep,3);
  await move(96,132);await move(64,132);await key();await shot('withheld-entry');
  await key();await key();await shot('referral-stamped');

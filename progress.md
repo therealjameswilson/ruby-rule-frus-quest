@@ -8648,3 +8648,12 @@ Previousgoalturn progressed withdaef987 earnedhandoffaudit andidentifiedcompactl
 ## Keep chronology actions in view — 2026-09-27
 
 Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375touch proofroute,updatedchronologyQAselectors,andaddedunfileddraftreloadcheck. Routepassed; screenshotreviewfoundMovecontrolsoffscreenwhileFilefixed. MovedEarlier/Later/Fileintosamefooter;sharedDeskControlscanreadanexplicitbodyregionfromfooterfocus. Final6nativecases andearnedproofroutepass,zeroerrors,with44pxtargets/visibleactions/controllerreadback/draftreload/noearlyLens.283files/2121tests/buildpass. Screenshotsinspected;standardclientSilentReadx134knownblacknativecapture. Evidence docs/qa/chronology-footer-2026-09-27.{md,json};newearnedcheckpoint /tmp/frus-earned-proof-footer/earned-storage.json. Localnotpublished.Goalactive.Nextupgradetheremainingcompactrelease-scope/cross-referenceproofsurfacesusingobserved375pxscreens;physicalhardware/listeningandnovicelearningremainunverified.
+
+## 2026-09-28 — release-scope desk completion and requested publication
+- Previous chronology footer turn was concrete progress. User explicitly requested publication.
+- Finished the pending native release-scope desk: fixed reviewer authorization, separate draft print/hold controls, explicit valid filing, saved draft and scene cleanup. Shared touch/keyboard/controller desk controls retained.
+- Updated board tests and earned-proof interaction path. 283 files / 2,120 tests pass; Pages production build passes.
+- Native desk fixture passed desktop, 375x667 portrait and 844x390 landscape, including touch, keyboard, simulated controller, invalid all/none, unchanged authorization, restore and shutdown.
+- Touch-only earned proof replay passed from prior earned editor checkpoint, including rejected drafts, chronology draft reload, earned Proof Lens and saved handoff; no browser errors.
+- Standard game client state checked. Its known black canvas capture persists; compositor screenshots of the actual native desks and earned game were inspected instead.
+- Broader game goal remains active: physical iPhone/controller and novice learning validation are not established by these simulations.
