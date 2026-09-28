@@ -1,10 +1,33 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { UIScene } from "./UIScene";
 import { resetGameState, setSceneState, setPlayerPosition, beginSnesTransition, completeSnesTransition } from "../game/state";
+import { retroAudio } from "../systems/audio";
 
 vi.mock("phaser", () => ({ default: { Scene: class {}, GameObjects: { Sprite: class {} } } }));
 
 beforeEach(() => resetGameState());
+
+it("holds one reading mix across dialogue, choice and Codex, then releases on hidden UI", () => {
+  const release=vi.fn(),hold=vi.spyOn(retroAudio,'holdReadingMix').mockReturnValue(release);
+  let codex=false;
+  const scene=Object.assign(new UIScene(),{
+    sys:{settings:{visible:true}},time:{now:100},
+    scene:{isActive:()=>codex,bringToTop:vi.fn()},
+    controls:{refreshForScene:vi.fn(),setEnabled:vi.fn()},
+    syncPixelCameras:vi.fn(),refreshQuestBand:vi.fn(),activeGameplaySceneKey:()=>"OfficeScene"
+  }) as unknown as UIScene;
+  try {
+    setSceneState('OfficeScene','dialog','Read');scene.update();scene.update();
+    setSceneState('OfficeScene','choice','Choose');scene.update();
+    expect(hold).toHaveBeenCalledOnce();expect(release).not.toHaveBeenCalled();
+    codex=true;setSceneState('OfficeScene','explore','Explore');scene.update();
+    expect(release).not.toHaveBeenCalled();
+    scene.sys.settings.visible=false;scene.update();scene.update();
+    expect(release).toHaveBeenCalledOnce();
+    codex=false;scene.sys.settings.visible=true;scene.update();
+    expect(hold).toHaveBeenCalledOnce();
+  } finally {hold.mockRestore();}
+});
 
 it("refreshes a changed action on the next frame but throttles unchanged meters", () => {
   const text = () => ({ setVisible: vi.fn(), setText: vi.fn(), setColor: vi.fn(), setY: vi.fn() });

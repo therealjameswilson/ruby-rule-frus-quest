@@ -39,6 +39,7 @@ import { EDITORIAL_RECHECK_TITLE, EDITORIAL_REPAIR_TITLE } from "../game/editori
 import { WITHHOLDING_CHRONOLOGY_TITLE } from "../game/withholdingChronology";
 import { EDITOR_CHRONOLOGY_TITLE } from "../game/editorChronology";
 import { RELEASE_SCOPE_TITLE } from "../game/releaseScope";
+import { retroAudio } from "../systems/audio";
 
 export class UIScene extends Phaser.Scene {
   private controls!: TouchControls;
@@ -60,6 +61,7 @@ export class UIScene extends Phaser.Scene {
   private questBandDecisionSignature = "";
   private questBandLastRefresh = 0;
   private questBandY = 0;
+  private releaseReadingMix?: () => void;
 
   constructor() {
     super("UIScene");
@@ -96,6 +98,8 @@ export class UIScene extends Phaser.Scene {
       this.questBandLastRefresh = 0;
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.releaseReadingMix?.();
+      this.releaseReadingMix = undefined;
       this.removeGamepadListener?.();
       this.removeColorblindModeListener?.();
       this.gamepadToastTimer?.remove(false);
@@ -105,6 +109,15 @@ export class UIScene extends Phaser.Scene {
   }
 
   update() {
+    // Canvas dialogue/review and the Codex deserve the same quiet score as
+    // native document desks. A shared lease does not compound attenuation.
+    const reading = this.sys.settings.visible && (gameState.mode === "dialog"
+      || gameState.mode === "choice" || this.scene.isActive("CodexScene"));
+    if (reading && !this.releaseReadingMix) this.releaseReadingMix = retroAudio.holdReadingMix();
+    else if (!reading && this.releaseReadingMix) {
+      this.releaseReadingMix();
+      this.releaseReadingMix = undefined;
+    }
     if (!this.sys.settings.visible) {
       this.controls.setEnabled(false);
       return;
