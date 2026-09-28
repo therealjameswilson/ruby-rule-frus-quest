@@ -8681,3 +8681,12 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 - Extended offline paper synthesis QA to mark/turn alongside pickup/file/stress/cancel. All four waveforms distinct, no clipping, silent tails and expected source cleanup. Offline synthesis and dispatch checks are not human listening approval.
 - Standard game client state and screenshots inspected (known native black capture); compositor chronology screenshot inspected. Evidence docs/qa/research-edit-audio-2026-09-28.json and research-paper-synthesis-2026-09-28.json. WAVs /tmp/frus-research-paper-sounds.
 - Local only, not published. Full goal remains active; physical hardware/listening and novice comprehension remain unverified.
+
+## 2026-09-28 — original-versus-proof reading desk
+- Previous goal turn progressed with 8ddbf13 distinct research edit sounds.
+- Replaced tiny canvas ProofComparisonBoard presentation with native ProofComparisonDesk: fixed original text, large inspectable typeset fragments, source-preserving correction feedback, separate explicit File action, draft restoration and shared input/audio/modal lifecycle.
+- Retained original repair bits and match validator. Faithful words stay unchanged. Correcting “will” to “may” explains tentative versus certain meaning; restoring Secto explains preserving designator plus number. No automatic filing or reward.
+- 284 files / 2121 tests and build pass. Three-layout native fixtures pass both required repairs, unchanged faithful fragments, restoration, explicit filing, touch/keyboard/simulated controller and cleanup, no browser errors.
+- Updated earned-production harness to native controls. Production-preview touch-only continuation from prior earned Proof Lens checkpoint passes rejected altered proof, both corrections, filing, Buckram Key and BlackVaultLairScene arrival, no errors. New earned save /tmp/frus-native-proof-earned-production/earned-storage.json (origin5221).
+- Phone and landscape desk screenshots plus earned proof-filed compositor inspected. Standard client state inspected; known black native capture persists. Evidence docs/qa/native-proof-comparison-2026-09-28.json and native-proof-earned-production-2026-09-28.json.
+- Local only; not published. Full goal active. Physical hardware/listening and novice learning remain unverified; inspect remaining editorial repair/binding presentation and update older legacy canvas QA before relying on it.
