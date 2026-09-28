@@ -1,0 +1,82 @@
+[
+  {
+    "mobile": false,
+    "room": "A1",
+    "figure": {
+      "texture": "npc-elena-detailed-v1",
+      "hero": "compiler_hd",
+      "width": 32,
+      "height": 48,
+      "soleY": 89,
+      "anchorY": 84,
+      "bounds": {
+        "type": 5,
+        "x": 24.890625,
+        "y": 43.25,
+        "width": 32,
+        "height": 48
+      }
+    },
+    "errors": []
+  },
+  {
+    "mobile": false,
+    "room": "B2",
+    "figure": {
+      "texture": "npc-elena-detailed-v1",
+      "hero": "compiler_hd",
+      "width": 32,
+      "height": 48,
+      "soleY": 107,
+      "anchorY": 102,
+      "bounds": {
+        "type": 5,
+        "x": 56.890625,
+        "y": 61.25,
+        "width": 32,
+        "height": 48
+      }
+    },
+    "errors": []
+  },
+  {
+    "mobile": true,
+    "room": "A1",
+    "figure": {
+      "texture": "npc-elena-detailed-v1",
+      "hero": "compiler_hd",
+      "width": 32,
+      "height": 48,
+      "soleY": 89,
+      "anchorY": 84,
+      "bounds": {
+        "type": 5,
+        "x": 24.890625,
+        "y": 43.25,
+        "width": 32,
+        "height": 48
+      }
+    },
+    "errors": []
+  },
+  {
+    "mobile": true,
+    "room": "B2",
+    "figure": {
+      "texture": "npc-elena-detailed-v1",
+      "hero": "compiler_hd",
+      "width": 32,
+      "height": 48,
+      "soleY": 107,
+      "anchorY": 102,
+      "bounds": {
+        "type": 5,
+        "x": 56.890625,
+        "y": 61.25,
+        "width": 32,
+        "height": 48
+      }
+    },
+    "errors": []
+  }
+]

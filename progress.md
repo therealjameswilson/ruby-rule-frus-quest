@@ -8592,3 +8592,7 @@ User supplied a photo and requested James match it. Generated a new stationary N
 ## James name — 2026-09-27
 
 User requested first name only. All in-game James speaker headings, visible-entity name and warning prefix now use James; photo likeness and behavior unchanged. Historical generation prompt remains verbatim in provenance. Diff check passed. Local only.
+
+## Distinct Archive colleague — 2026-09-27
+
+Previous completed goal work was progress (saved-publication audit); intervening James photo/name changes are committed local progress. Revalidated Elena uses the default hero fallback in both Archive A1 and B2. Generated original teal-jacket/auburn-bob colleague via built-in image_gen; copied RGBA unchanged and documented exact prompt. Added measured origin to shared detailed NPC registry and Archive preload, preserving fallback, grounded 32x48 pose and existing behavior. Build and 282files/2114tests pass. Desktop and simulated375x667 fixtures confirm distinct texture and floor alignment in both rooms, zero pageerrors; compositor screenshots inspected after banner dismissal. Standard client movement passes with known black native capture. Evidence docs/qa/elena-distinct-sprite-2026-09-27.{md,json}. Local only, not published. Goal active: continue current rendered presentation/learning review, with physical hardware and novice comprehension unverified.
