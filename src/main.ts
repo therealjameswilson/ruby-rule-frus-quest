@@ -505,11 +505,14 @@ function installMobileShellAffordances() {
 }
 
 function installTapToResumeOverlay(game: Phaser.Game) {
-  const overlay = document.createElement("button");
+  const overlay = document.createElement("dialog");
   overlay.id = "tap-resume-overlay";
-  overlay.type = "button";
-  overlay.textContent = "RESUME";
-  overlay.setAttribute("aria-label", "Resume Ruby Rule: tap, press any key, or press controller A or Start");
+  overlay.setAttribute("aria-label", "Game paused");
+  const resumeButton = document.createElement("button");
+  resumeButton.type = "button";
+  resumeButton.textContent = "RESUME";
+  resumeButton.setAttribute("aria-label", "Resume Ruby Rule: tap, press any key, or press controller A or Start");
+  overlay.append(resumeButton);
   overlay.hidden = true;
   document.body.appendChild(overlay);
 
@@ -532,7 +535,8 @@ function installTapToResumeOverlay(game: Phaser.Game) {
     if (!pausedSceneKey) return;
     if (overlay.hidden) controllerResume.begin();
     overlay.hidden = false;
-    overlay.focus({ preventScroll: true });
+    if (!overlay.open) overlay.showModal();
+    resumeButton.focus({ preventScroll: true });
     setLatestMessage("Paused. Tap, press a key, or press controller A / Start to resume.");
   };
 
@@ -540,6 +544,7 @@ function installTapToResumeOverlay(game: Phaser.Game) {
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
+    overlay.close();
     overlay.hidden = true;
     if (pausedSceneKey && game.scene.isPaused(pausedSceneKey)) game.scene.resume(pausedSceneKey);
     pausedSceneKey = null;

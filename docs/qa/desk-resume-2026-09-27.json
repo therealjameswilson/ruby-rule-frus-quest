@@ -1,0 +1,26 @@
+[
+  {
+    "name": "desktop",
+    "topmost": true,
+    "selectionPreserved": true,
+    "focusAndScrollRestored": true,
+    "inputs": [
+      "pointer",
+      "keyboard",
+      "controller"
+    ],
+    "errors": []
+  },
+  {
+    "name": "phone",
+    "topmost": true,
+    "selectionPreserved": true,
+    "focusAndScrollRestored": true,
+    "inputs": [
+      "pointer",
+      "keyboard",
+      "controller"
+    ],
+    "errors": []
+  }
+]

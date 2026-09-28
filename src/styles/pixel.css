@@ -189,6 +189,13 @@ canvas {
 }
 
 #tap-resume-overlay {
+  display: grid;
+  place-content: center;
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  max-height: none;
+  box-sizing: border-box;
   position: fixed;
   inset: 0;
   z-index: 10000;
@@ -203,7 +210,21 @@ canvas {
   -webkit-tap-highlight-color: transparent;
 }
 
-#tap-resume-overlay::after {
+#tap-resume-overlay > button {
+  min-width: 240px;
+  border: 1px solid #b99048;
+  border-radius: 8px;
+  padding: 24px;
+  background: #111719;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+#tap-resume-overlay::backdrop { background: transparent; }
+
+#tap-resume-overlay > button::after {
   content: "TAP · ANY KEY · A / START";
   display: block;
   margin-top: 12px;
