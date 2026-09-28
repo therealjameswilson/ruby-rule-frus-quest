@@ -1,0 +1,53 @@
+{
+  "scope": "Bounded native editorial repair fixtures",
+  "results": [
+    {
+      "name": "desktop",
+      "record": "source_note_047",
+      "visibleItalic": true,
+      "separateDraftAndProof": true,
+      "noProofTableEdit": true,
+      "touchKeyboardController": true
+    },
+    {
+      "name": "desktop",
+      "record": "sbu_annotation_001",
+      "visibleItalic": true,
+      "separateDraftAndProof": true,
+      "noProofTableEdit": true,
+      "touchKeyboardController": true
+    },
+    {
+      "name": "phone",
+      "record": "source_note_047",
+      "visibleItalic": true,
+      "separateDraftAndProof": true,
+      "noProofTableEdit": true,
+      "touchKeyboardController": true
+    },
+    {
+      "name": "phone",
+      "record": "sbu_annotation_001",
+      "visibleItalic": true,
+      "separateDraftAndProof": true,
+      "noProofTableEdit": true,
+      "touchKeyboardController": true
+    },
+    {
+      "name": "landscape",
+      "record": "source_note_047",
+      "visibleItalic": true,
+      "separateDraftAndProof": true,
+      "noProofTableEdit": true,
+      "touchKeyboardController": true
+    },
+    {
+      "name": "landscape",
+      "record": "sbu_annotation_001",
+      "visibleItalic": true,
+      "separateDraftAndProof": true,
+      "noProofTableEdit": true,
+      "touchKeyboardController": true
+    }
+  ]
+}

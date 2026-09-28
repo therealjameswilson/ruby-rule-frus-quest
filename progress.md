@@ -8699,3 +8699,12 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 - First legacy qa-bindery-finale attempt stopped on obsolete manual assembly expectation; its edits reverted, not counted as a pass. Only current assembly harness is validated.
 - Evidence docs/qa/native-standards-seal-2026-09-28.{md,json}, native-seal-earned-publication-2026-09-28.json. Artifacts /tmp/frus-native-seal-earned-current including pending-seal-storage and earned publication save.
 - Local only, not published. Full goal remains active. Physical hardware/listening, novice learning and whole-game presentation consistency still require evidence.
+
+## 2026-09-28 — visible withholding indications and separate proof review
+- Previous goal turn progressed with 14219a6 native final standards checklist and earned publication continuation.
+- Replaced tiny canvas EditorialRepairBoard with native EditorialRepairDesk. Retained evidence stays visible; the reader-facing indication renders as actual italic text; copy distinguishes disclosure of withheld text from declassification/release. Draft and proof stages have different actions; proof cannot invent a missing draft correction.
+- Existing record strings, first-time saved bracket state, repair callbacks and draft/proof filing rules preserved. Human filing remains separate from edit and scene-owned reward.
+- 284 files / 2119 tests and build pass. Six native cases (two records, desktop/375 portrait/844 landscape) pass correct italic text, unknown extent preserved, no early filing, no proof-table edit, touch/keyboard/controller, restore/cancel. Phone draft and proof screenshots inspected.
+- Updated earned editor harness to native controls. Production touch-only route from prior earned referral checkpoint passes wrong filing rejection, bracket-draft reload, explicit filing, Red Pencil reward and S1 proof-room arrival without browser errors. Save /tmp/frus-native-editorial-earned/earned-storage.json, origin5221.
+- Evidence docs/qa/native-editorial-repair-2026-09-28.json and native-editorial-earned-2026-09-28.json. Standard client state checked; known black native capture, compositor screenshots used.
+- Local only, not published. Full goal active. Physical hardware/listening and novice comprehension unverified. Legacy qa-editorial-repair and qa-proof-comparison still contain old canvas interaction assumptions; use updated earned-editor and native fixture until those are refreshed.

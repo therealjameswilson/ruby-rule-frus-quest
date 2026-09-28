@@ -41,15 +41,16 @@ try{
  await move(30,202);await move(56,202);await key();await shot('carried');
  await move(96,202);await move(96,185);await move(128,185);await key();await shot('editor-check');
  console.log(JSON.stringify((await state()).choice));
- await key('ArrowDown');await key();await shot('invisible-rejected');
+ const repair=async(key)=>{const e=page.locator(`.editorial-repair-desk [data-focus-key=${key}]`);await e.scrollIntoViewIfNeeded();if(mobile)await e.tap();else await e.click();await page.waitForTimeout(150);};
+ await repair('file');await shot('invisible-rejected');
  assert(!(await state()).inventory.includes('Red Pencil'));
- await key('ArrowUp');await key();await shot('bracket-added');
+ await repair('repair');await shot('bracket-added');
  assert.equal((await state()).audioStatus,'quiet annotation mark');
  if(process.argv.includes('--reload-bracket')){
   const drafted=await state();
   assert.equal(drafted.sceneProgress.silentReadBracketDraft,1);
   assert(!drafted.inventory.includes('Red Pencil'));
-  await key('x');
+  await repair('leave');
   await page.reload();await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');await key('Enter');
   await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='SilentReadScene');await page.waitForTimeout(600);
   const restored=await state();
@@ -59,7 +60,7 @@ try{
   assert(!restored.inventory.includes('Red Pencil'),'A saved draft must not grant its tool before verification');
   await key();await shot('bracket-reloaded');
  }
- await key();await page.waitForTimeout(300);await shot('draft-filed');
+ await repair('file');await page.waitForTimeout(300);await shot('draft-filed');
  assert.equal((await state()).audioStatus,'paper filing and stamp');
  assert(!(await state()).inventory.includes('Red Pencil'));
  await key();await page.waitForTimeout(100);await shot('pencil-earned');
