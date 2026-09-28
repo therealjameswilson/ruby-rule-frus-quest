@@ -30,6 +30,7 @@ import {
   bindDomPointerDown,
   getGamepadDebugState,
   initializeInput,
+  setBackgroundInputSuspended,
   swallowNextInputFrame,
   updateInputCallbacks
 } from "./input/InputState";
@@ -38,6 +39,7 @@ import { retroAudio, type AudioDebugState } from "./systems/audio";
 import { getLanguage } from "./systems/i18n";
 import { getPauseMenuReadout } from "./systems/pauseMenu";
 import { getCodexViewReadout } from "./systems/codexLayout";
+import { createControllerResume } from "./input/controllerResume";
 import { installResumeInput } from "./input/resumeInput";
 import { applyIntegerZoom, configureIntegerGameShellScale, measurePixelScale, normalizeDevicePixelRatio } from "./systems/pixelPerfect";
 import { getSaveDebugState, installAutosaveLifecycle, saveGameNow } from "./systems/save";
@@ -503,20 +505,26 @@ function installMobileShellAffordances() {
 }
 
 function installTapToResumeOverlay(game: Phaser.Game) {
-  const overlay = document.createElement("button");
+  const overlay = document.createElement("dialog");
   overlay.id = "tap-resume-overlay";
-  overlay.type = "button";
-  overlay.textContent = "TAP TO RESUME";
-  overlay.setAttribute("aria-label", "Tap to resume Ruby Rule");
+  overlay.setAttribute("aria-label", "Game paused");
+  const resumeButton = document.createElement("button");
+  resumeButton.type = "button";
+  resumeButton.textContent = "RESUME";
+  resumeButton.setAttribute("aria-label", "Resume Ruby Rule: tap, press any key, or press controller A or Start");
+  overlay.append(resumeButton);
   overlay.hidden = true;
   document.body.appendChild(overlay);
 
   let pausedSceneKey: string | null = null;
+  const controllerResume = createControllerResume();
 
   const pauseForBackground = (reason: "visibility" | "pagehide") => {
     const sceneKey = gameState.currentScene;
     if (sceneKey && sceneKey !== "BootScene" && sceneKey !== "TapToStartScene") {
       setCompletionStatsSuspended(true);
+      controllerResume.begin();
+      setBackgroundInputSuspended(true);
       pausedSceneKey = sceneKey;
       if (game.scene.isActive(sceneKey)) game.scene.pause(sceneKey);
     }
@@ -525,24 +533,33 @@ function installTapToResumeOverlay(game: Phaser.Game) {
 
   const showResumeOverlay = () => {
     if (!pausedSceneKey) return;
+    if (overlay.hidden) controllerResume.begin();
     overlay.hidden = false;
-    overlay.focus({ preventScroll: true });
-    setLatestMessage("Paused for mobile resume.");
+    if (!overlay.open) overlay.showModal();
+    resumeButton.focus({ preventScroll: true });
+    setLatestMessage("Paused. Tap, press a key, or press controller A / Start to resume.");
   };
 
   const resumeFromOverlay = async (event: Event) => {
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
+    overlay.close();
     overlay.hidden = true;
     if (pausedSceneKey && game.scene.isPaused(pausedSceneKey)) game.scene.resume(pausedSceneKey);
     pausedSceneKey = null;
     setCompletionStatsSuspended(false);
-    swallowNextInputFrame();
+    setBackgroundInputSuspended(false);
     await retroAudio.unlock();
     refreshIntegerScale();
   };
 
+  // Poll before any scene handles input; a resume press is swallowed until release.
+  game.events.on("prestep", () => {
+    if (!overlay.hidden && !document.hidden && controllerResume.poll(navigator.getGamepads?.() ?? [])) {
+      void resumeFromOverlay(new Event("controller-resume"));
+    }
+  });
   installResumeInput(() => !overlay.hidden, (event) => { void resumeFromOverlay(event); });
 
   document.addEventListener("visibilitychange", () => {

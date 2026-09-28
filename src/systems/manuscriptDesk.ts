@@ -25,7 +25,7 @@ export class ManuscriptDesk {
     this.root.innerHTML=`<section class="manuscript-panel">
       <header class="manuscript-heading"><div><p class="manuscript-eyebrow">THE COMPILER’S DESK <span>01 / SELECTION</span></p><h1 id="manuscript-title">Make room for the decision.</h1><p>Select the records that carry the story. Keep useful unprinted material in the source file.</p></div><button class="manuscript-close" type="button" aria-label="Save draft and return to the archive">Save &amp; leave</button></header>
       <div class="manuscript-budget"><div><span>DOCUMENT PAGES</span><strong data-pages></strong></div><div class="manuscript-meter" role="meter" aria-label="Document page budget" aria-valuemin="0" aria-valuemax="1400"><i class="manuscript-base"></i><i data-added></i></div><p data-remaining></p><small>Annotation sheets are outside this limit.</small></div>
-      <div class="manuscript-body"><section class="manuscript-candidates" aria-label="Research packets"><h2>On your desk <span>Tap a packet to place it</span></h2><div class="manuscript-packets"></div></section>
+      <div class="manuscript-body"><section class="manuscript-coverage" data-reading-start aria-label="Coverage added by these exercise packets"><h2>What these packets add <span data-coverage-count></span></h2><div data-coverage></div></section><section class="manuscript-candidates" aria-label="Research packets"><h2>On your desk <span>Tap a packet to place it</span></h2><div class="manuscript-packets"></div></section>
       <aside class="manuscript-trays"><div class="manuscript-bound-volume" aria-hidden="true"><span>FOREIGN<br>RELATIONS<br>OF THE<br>UNITED STATES</span><i>WORKING MANUSCRIPT</i></div><h2>In the manuscript</h2><p data-tray></p><h2>Source file</h2><p data-outside></p><p class="manuscript-danne">DANN-E: “Print everything. Bigger book, bigger genius!”</p></aside></div>
       <footer class="manuscript-footer"><p data-status role="status" aria-live="polite">Your existing manuscript has 1,100 document pages. Compare the two packets before filing.</p><button class="manuscript-submit" type="button">File selection <span>→</span></button><small>Illustrative packets • Arrows / D-pad to move · A / Enter to select · B / Esc to leave</small></footer>
     </section>`;
@@ -65,6 +65,15 @@ export class ManuscriptDesk {
     this.remaining.textContent=state.remaining<0?`${-state.remaining} pages over budget`:`${state.remaining} pages available`;
     this.root.dataset.over=String(state.remaining<0);this.meter.setAttribute('aria-valuenow',String(Math.min(state.pages,state.pageLimit)));this.meter.setAttribute('aria-valuetext',this.count.textContent);
     (this.root.querySelector('[data-added]') as HTMLElement).style.width=`${Math.min(300,state.pages-state.basePages)/14}%`;
+    this.root.querySelector('[data-coverage-count]')!.textContent=`${state.coverage.filter(record=>record.inManuscript).length} / ${state.coverage.length} in manuscript`;
+    const coverage=this.root.querySelector('[data-coverage]')!;
+    coverage.replaceChildren(...state.coverage.map(record=>{
+      const row=document.createElement('div');row.dataset.coverageId=record.id;row.dataset.printed=String(record.inManuscript);
+      const label=document.createElement('strong');label.textContent=record.label;
+      const location=document.createElement('span');location.textContent=record.inManuscript?'✓ In manuscript':'Source file only';
+      const source=document.createElement('small');source.textContent=record.locator;
+      row.append(label,location,source);return row;
+    }));
     this.tray.textContent=['Existing manuscript · 1,100 pp.',...state.packets.filter(p=>p.selected).map(p=>`${p.title} · ${p.pages} pp.`)].join('\n');
     this.outside.textContent=state.packets.filter(p=>!p.selected).map(p=>p.title).join('\n')||'No packets here. Unselected material stays traceable.';
     state.packets.forEach((packet,i)=>{this.buttons[i].setAttribute('aria-pressed',String(packet.selected));this.buttons[i].querySelector('.manuscript-placement')!.textContent=packet.selected?'✓ In manuscript · tap to return to source file':'+ Place in manuscript';});

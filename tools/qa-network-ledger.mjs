@@ -166,34 +166,19 @@ async function run(label, mobile) {
     return current;
   }
 
-  async function shiftEntry(direction) {
+  async function boardAction(key) {
     assert.equal((await state()).mode, "choice");
-    // Exercise the generous hit target outside the visible arrow button.
-    if (mobile) await tap(direction < 0 ? 14 : 193, 168);
-    else if (pointerBoard) {
-      const target = await point(direction < 0 ? 14 : 193, 168);
-      await page.mouse.click(target.x, target.y);
-    }
-    else await press(direction < 0 ? "ArrowLeft" : "ArrowRight");
-    await page.waitForTimeout(150);
-  }
-
-  async function fileEntry() {
-    assert.equal((await state()).mode, "choice");
-    if (mobile) await tap(104, 168);
-    else if (pointerBoard) {
-      const target = await point(104, 168);
-      await page.mouse.click(target.x, target.y);
-    }
+    const target=page.locator(`.chronology-desk [data-focus-key=${key}]`);
+    if(mobile||pointerBoard){await target.scrollIntoViewIfNeeded();if(mobile)await target.tap();else await target.click();}
     else {
-      // Read selection only; actual input must select and file the entry.
-      if (await page.evaluate(() => window.game.scene.getScene("NetworkScene").ledgerChoice.selected !== "file")) {
-        await press("ArrowDown");
-      }
-      await press();
+      for(let i=0;i<8&&!(await target.evaluate(e=>e===document.activeElement));i++)await page.keyboard.press('Tab');
+      assert(await target.evaluate(e=>e===document.activeElement));await page.keyboard.press('Enter');
     }
     await page.waitForTimeout(150);
   }
+  async function shiftEntry(direction){await boardAction(direction<0?'earlier':'later');}
+  async function fileEntry(){await boardAction('file');}
+
 
   try {
     await page.goto(`${base}?text=full`);
@@ -478,31 +463,12 @@ async function run(label, mobile) {
       assert.equal(rotated.reliability, current.reliability);
       assert.equal(rotated.mode, "choice");
     }
-    const layout = await page.evaluate(() => {
-      const board = window.game.scene.getScene("NetworkScene").children.getByName("withholding-chronology-board");
-      const scale = window.game.canvas.getBoundingClientRect().width / 256;
-      return board.list.filter(object => object.input).map(object => {
-        const hit = object.input.hitArea;
-        return { name: object.name, x: object.x - object.width * object.originX + hit.x,
-          y: object.y - object.height * object.originY + hit.y,
-          width: hit.width, height: hit.height, cssWidth: hit.width * scale, cssHeight: hit.height * scale };
-      });
-    });
-    assert.equal(layout.length, 4);
-    for (const button of layout) {
-      assert(button.cssWidth >= 44 && button.cssHeight >= 44, `${button.name}: touch target too small`);
-      assert(button.x >= 0 && button.y >= 30 && button.x + button.width <= 256);
-      for (const other of layout.filter(other => other !== button)) {
-        assert(button.x + button.width <= other.x || other.x + other.width <= button.x
-          || button.y + button.height <= other.y || other.y + other.height <= button.y,
-        `${button.name} overlaps ${other.name}`);
-      }
-      // Existing touch A and B capture these regions before forwarding board input.
-      for (const control of [{ x: 196, y: 176, width: 58, height: 58 }, { x: 150, y: 192, width: 48, height: 48 }]) {
-        assert(button.x + button.width <= control.x || control.x + control.width <= button.x
-          || button.y + button.height <= control.y || control.y + control.height <= button.y,
-        `${button.name} overlaps the touch controls`);
-      }
+    const layout=[];
+    for(const key of ['earlier','later','file','leave']){
+      const button=page.locator(`.chronology-desk [data-focus-key=${key}]`);await button.scrollIntoViewIfNeeded();
+      const box=await button.boundingBox();assert(box.width>=44&&box.height>=44,`${key}: touch target too small`);
+      assert(await button.evaluate(e=>{const r=e.getBoundingClientRect();return e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}),`${key}: obscured target`);
+      layout.push({key,...box});
     }
     await writeFile(`${out}/board-layout.json`, JSON.stringify(layout, null, 2));
     const frozen = { player: current.player, combat: current.playerCombat, threats: current.visibleThreats, reliability: current.reliability };

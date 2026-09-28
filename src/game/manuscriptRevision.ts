@@ -43,6 +43,8 @@ export function manuscriptRevisionReadout(progress:Readonly<Progress>){
     comments:REVIEW_NOTES.map(n=>({...n,read:Boolean((progress.compilerRevisionRead??0)&n.bit)})),
     source:source?.id??null,locator:source?.locator??null,excerpt:source?.lines??null,
     highlightedLine:progress.compilerRevisionLine===1?0:progress.compilerRevisionLine===2?1:null,
+    markedEvidence:source&&(progress.compilerRevisionLine===1||progress.compilerRevisionLine===2)
+      ?{locator:source.locator,line:progress.compilerRevisionLine,text:source.lines[progress.compilerRevisionLine-1]}:null,
     applied,revisionCopy:applied?REVISED_REVIEW_NOTE:ORIGINAL_REVIEW_NOTE,
     backupAttached:progress.compilerRevisionBackup===1,complete:progress.compilerSop_revision===1};
 }

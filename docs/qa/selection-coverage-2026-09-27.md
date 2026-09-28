@@ -1,0 +1,7 @@
+# Selection coverage feedback
+
+The prior desk showed page usage and packet placement but did not summarize what evidence would enter the printed manuscript. Added an exercise-scoped coverage panel for objections, approval, and the resource shortfall, each linked to its existing fictional exhibit locator. Locations update with selection and remain distinct from the page limit. Unprinted evidence is explicitly retained in the source file. Failure feedback now identifies the three exhibits instead of only naming the required packet. No new gate or automatic editorial decision.
+
+The shared desk reader lets Up reveal a reading prelude before wrapping focus away from the first packet. The controller check asserts actual panel visibility, not scrollTop zero, since body padding permits the full panel to be visible at a nonzero offset.
+
+283 files / 2,120 tests and production build passed. Desktop,390x844 portrait,and844x390 landscape seeded manuscript-to-DPD flows pass: invalid choices, coverage state, save/reload, touch scrolling, controller reading, chapter assembly and review handoff; zero errors. Screenshots inspected. An initial dev run was invalidated by HMR during edits; final checks used the stable production preview. Standard client movement x134 in ArchiveScene; native screenshot remains black while compositor images render correctly. These fixtures do not establish novice comprehension or physical-device usability.

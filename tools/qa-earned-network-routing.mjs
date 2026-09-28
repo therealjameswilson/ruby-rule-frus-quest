@@ -1,3 +1,4 @@
+import {pressPortraitControl} from './portrait-input-fixture.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -11,8 +12,12 @@ page.on('console', message => { if (message.type() === 'error') errors.push(mess
 const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
 const eastGate = async () => (await state()).roomGraph.find(room => room.id === 'N1').lockedExitState.east;
 const cdp=mobile?await context.newCDPSession(page):null;
+if(mobile)for(const device of [page.keyboard,page.mouse])for(const method of ['press','down','up','click','move','type','insertText']){
+ if(typeof device[method]==='function')device[method]=()=>{throw Error(`Non-touch input: ${method}`);};
+}
 const key=async(k='Space',ms=50)=>{
  if(mobile){
+  if(await pressPortraitControl(page,cdp,k,ms)){await page.waitForTimeout(150);return;}
   const box=await page.locator('canvas').first().boundingBox();
   const point=(x,y)=>({x:box.x+x*box.width/256,y:box.y+y*box.height/240,id:1});
   const dirs={ArrowLeft:[-26,0],ArrowRight:[26,0],ArrowUp:[0,-26],ArrowDown:[0,26]};
@@ -33,6 +38,9 @@ try{
 
  await page.waitForTimeout(3000);
  assert.equal((await state()).scene,'NetworkScene','Reading a continued doorway save must not return to Archive');
+ assert.equal((await state()).sceneProgress.compilerSop_submission,1,'Earned editorial handoff is retained');
+ assert(!(await state()).inventory.includes('Clearance Token'),'Editorial approval does not grant clearance');
+ assert(!(await state()).sceneProgress.finalGatePublished,'The manuscript remains unpublished');
  await move(96,124);
  await page.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='FILE PUBLIC PACKET FIRST');
  assert.equal(await page.evaluate(()=>window.game.scene.getScene('UIScene').questBandVerbText.text),'!');
@@ -40,7 +48,7 @@ try{
  assert.equal((await eastGate()).canOpen,false);
  await move(96,178);await key();await shot('public-carried');
  assert.equal((await state()).sceneProgress.networkRoutingCarried,1);
- await move(96,140);await key();await shot('public-filed');
+ await move(90,138);await key();await shot('public-filed');
  assert.equal((await state()).sceneProgress.networkRoutingStep,1);
  // Approach above the OpenNet packet-filing radius so the seal owns the cue.
  await move(96,108);await key('ArrowRight',100);
@@ -73,12 +81,13 @@ try{
  await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');await key('Enter');
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='NetworkScene');await page.waitForTimeout(800);
  assert.equal((await state()).roomTraversal.currentRoomId,'N2');
+ assert(!(await state()).inventory.includes('Clearance Token'),'Routing alone does not grant the review token');
  const restoredX=(await state()).player.x;
  await key('ArrowRight',100);
  assert((await state()).player.x>restoredX);
  await shot('vault-restored');
 
  await context.storageState({path:`${out}/earned-storage.json`});
- await writeFile(`${out}/result.json`,JSON.stringify({mobile,packetsRouted:true,wrongRouteRejected:process.argv.includes('--wrong-route'),crossingOpened:true,vaultEntered:true,reloaded:true,errors},null,2));
+ await writeFile(`${out}/result.json`,JSON.stringify({mobile,packetsRouted:true,editorialAndRoutingNotRelease:true,wrongRouteRejected:process.argv.includes('--wrong-route'),crossingOpened:true,vaultEntered:true,reloaded:true,errors},null,2));
  assert.deepEqual(errors,[]);console.log('PASS four earned routing deliveries, Citation Stamp crossing and ClassNet Vault arrival');
 }finally{await shot('last');await browser.close();}

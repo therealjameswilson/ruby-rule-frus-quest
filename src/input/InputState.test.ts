@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   getInput,
   setNativeTextEntryActive,
+  setBackgroundInputSuspended,
   getPrimaryActionBadge,
   getSecondaryActionBadge,
   isTouchControlPoint,
@@ -23,9 +24,28 @@ import {
 describe("InputState keyboard edges", () => {
   afterEach(() => {
     setNativeTextEntryActive(false);
+    setBackgroundInputSuspended(false);
     setNowProviderForTests(null);
     resetInput();
     updateInputCallbacks({ isTouchControlPoint: undefined });
+  });
+
+  it("blocks held movement and actions behind the background resume shield", () => {
+    setBackgroundInputSuspended(true);
+    setKeyboardDownForTests(["ArrowRight", "KeyZ"]);
+    setTouchControl("b", true);
+    for (let frame=0;frame<4;frame++) {
+      tickInput();
+      expect(getInput().dir).toEqual({x:0,y:0});
+      expect(getInput().a).toBe(false);
+      expect(getInput().b).toBe(false);
+    }
+    setBackgroundInputSuspended(false);
+    tickInput();
+    expect(getInput().aJustPressed).toBe(false);
+    pressKeyForTests("ArrowRight");
+    tickInput();
+    expect(getInput().dir.x).toBe(1);
   });
 
   it("suspends all game input during native text entry and swallows dismissal", () => {

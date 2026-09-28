@@ -10,6 +10,15 @@ describe('evidence-led manuscript revision',()=>{
   const p=ready();chooseRevisionSource(p,3);markRevisionPassage(p,1);expect(applyManuscriptRevision(p).ok).toBe(false);
   chooseRevisionSource(p,2);markRevisionPassage(p,0);expect(applyManuscriptRevision(p).ok).toBe(false);markRevisionPassage(p,1);expect(applyManuscriptRevision(p).ok).toBe(true);
  });
+ it('shows the actually marked passage, including unsuitable evidence, without endorsing it',()=>{
+  const p=ready();
+  expect(manuscriptRevisionReadout(p).markedEvidence).toEqual({locator:'Exercise E · page 2',line:2,text:'The resource shortfall continued; further assistance was requested.'});
+  chooseRevisionSource(p,1);expect(manuscriptRevisionReadout(p).markedEvidence).toBeNull();
+  markRevisionPassage(p,0);
+  expect(manuscriptRevisionReadout(p).markedEvidence?.text).toBe('The report was forwarded to the responsible office.');
+  expect(manuscriptRevisionReadout(p).applied).toBe(false);
+  expect(applyManuscriptRevision(p).ok).toBe(false);
+ });
  it('retains the original, persists the draft, and requires numbered backup',()=>{
   let p=ready();expect(evaluateManuscriptRevision(p).ok).toBe(false);applyManuscriptRevision(p);expect(evaluateManuscriptRevision(p).ok).toBe(false);
   p.compilerRevisionBackup=1;p=JSON.parse(JSON.stringify(p));expect(evaluateManuscriptRevision(p).ok).toBe(true);

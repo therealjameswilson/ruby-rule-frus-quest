@@ -5,7 +5,7 @@ assert(process.env.FRUS_QA_STORAGE, 'Provide the preceding earned checkpoint via
 const out=process.env.FRUS_QA_OUT ?? '/private/tmp/frus-earned-clearance';await mkdir(out,{recursive:true});
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE});
 const mobile=process.argv.includes('--mobile');
-const context=await browser.newContext({storageState:process.env.FRUS_QA_STORAGE,...(mobile?{viewport:{width:390,height:844},hasTouch:true,isMobile:true}:{})});
+const context=await browser.newContext({storageState:process.env.FRUS_QA_STORAGE,...(mobile?{viewport:{width:375,height:667},hasTouch:true,isMobile:true}:{})});
 const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
 page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
 const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
@@ -67,10 +67,11 @@ try{
  await move(96,96);await key();await shot('release-filed');assert.equal((await state()).sceneProgress.classNetVaultReviewStep,2);
  await move(164,96);await move(176,150);await key();await shot('ledger');
  console.log(JSON.stringify((await state()).choice));
- await key('ArrowDown');await key();await shot('missing-entry');
+ const ledger=async(key)=>{const target=page.locator(`.chronology-desk [data-focus-key=${key}]`);await target.scrollIntoViewIfNeeded();if(mobile)await target.tap();else await target.click();await page.waitForTimeout(150);};
+ await ledger('file');await shot('missing-entry');
  assert(!(await state()).sceneProgress.classNetVaultReviewComplete);
- await key('ArrowRight');await key('ArrowRight');await shot('chronology-corrected');
- await key('ArrowDown');await key();await page.waitForTimeout(600);await shot('review-complete');
+ await ledger('later');await ledger('later');await shot('chronology-corrected');
+ await ledger('file');await page.waitForTimeout(600);await shot('review-complete');
  if(process.argv.includes('--reward-art')){
   const art=await page.evaluate(()=>{const icon=window.game.scene.getScene('NetworkScene').clearanceTokenIcon;return {texture:icon.texture.key,width:icon.displayWidth,height:icon.displayHeight,sourceWidth:icon.texture.getSourceImage().width};});
   assert.equal(art.texture,'world-item-detail-v2-clearance-token');assert.equal(art.width,24);assert.equal(art.height,24);assert.equal(art.sourceWidth,144);
@@ -86,6 +87,7 @@ try{
   assert(burst,'Pickup celebration must use the detailed icon too');
  }
  assert((await state()).inventory.includes('Clearance Token'));
+ assert(!(await state()).sceneProgress.finalGatePublished,'A review token does not publish the volume');
  await move(216,132);await move(216,120);await key('ArrowRight',1200);
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='ReferralVaultScene');
  await page.waitForTimeout(700);await shot('referral-arrival');
@@ -106,6 +108,6 @@ try{
  assert((await state()).player.y>restored.player.y,'Movement must resume after the handoff reload');
 
  await context.storageState({path:`${out}/earned-storage.json`});
- await writeFile(`${out}/result.json`,JSON.stringify({mobile,reviewFiled:true,missingEntryRejected:true,chronologyRepaired:true,tokenEarned:true,referralEntered:true,reloadedWithoutDuplicateReward:true,errors},null,2));
+ await writeFile(`${out}/result.json`,JSON.stringify({mobile,reviewFiled:true,missingEntryRejected:true,chronologyRepaired:true,tokenEarned:true,reviewNotPublication:true,referralEntered:true,reloadedWithoutDuplicateReward:true,errors},null,2));
  assert.deepEqual(errors,[]);console.log('PASS earned review batch, missing-entry rejection, chronology repair, Clearance Token, referral arrival and reload');
 }finally{await shot('last');await browser.close();}

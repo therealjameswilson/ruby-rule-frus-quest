@@ -62,10 +62,15 @@ export class DeskControls {
   private moveFocus(step:number,readPacket=true){
     const current=this.buttons[this.focusIndex];if(!current)return;
     const body=this.root.querySelector<HTMLElement>('.manuscript-body')!;
-    const readable=current.closest<HTMLElement>('[data-readable]')??(current.dataset.packet?current:null);
+    const readable=(current.dataset.readingTarget?this.root.querySelector<HTMLElement>(current.dataset.readingTarget):null)
+      ??current.closest<HTMLElement>('[data-readable]')??(current.dataset.packet?current:null);
     if(readPacket&&readable){
       const card=readable.getBoundingClientRect(),viewport=body.getBoundingClientRect();
-      const clipped=step>0?card.bottom-viewport.bottom:viewport.top-card.top;
+      // A reading prelude belongs to the first packet. Up must reveal it,
+      // rather than wrapping focus away before a controller user can read it.
+      const prelude=this.focusIndex===0?this.root.querySelector<HTMLElement>('[data-reading-start]'):null;
+      const top=prelude?Math.min(card.top,prelude.getBoundingClientRect().top):card.top;
+      const clipped=step>0?card.bottom-viewport.bottom:viewport.top-top;
       if(clipped>4){const before=body.scrollTop;body.scrollTop+=step*Math.min(clipped+8,body.clientHeight*.75);if(Math.abs(body.scrollTop-before)>1)return;}
     }
     this.focusIndex=(this.focusIndex+step+this.buttons.length)%this.buttons.length;

@@ -15,3 +15,8 @@
 .revision-action[aria-pressed=true]{background:#526d49;border-color:#bbd8a4}
 @media(max-width:760px){.revision-desk .assembly-body{grid-template-columns:1fr;gap:20px}.revision-changes{grid-template-columns:1fr}.revision-summary{padding:12px 20px;font-size:11px}.revision-desk .assembly-sources button{padding:10px}.revision-original p,.revision-proposed p{font-size:19px}}
 @media(max-height:550px) and (min-width:761px){.revision-desk .assembly-body{grid-template-columns:230px 1fr;gap:18px}.revision-summary{padding:8px 20px;font-size:11px}.revision-comment{padding:14px}.revision-desk .assembly-sources{display:grid}}
+
+.revision-marked-evidence{grid-column:1/-1;grid-row:2;border:1px solid #8aa4a3;border-radius:10px;background:#142c33;padding:18px;color:#e5f0e9}
+.revision-marked-evidence strong{display:block;font-size:11px;letter-spacing:.06em;color:#b8d3ce}
+.revision-marked-evidence span{display:block;font-size:12px;color:#bdccca;margin-top:6px}
+.revision-marked-evidence p{font:19px/1.5 Georgia,serif;margin:10px 0 0}

@@ -38,7 +38,11 @@ export function manuscriptSelectionReadout(progress: Readonly<Record<string, num
   const packets = SELECTION_PACKETS.map(p => ({id:p.id, title:p.title, pages:p.pages, selected:progress[p.flag]===1 || (p.id==='decision' && progress.compilerSop_selection===1 && progress[p.flag]===undefined)}));
   const pages = MANUSCRIPT_BASE_PAGES + packets.reduce((n,p)=>n+(p.selected?p.pages:0),0);
   return {basePages:MANUSCRIPT_BASE_PAGES, pageLimit:MANUSCRIPT_PAGE_LIMIT, pages,
-    remaining:MANUSCRIPT_PAGE_LIMIT-pages, annotationCountsTowardLimit:false, packets};
+    remaining:MANUSCRIPT_PAGE_LIMIT-pages, annotationCountsTowardLimit:false, packets,
+    coverage: CHAPTER_EXHIBITS.map((record,index)=>({
+      id:record.id, label:['Objections','Approved instruction','Resource shortfall'][index],
+      locator:record.locator, inManuscript:packets[0].selected
+    }))};
 }
 export function toggleSelectionPacket(progress: Record<string, number>, id: SelectionPacketId) {
   const packet = SELECTION_PACKETS.find(p=>p.id===id)!;
@@ -47,6 +51,6 @@ export function toggleSelectionPacket(progress: Record<string, number>, id: Sele
 export function evaluateManuscriptSelection(progress: Readonly<Record<string, number>>) {
   const state = manuscriptSelectionReadout(progress);
   if (state.remaining<0) return {ok:false, message:`${-state.remaining} pages over the document limit. Compare what each packet contributes; retain useful unprinted evidence for annotation.`};
-  if (!state.packets[0].selected) return {ok:false, message:'The manuscript is missing the decision trail. Space alone is not enough: preserve the policy decision, dissent, and implementation evidence.'};
+  if (!state.packets[0].selected) return {ok:false, message:'The manuscript is missing the decision trail. Space alone is not enough: Exercise A records objections; B gives the approval; C reports a resource shortfall. The daily summaries do not replace that evidence.'};
   return {ok:true, message:'Decision trail selected. Supporting file retained for annotation and further research.'};
 }

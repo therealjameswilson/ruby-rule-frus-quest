@@ -4,9 +4,9 @@ export const RELEASE_SCOPE_TITLE = "CHECK THE RELEASE SCOPE";
 export const RELEASE_SCOPE_SOURCE = ABOUT_SERIES_SOURCE.url;
 export const RELEASE_SCOPE_EVIDENCE = "RELEASE NOTE: SECTION B ONLY";
 export const RELEASE_SCOPE_PARTS = [
-  { id: "source", label: "A SOURCE" },
-  { id: "excerpt", label: "B EXCERPT" },
-  { id: "annex", label: "C ANNEX" }
+  { id: "source", label: "A SOURCE", cleared: false },
+  { id: "excerpt", label: "B EXCERPT", cleared: true },
+  { id: "annex", label: "C ANNEX", cleared: false }
 ] as const;
 export type ReleaseScopePart = 0 | 1 | 2;
 
