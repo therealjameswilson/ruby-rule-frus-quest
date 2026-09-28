@@ -29,9 +29,12 @@ try{for(const [name,width,height] of [['desktop',1280,900],['phone',375,667],['l
   await p.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
   await p.locator('#tap-resume-overlay button').tap();assert.equal(await p.evaluate(()=>window.qaDraft),2);assert.deepEqual(await p.evaluate(()=>window.qaFiled),[]);
   await p.keyboard.press('Escape');assert.equal(await p.locator('.chronology-desk').count(),0);await show(2);
-  // Read all evidence with Up while keeping the first control focused.
-  await p.locator('[data-focus-key=earlier]').scrollIntoViewIfNeeded();
+  // Footer actions stay visible even when the evidence is scrolled away.
+  await p.locator('.manuscript-body').evaluate(e=>e.scrollTop=e.scrollHeight);
+  for(const key of ['earlier','later','file']){const r=await p.locator(`[data-focus-key=${key}]`).boundingBox();assert(r.y>=0&&r.y+r.height<=height,'Chronology actions must stay in view');}
+  await p.locator('[data-focus-key=earlier]').focus();
   for(let n=0;n<10;n++){const visible=await p.locator('.chronology-evidence').evaluate(e=>{const r=e.getBoundingClientRect(),v=e.closest('.manuscript-body').getBoundingClientRect();return r.top>=v.top;});if(visible)break;await pad(12);}
+  assert(await p.locator('.chronology-evidence').evaluate(e=>e.getBoundingClientRect().top>=e.closest('.manuscript-body').getBoundingClientRect().top),'Controller Up must reveal evidence from the fixed footer');
   await p.screenshot({path:`${out}/${name}-${scene}-draft.png`});
   assert.equal(await p.evaluate(()=>window.qaDraft),2);
   for(let n=0;n<8&&!(await p.locator('[data-focus-key=file]').evaluate(e=>e===document.activeElement));n++)await p.keyboard.press('Tab');

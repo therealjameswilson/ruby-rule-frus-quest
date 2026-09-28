@@ -12,11 +12,16 @@
 .chronology-record b{font-size:22px;font-variant-numeric:tabular-nums}
 .chronology-record[data-record=memcon]{background:#792a3d;color:#fae5ac;border:2px solid #ecc46f}
 .chronology-record[data-record=missing]{background:#142229;border:1px dashed #8ca9a2;color:#bbcfc6}
-.chronology-move{display:flex;justify-content:space-between;gap:16px;margin-top:20px}
-.chronology-move button{min-height:48px;border:1px solid #85988b;border-radius:10px;background:#293f38;color:#e6eacf;padding:12px 18px;font-size:14px}
+.chronology-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;grid-column:1/-1}
+.chronology-actions button{min-height:48px;border:1px solid #85988b;border-radius:10px;background:#293f38;color:#e6eacf;padding:12px 18px;font-size:14px}
 .chronology-desk [data-status]{white-space:pre-line}
-@media(max-width:760px){.chronology-evidence{grid-template-columns:1fr;padding:16px;gap:8px}.chronology-sequence{gap:8px}.chronology-record{padding:16px 8px;gap:8px}.chronology-record strong{font-size:13px}.chronology-record span{font-size:13px}.chronology-record b{font-size:18px}.chronology-move button{padding:12px;font-size:13px}.chronology-desk .manuscript-heading h1{font-size:25px}}
-@media(max-height:550px){.chronology-evidence{padding:14px;gap:6px 20px;margin-bottom:16px}.chronology-move{margin-top:14px}}
+@media(max-width:760px){.chronology-evidence{grid-template-columns:1fr;padding:16px;gap:8px}.chronology-sequence{gap:8px}.chronology-record{padding:16px 8px;gap:8px}.chronology-record strong{font-size:13px}.chronology-record span{font-size:13px}.chronology-record b{font-size:18px}.chronology-actions button{padding:12px;font-size:13px}.chronology-desk .manuscript-heading h1{font-size:25px}}
+@media(max-height:550px){.chronology-evidence{padding:14px;gap:6px 20px;margin-bottom:16px}}
 @media(max-width:480px){.chronology-desk .manuscript-heading>div{width:100%}.chronology-desk .manuscript-eyebrow{max-width:calc(100% - 100px);line-height:1.5}}
 .chronology-desk .manuscript-close{min-height:44px}
 .chronology-desk .manuscript-submit{min-height:48px}
+
+.chronology-desk .manuscript-footer{grid-template-columns:1fr}
+.chronology-actions button{padding:12px 10px;text-align:center}
+.chronology-actions .manuscript-submit{background:#e6cc91;color:#253437;border-color:#ffefc9;font-size:14px!important}
+@media(max-width:480px){.chronology-actions{gap:8px}.chronology-actions button,.chronology-actions .manuscript-submit{font-size:12px!important;padding:12px 6px}}

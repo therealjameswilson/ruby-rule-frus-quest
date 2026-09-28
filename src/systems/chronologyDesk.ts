@@ -18,8 +18,8 @@ export class ChronologyDesk {
     this.root.setAttribute('aria-labelledby','chronology-title');
     this.root.innerHTML=`<section class="manuscript-panel">
       <header class="manuscript-heading"><div><p class="manuscript-eyebrow">CHRONOLOGY · FICTIONAL TRAINING CASE</p><h1 id="chronology-title"></h1><p>Compare the event and drafting times. Move the memcon, then file the entry.</p></div><button class="manuscript-close" data-focus-key="leave">Save &amp; leave</button></header>
-      <div class="manuscript-body"><section class="chronology-work" data-readable><section class="chronology-evidence" data-reading-start aria-label="Record evidence"></section><h2>Order in the volume</h2><div class="chronology-sequence" aria-label="Draft chronological sequence"></div><div class="chronology-move"><button data-focus-key="earlier">← Move earlier</button><button data-focus-key="later">Move later →</button></div></section></div>
-      <footer class="manuscript-footer"><p data-status role="status" aria-live="polite"></p><button class="manuscript-submit" data-focus-key="file">File entry →</button><small>Arrows / D-pad to read and move · A / Enter to act · B / Esc to save and leave</small></footer>
+      <div class="manuscript-body"><section class="chronology-work" data-readable><section class="chronology-evidence" data-reading-start aria-label="Record evidence"></section><h2>Order in the volume</h2><div class="chronology-sequence" aria-label="Draft chronological sequence"></div></section></div>
+      <footer class="manuscript-footer"><p data-status role="status" aria-live="polite"></p><div class="chronology-actions"><button data-focus-key="earlier" data-reading-target=".chronology-work">← Earlier</button><button data-focus-key="later" data-reading-target=".chronology-work">Later →</button><button class="manuscript-submit" data-focus-key="file">File entry</button></div><small>Arrows / D-pad to read and move · A / Enter to act · B / Esc to save and leave</small></footer>
     </section>`;
     this.root.querySelector('h1')!.textContent=task.heading;
     const evidence=this.root.querySelector('.chronology-evidence')!;
@@ -41,7 +41,7 @@ export class ChronologyDesk {
       const time=document.createElement('b');time.textContent=record?.time??'—';
       card.append(label,date,time);this.sequence.append(card);
     }
-    this.later.textContent=records.length<3?'Insert entry →':'Move later →';
+    this.later.textContent=records.length<3?'Insert →':'Later →';
     this.status.textContent=message;this.status.dataset.error=String(error);
     if(this.firstRender){this.firstRender=false;if(records.length<3)this.later.focus({preventScroll:true});}
   }

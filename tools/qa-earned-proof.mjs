@@ -58,13 +58,24 @@ try {
  await key();await key();await shot('referral-stamped');
  assert.equal((await state()).sceneProgress.silentReadReviewStep,4);
  await move(96,132);await move(192,132);await key();await shot('chronology');
- // This board hides the floating controls; use its visible file/shift buttons.
- if(mobile)await tap(104,168);else{await key('ArrowDown');await key();}
+ // The chronology task now uses native desk controls.
+ const chronology=async(action)=>{const target=page.locator(`.chronology-desk [data-focus-key=${action}]`);await target.scrollIntoViewIfNeeded();if(mobile)await target.tap();else await target.click();await page.waitForTimeout(150);};
+ await chronology('file');
  await shot('draft-date-rejected');
  assert((await state()).choice, 'Invalid chronology must leave the correction board open');
  assert.equal((await state()).sceneProgress.silentReadReviewStep,4);
  assert(!(await state()).inventory.includes('Proof Lens'));
- if(mobile){await tap(34,168);await tap(104,168);}else{await key('ArrowLeft');await key('ArrowDown');await key();}
+ await chronology('earlier');
+ assert.equal((await state()).sceneProgress.silentReadChronologySlot,2);
+ if(process.argv.includes('--reload-chronology')){
+  const drafted=await state();await chronology('leave');
+  await page.reload();await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');await key('Enter');
+  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='SilentReadScene');await page.waitForTimeout(600);await key();
+  await page.waitForSelector('.chronology-desk');
+  assert.equal((await state()).sceneProgress.silentReadChronologySlot,2);assert.equal((await state()).documentPoints,drafted.documentPoints);
+  assert(!(await state()).inventory.includes('Proof Lens'));await shot('chronology-draft-restored');
+ }
+ await chronology('file');
  await shot('chronology-filed');
  assert(!(await state()).inventory.includes('Proof Lens'));
  await key();await page.waitForTimeout(100);await shot('lens-earned');
@@ -77,5 +88,5 @@ try {
  assert.equal((await state()).roomTraversal.currentRoomId,'S1');
  assert.equal((await state()).sceneProgress.silentReadReviewStep,5);
  assert((await state()).inventory.includes('Proof Lens'));await shot('lens-reloaded');
- assert.deepEqual(errors,[]);await writeFile(`${out}/result.json`,JSON.stringify({mobile,stage:'proof',passed:true,errors,final:{scene:(await state()).scene,room:(await state()).roomTraversal.currentRoomId,inventory:(await state()).inventory,documentPoints:(await state()).documentPoints}},null,2));console.log(`PASS ${mobile?'touch-only':'keyboard'} earned Proof Lens, rejected drafts, and saved production handoff`);
+ assert.deepEqual(errors,[]);await writeFile(`${out}/result.json`,JSON.stringify({mobile,stage:'proof',passed:true,chronologyDraftReload:process.argv.includes('--reload-chronology'),errors,final:{scene:(await state()).scene,room:(await state()).roomTraversal.currentRoomId,inventory:(await state()).inventory,documentPoints:(await state()).documentPoints}},null,2));console.log(`PASS ${mobile?'touch-only':'keyboard'} earned Proof Lens, rejected drafts, and saved production handoff`);
 } finally {try{await shot('last');}catch(error){console.error('Final screenshot unavailable:',error.message);}await browser.close();}

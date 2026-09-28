@@ -62,7 +62,8 @@ export class DeskControls {
   private moveFocus(step:number,readPacket=true){
     const current=this.buttons[this.focusIndex];if(!current)return;
     const body=this.root.querySelector<HTMLElement>('.manuscript-body')!;
-    const readable=current.closest<HTMLElement>('[data-readable]')??(current.dataset.packet?current:null);
+    const readable=(current.dataset.readingTarget?this.root.querySelector<HTMLElement>(current.dataset.readingTarget):null)
+      ??current.closest<HTMLElement>('[data-readable]')??(current.dataset.packet?current:null);
     if(readPacket&&readable){
       const card=readable.getBoundingClientRect(),viewport=body.getBoundingClientRect();
       // A reading prelude belongs to the first packet. Up must reveal it,
