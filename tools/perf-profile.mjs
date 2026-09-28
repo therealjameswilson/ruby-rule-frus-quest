@@ -94,19 +94,6 @@ const rendererInfo = await page.evaluate(() => {
 });
 await page.evaluate(() => window.rubyRuleResetPerformanceMetrics?.());
 await page.waitForTimeout(100);
-// Observe actual game steps: the diagnostic HUD's separate RAF and coarse
-// percentile buckets are not a substitute for game-loop frame pacing.
-await page.evaluate(() => {
-  window.__profileSteps = [];
-  let previous;
-  const observe = () => {
-    const now = performance.now();
-    if (previous !== undefined) window.__profileSteps.push(now - previous);
-    previous = now;
-  };
-  window.game.events.on('step', observe);
-  window.__stopProfileSteps = () => window.game.events.off('step', observe);
-});
 
 if (profileGraphics) await page.evaluate(() => {
   window.__graphicsCosts = [];
@@ -125,24 +112,44 @@ if (profileGraphics) await page.evaluate(() => {
   };
   for (const scene of window.game.scene.getScenes(true)) scene.children.list.forEach((object,index)=>visit(object,scene.sys.settings.key,String(index)));
 });
-const startedAt = Date.now();
 if (cpuProfilePath) {
   await cdp.send('Profiler.enable');
   await cdp.send('Profiler.start');
 }
+// Observe actual game steps: the diagnostic HUD's separate RAF and coarse
+// percentile buckets are not a substitute for game-loop frame pacing.
+await page.evaluate(() => {
+  window.__profileSteps = [];
+  let previous;
+  const observe = () => {
+    const now = performance.now();
+    if (previous !== undefined) window.__profileSteps.push(now - previous);
+    previous = now;
+  };
+  window.game.events.on('step', observe);
+  window.__stopProfileSteps = () => window.game.events.off('step', observe);
+});
+
+const startedAt = Date.now();
 const samples = [];
 let walkingKey = null;
 let previousLeg = -1;
+const inputSurfaces = new Set();
 while (Date.now() - startedAt < seconds * 1000) {
   if (walk) {
     const leg = Math.floor((Date.now() - startedAt) / 1000);
     if (leg !== previousLeg) {
       const right = leg % 2 === 0;
       if (mobile) {
-        const box = await page.locator('canvas').first().boundingBox();
-        const point = x => ({ x: box.x + x * box.width / 256, y: box.y + 202 * box.height / 240, id: 1 });
-        if (previousLeg < 0) await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(48)] });
-        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point(right ? 74 : 22)] });
+        const dock=page.locator('#portrait-touch-dock [data-control="pad"]');
+        const docked=await dock.isVisible();
+        const box=await (docked?dock:page.locator('canvas').first()).boundingBox();
+        const point = direction => docked
+          ? {x:box.x+box.width*(.5+direction*.35),y:box.y+box.height*.5,id:1}
+          : {x:box.x+(48+direction*26)*box.width/256,y:box.y+202*box.height/240,id:1};
+        inputSurfaces.add(docked?'portrait dock':'canvas pad');
+        if (previousLeg < 0) await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(0)] });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point(right ? 1 : -1)] });
       } else {
         if (walkingKey) await page.keyboard.up(walkingKey);
         walkingKey = right ? 'ArrowRight' : 'ArrowLeft';
@@ -200,6 +207,7 @@ const report = {
   warmupMs,
   mobile,
   walk,
+  inputSurfaces: [...inputSurfaces],
   cpuThrottle,
   reducedMotion,
   browserChannel: channel || 'bundled-chromium',
@@ -244,4 +252,8 @@ await fs.writeFile(outPath, `${JSON.stringify(report, null, 2)}\n`);
 
 console.log(`Wrote ${outPath}`);
 console.log(JSON.stringify(report.summary, null, 2));
+if (report.summary.movementRunValid === false || pageErrors.length) {
+  console.error('Invalid gameplay profile: requested movement was not sustained, or a page error occurred. See the saved report.');
+  process.exitCode = 1;
+}
 } finally { await browser.close(); }

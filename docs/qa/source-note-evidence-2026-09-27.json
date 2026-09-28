@@ -1,0 +1,144 @@
+[
+  {
+    "mobile": false,
+    "lines": [
+      {
+        "text": "NOTE 47 / FICTIONAL RECORD",
+        "x": 20,
+        "y": 24,
+        "width": 119,
+        "height": 8.6640625
+      },
+      {
+        "text": "REPO  NATIONAL ARCHIVES\nCOLL  POLICY PLANNING\nFILE  ALLIANCE CONSULTATION",
+        "x": 20,
+        "y": 40,
+        "width": 124,
+        "height": 29.9921875
+      },
+      {
+        "text": "CLASSIFICATION: NOT RECORDED\nDISTRIBUTION: NOT RECORDED\nDRAFTING: NOT RECORDED",
+        "x": 20,
+        "y": 75,
+        "width": 135,
+        "height": 29.9921875
+      },
+      {
+        "text": "CONTEXT: FOLDER TITLE ONLY",
+        "x": 20,
+        "y": 110,
+        "width": 122,
+        "height": 8.6640625
+      },
+      {
+        "text": "NO READERSHIP EVIDENCE FOUND",
+        "x": 20,
+        "y": 122,
+        "width": 141,
+        "height": 8.6640625
+      },
+      {
+        "text": "DRAFT: PRESIDENT READ IT\nREMOVE UNSUPPORTED CLAIM",
+        "x": 28,
+        "y": 141,
+        "width": 125,
+        "height": 21.328125
+      },
+      {
+        "text": "FILE NOTE",
+        "x": 50,
+        "y": 181,
+        "width": 42,
+        "height": 8.6640625
+      },
+      {
+        "text": "RETURN",
+        "x": 170,
+        "y": 181,
+        "width": 34,
+        "height": 8.6640625
+      },
+      {
+        "text": "ONE UNSUPPORTED CLAIM",
+        "x": 20,
+        "y": 207,
+        "width": 108,
+        "height": 8.6640625
+      }
+    ],
+    "unsupportedRejected": true,
+    "correctedThenFiled": true,
+    "errors": []
+  },
+  {
+    "mobile": true,
+    "lines": [
+      {
+        "text": "NOTE 47 / FICTIONAL RECORD",
+        "x": 20,
+        "y": 24,
+        "width": 119,
+        "height": 8.6640625
+      },
+      {
+        "text": "REPO  NATIONAL ARCHIVES\nCOLL  POLICY PLANNING\nFILE  ALLIANCE CONSULTATION",
+        "x": 20,
+        "y": 40,
+        "width": 124,
+        "height": 29.9921875
+      },
+      {
+        "text": "CLASSIFICATION: NOT RECORDED\nDISTRIBUTION: NOT RECORDED\nDRAFTING: NOT RECORDED",
+        "x": 20,
+        "y": 75,
+        "width": 135,
+        "height": 29.9921875
+      },
+      {
+        "text": "CONTEXT: FOLDER TITLE ONLY",
+        "x": 20,
+        "y": 110,
+        "width": 122,
+        "height": 8.6640625
+      },
+      {
+        "text": "NO READERSHIP EVIDENCE FOUND",
+        "x": 20,
+        "y": 122,
+        "width": 141,
+        "height": 8.6640625
+      },
+      {
+        "text": "DRAFT: PRESIDENT READ IT\nREMOVE UNSUPPORTED CLAIM",
+        "x": 28,
+        "y": 141,
+        "width": 125,
+        "height": 21.328125
+      },
+      {
+        "text": "FILE NOTE",
+        "x": 50,
+        "y": 181,
+        "width": 42,
+        "height": 8.6640625
+      },
+      {
+        "text": "RETURN",
+        "x": 170,
+        "y": 181,
+        "width": 34,
+        "height": 8.6640625
+      },
+      {
+        "text": "ONE UNSUPPORTED CLAIM",
+        "x": 20,
+        "y": 207,
+        "width": 108,
+        "height": 8.6640625
+      }
+    ],
+    "unsupportedRejected": true,
+    "correctedThenFiled": true,
+    "errors": []
+  }
+]

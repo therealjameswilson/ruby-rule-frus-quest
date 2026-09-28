@@ -25,3 +25,9 @@
 .manuscript-panel{max-height:calc(100dvh - max(var(--desk-inset),env(safe-area-inset-top)) - max(var(--desk-inset),env(safe-area-inset-bottom)))}
 @media(max-width:760px){.manuscript-desk{--desk-inset:12px}}
 @media(max-height:550px){.manuscript-desk{--desk-inset:8px}}
+/* Record samples make the selection tradeoff visible without a separate quiz. */
+.manuscript-evidence{display:flex;flex-direction:column;gap:10px;border-left:2px solid #9f8b66;padding-left:10px}
+.manuscript-evidence-heading{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6c6047;font-weight:700}
+.manuscript-record{display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.45}
+.manuscript-record b{font-size:11px;color:#405d58}
+.manuscript-record>span{color:#354144}

@@ -35,14 +35,25 @@ export class ResearchWorldScene extends Phaser.Scene {
   private tally!: Phaser.GameObjects.Text;
   private worldLabels: Phaser.GameObjects.Text[] = [];
   private arrival?: {x:number;y:number};
+  private fallbackDisguise?: number;
+  private arrivalDisguise?: number;
   constructor() { super('ResearchWorldScene'); }
 
-  init(data: {x?:number;y?:number} = {}) {
+  init(data: {x?:number;y?:number;disguiseFallback?:number} = {}) {
     this.arrival = typeof data.x === 'number' && typeof data.y === 'number' ? {x:data.x,y:data.y} : undefined;
+    this.fallbackDisguise = data.disguiseFallback;
   }
   preload() {
     this.disguise=disguiseIndex(gameState.sceneProgress.researchDanneDisguise);
-    this.loadDisguise(this.disguise);
+    this.arrivalDisguise=undefined;
+    // A cosmetic change must not empty the world while its image downloads.
+    // Initial visits still preload normally; crossings can retain a cached pose.
+    if (!this.textures.exists(`danne-disguise-${this.disguise}`)
+      && this.fallbackDisguise !== undefined
+      && this.textures.exists(`danne-disguise-${this.fallbackDisguise}`)) {
+      this.arrivalDisguise=this.disguise;
+      this.disguise=this.fallbackDisguise;
+    } else this.loadDisguise(this.disguise);
     if (researchZone(gameState.sceneProgress.researchWorldZone) === 1) {
       for (const name of ['sweetgreen-v2','james-v3']) {
         if (!this.textures.exists(`research-${name}`)) this.load.image(`research-${name}`, `assets/research-world/presentation/${name}.png`);
@@ -138,6 +149,7 @@ export class ResearchWorldScene extends Phaser.Scene {
     setVisibleEntities([zone.name,...landmarks.map(l=>l.name),...(this.zone===1?['Sweetgreen','James']:[]),'DANN-E (civilian disguise)','Rail station','Discovery journal','Return to office / Washington']);
     setLatestMessage('Walk freely. Approach a landmark and press A to discover it. Rail travel is free.');
     this.refreshTally(); swallowNextInputFrame();
+    if(this.arrivalDisguise!==undefined)this.loadAndApplyDisguise(this.arrivalDisguise,false);
   }
   update(_:number,delta:number) {
     tickInput(); const input=getInput();
@@ -246,12 +258,15 @@ export class ResearchWorldScene extends Phaser.Scene {
   }
   private changeDisguise() {
     if(this.load.isLoading())return;
-    const next=disguiseIndex(this.disguise+1),key=`danne-disguise-${next}`;
+    this.loadAndApplyDisguise(disguiseIndex(this.disguise+1),true);
+  }
+  private loadAndApplyDisguise(next:number,announce:boolean) {
+    const key=`danne-disguise-${next}`;
     const target=this.danne;
     const apply=()=>{
       if(this.danne!==target||!this.sys.isActive()||!this.textures.exists(key))return;
       this.disguise=next;this.applyDisguise(next);saveGameNow();
-      setLatestMessage(`DANN-E changes into his ${DANNE_DISGUISES[next].movie} disguise. ${next+1}/20. A: talk. B: next disguise.`);
+      if(announce)setLatestMessage(`DANN-E changes into his ${DANNE_DISGUISES[next].movie} disguise. ${next+1}/20. A: talk. B: next disguise.`);
     };
     if(this.textures.exists(key)){apply();return;}
     this.loadDisguise(next);this.load.once('complete',apply);this.load.start();
@@ -316,7 +331,7 @@ export class ResearchWorldScene extends Phaser.Scene {
     if(this.leaving)return;
     this.leaving=true;gameState.sceneProgress.researchWorldZone=zone;
     gameState.sceneProgress.researchDanneDisguise=disguiseIndex(this.disguise+1);
-    swallowNextInputFrame();this.scene.restart(arrival);
+    swallowNextInputFrame();this.scene.restart({...arrival,disguiseFallback:this.disguise});
   }
   private travelMenu() {
     this.choice.show('FREE RESEARCH RAIL\nChoose a destination.',[

@@ -57,7 +57,7 @@ export class ChapterAssemblyDesk {
   }
   private renderChronology(){
     const state=chapterAssemblyReadout(this.progress);
-    const introduction=document.createElement('p');introduction.className='assembly-brief';introduction.textContent='Illustrative records · DANN-E: “I sorted them by typing date. You’re welcome.”';this.body.append(introduction);
+    const introduction=document.createElement('p');introduction.className='assembly-brief';introduction.textContent='Your selected decision trail · Fictional records A–C. DANN-E: “I sorted them by typing date. You’re welcome.”';this.body.append(introduction);
     const list=document.createElement('ol');list.className='assembly-records';list.setAttribute('aria-label','Document sequence');this.body.append(list);
     state.order.forEach((id,index)=>{
       const exhibit=CHAPTER_EXHIBITS.find(e=>e.id===id)!;const row=document.createElement('li');row.dataset.record=id;row.dataset.readable='';

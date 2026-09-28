@@ -1,0 +1,395 @@
+{
+  "runs": [
+    {
+      "url": "http://127.0.0.1:5221/?scene=OfficeScene&fps=1",
+      "seconds": 12,
+      "mobile": true,
+      "walk": true,
+      "inputSurfaces": null,
+      "rendererInfo": {
+        "api": "webgl",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)",
+        "softwareRenderer": false,
+        "backingWidth": 768,
+        "backingHeight": 720,
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+      },
+      "summary": {
+        "measuredGameFrames": 735,
+        "gameFrameP50Ms": 16.69999998807907,
+        "gameFrameP95Ms": 17.099999994039536,
+        "gameFrameP99Ms": 17.5,
+        "gameFrameMaxMs": 18.099999994039536,
+        "gameFramesOver33Ms": 0,
+        "gameFramesOver50Ms": 0,
+        "sampleCount": 45,
+        "gameLoopFps": 59.9764468371467,
+        "maxReportedThreats": 1,
+        "movingSamples": 0,
+        "movementCoverage": 0,
+        "movementRunValid": false,
+        "gameplayModes": [
+          "explore"
+        ],
+        "avgFps": 60.002228860532796,
+        "minFps": 59.99461203811536,
+        "maxSampledFrameP99Ms": 20,
+        "finalFrameP99Ms": 20,
+        "finalFrameMaxMs": 16.80000000000109,
+        "lastInputLatencyMs": 12.299999976158233,
+        "consoleWarningsOrErrors": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "url": "http://127.0.0.1:5221/?scene=OfficeScene&fps=1",
+      "seconds": 12,
+      "mobile": true,
+      "walk": true,
+      "inputSurfaces": [
+        "portrait dock"
+      ],
+      "rendererInfo": {
+        "api": "webgl",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)",
+        "softwareRenderer": false,
+        "backingWidth": 768,
+        "backingHeight": 720,
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+      },
+      "summary": {
+        "measuredGameFrames": 715,
+        "gameFrameP50Ms": 16.69999998807907,
+        "gameFrameP95Ms": 18,
+        "gameFrameP99Ms": 18.5,
+        "gameFrameMaxMs": 136.7000000178814,
+        "gameFramesOver33Ms": 1,
+        "gameFramesOver50Ms": 1,
+        "sampleCount": 45,
+        "gameLoopFps": 59.34819897084048,
+        "maxReportedThreats": 1,
+        "movingSamples": 44,
+        "movementCoverage": 1,
+        "movementRunValid": true,
+        "gameplayModes": [
+          "explore"
+        ],
+        "avgFps": 59.9161934842216,
+        "minFps": 59.02399023037328,
+        "maxSampledFrameP99Ms": 133.30000000000018,
+        "finalFrameP99Ms": 20,
+        "finalFrameMaxMs": 16.80000000000109,
+        "lastInputLatencyMs": 13.400000000000091,
+        "consoleWarningsOrErrors": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "url": "http://127.0.0.1:5221/?scene=ArchiveScene&fps=1",
+      "seconds": 15,
+      "mobile": true,
+      "walk": true,
+      "inputSurfaces": [
+        "portrait dock"
+      ],
+      "rendererInfo": {
+        "api": "webgl",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)",
+        "softwareRenderer": false,
+        "backingWidth": 768,
+        "backingHeight": 720,
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+      },
+      "summary": {
+        "measuredGameFrames": 902,
+        "gameFrameP50Ms": 16.69999998807907,
+        "gameFrameP95Ms": 18,
+        "gameFrameP99Ms": 18.599999994039536,
+        "gameFrameMaxMs": 18.900000005960464,
+        "gameFramesOver33Ms": 0,
+        "gameFramesOver50Ms": 0,
+        "sampleCount": 56,
+        "gameLoopFps": 59.956296093963395,
+        "maxReportedThreats": 2,
+        "movingSamples": 55,
+        "movementCoverage": 1,
+        "movementRunValid": true,
+        "gameplayModes": [
+          "explore"
+        ],
+        "avgFps": 60.0025096868584,
+        "minFps": 59.994612038115335,
+        "maxSampledFrameP99Ms": 20,
+        "finalFrameP99Ms": 20,
+        "finalFrameMaxMs": 16.80000000000109,
+        "lastInputLatencyMs": 13.199999999999818,
+        "consoleWarningsOrErrors": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "url": "http://127.0.0.1:5221/?scene=OfficeScene&fps=1",
+      "seconds": 20,
+      "mobile": true,
+      "walk": true,
+      "inputSurfaces": [
+        "portrait dock"
+      ],
+      "rendererInfo": {
+        "api": "webgl",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)",
+        "softwareRenderer": false,
+        "backingWidth": 768,
+        "backingHeight": 720,
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+      },
+      "summary": {
+        "measuredGameFrames": 1207,
+        "gameFrameP50Ms": 16.69999998807907,
+        "gameFrameP95Ms": 18,
+        "gameFrameP99Ms": 18.400000005960464,
+        "gameFrameMaxMs": 100.30000001192093,
+        "gameFramesOver33Ms": 1,
+        "gameFramesOver50Ms": 1,
+        "sampleCount": 75,
+        "gameLoopFps": 59.9908643353804,
+        "maxReportedThreats": 1,
+        "movingSamples": 74,
+        "movementCoverage": 1,
+        "movementRunValid": true,
+        "gameplayModes": [
+          "explore"
+        ],
+        "avgFps": 59.90921221928468,
+        "minFps": 56.56362950221979,
+        "maxSampledFrameP99Ms": 83.29999999999973,
+        "finalFrameP99Ms": 20,
+        "finalFrameMaxMs": 16.80000000000291,
+        "lastInputLatencyMs": 13.199999999999818,
+        "consoleWarningsOrErrors": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "url": "http://127.0.0.1:5221/?scene=OfficeScene&fps=1",
+      "seconds": 20,
+      "mobile": true,
+      "walk": true,
+      "inputSurfaces": [
+        "portrait dock"
+      ],
+      "rendererInfo": {
+        "api": "webgl",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)",
+        "softwareRenderer": false,
+        "backingWidth": 768,
+        "backingHeight": 720,
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+      },
+      "summary": {
+        "measuredGameFrames": 1203,
+        "gameFrameP50Ms": 16.69999998807907,
+        "gameFrameP95Ms": 18.19999998807907,
+        "gameFrameP99Ms": 18.600000023841858,
+        "gameFrameMaxMs": 20.69999998807907,
+        "gameFramesOver33Ms": 0,
+        "gameFramesOver50Ms": 0,
+        "sampleCount": 75,
+        "gameLoopFps": 59.97253166488631,
+        "maxReportedThreats": 1,
+        "movingSamples": 74,
+        "movementCoverage": 1,
+        "movementRunValid": true,
+        "gameplayModes": [
+          "explore"
+        ],
+        "avgFps": 60.003625112604055,
+        "minFps": 59.99454046582666,
+        "maxSampledFrameP99Ms": 20,
+        "finalFrameP99Ms": 20,
+        "finalFrameMaxMs": 16.80000000000291,
+        "lastInputLatencyMs": 13.699999999999818,
+        "consoleWarningsOrErrors": 0,
+        "pageErrors": 0
+      }
+    }
+  ],
+  "crossings": {
+    "fixture": "edge approach placement; real keyboard boundary input",
+    "crossings": [
+      {
+        "from": 1,
+        "to": 0,
+        "disguise": 1,
+        "nextReady": false,
+        "sameGrounding": true,
+        "maxMs": 23.900000005960464,
+        "frames": 12
+      },
+      {
+        "from": 0,
+        "to": 1,
+        "disguise": 2,
+        "nextReady": false,
+        "sameGrounding": true,
+        "maxMs": 41.400000005960464,
+        "frames": 13
+      },
+      {
+        "from": 1,
+        "to": 0,
+        "disguise": 3,
+        "nextReady": false,
+        "sameGrounding": true,
+        "maxMs": 19.599999994039536,
+        "frames": 12
+      },
+      {
+        "from": 0,
+        "to": 1,
+        "disguise": 4,
+        "nextReady": false,
+        "sameGrounding": true,
+        "maxMs": 39.099999994039536,
+        "frames": 14
+      },
+      {
+        "from": 1,
+        "to": 0,
+        "disguise": 5,
+        "nextReady": false,
+        "sameGrounding": true,
+        "maxMs": 40.80000001192093,
+        "frames": 13
+      },
+      {
+        "from": 0,
+        "to": 1,
+        "disguise": 6,
+        "nextReady": false,
+        "sameGrounding": true,
+        "maxMs": 18.399999976158142,
+        "frames": 12
+      },
+      {
+        "from": 1,
+        "to": 0,
+        "disguise": 7,
+        "nextReady": false,
+        "sameGrounding": true,
+        "maxMs": 33.80000001192093,
+        "frames": 13
+      },
+      {
+        "from": 0,
+        "to": 1,
+        "disguise": 8,
+        "nextReady": false,
+        "sameGrounding": true,
+        "maxMs": 38.099999994039536,
+        "frames": 14
+      }
+    ],
+    "costs": [
+      {
+        "phase": "shutdown",
+        "ms": 1.4000000059604645
+      },
+      {
+        "phase": "preload",
+        "ms": 0
+      },
+      {
+        "phase": "create",
+        "ms": 3.2000000178813934
+      },
+      {
+        "phase": "shutdown",
+        "ms": 1.7000000178813934
+      },
+      {
+        "phase": "preload",
+        "ms": 0.09999999403953552
+      },
+      {
+        "phase": "create",
+        "ms": 3.5
+      },
+      {
+        "phase": "shutdown",
+        "ms": 0.5
+      },
+      {
+        "phase": "preload",
+        "ms": 0
+      },
+      {
+        "phase": "create",
+        "ms": 2
+      },
+      {
+        "phase": "shutdown",
+        "ms": 2.300000011920929
+      },
+      {
+        "phase": "preload",
+        "ms": 0.09999999403953552
+      },
+      {
+        "phase": "create",
+        "ms": 3.2000000178813934
+      },
+      {
+        "phase": "shutdown",
+        "ms": 2.0999999940395355
+      },
+      {
+        "phase": "preload",
+        "ms": 0.09999999403953552
+      },
+      {
+        "phase": "create",
+        "ms": 3.5
+      },
+      {
+        "phase": "shutdown",
+        "ms": 0.5
+      },
+      {
+        "phase": "preload",
+        "ms": 0.10000002384185791
+      },
+      {
+        "phase": "create",
+        "ms": 2.0999999940395355
+      },
+      {
+        "phase": "shutdown",
+        "ms": 1.5999999940395355
+      },
+      {
+        "phase": "preload",
+        "ms": 0
+      },
+      {
+        "phase": "create",
+        "ms": 3.199999988079071
+      },
+      {
+        "phase": "shutdown",
+        "ms": 1.9000000059604645
+      },
+      {
+        "phase": "preload",
+        "ms": 0.09999999403953552
+      },
+      {
+        "phase": "create",
+        "ms": 2.5999999940395355
+      }
+    ],
+    "pixelReads": 0,
+    "errors": []
+  },
+  "invalidWalkExitGuard": "Zero-second --walk run exited 1 as expected"
+}

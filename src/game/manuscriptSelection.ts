@@ -1,18 +1,34 @@
 /** An illustrative selection exercise; these packets are not historical documents. */
+import {CHAPTER_EXHIBITS, type ExhibitId} from './chapterAssembly';
+
+function chapterSample(id:ExhibitId, line:0|1, label:string) {
+  const exhibit=CHAPTER_EXHIBITS.find(record=>record.id===id)!;
+  return {label:`${label} · ${exhibit.locator}`,excerpt:exhibit.lines[line]};
+}
 export const MANUSCRIPT_BASE_PAGES = 1100;
 export const MANUSCRIPT_PAGE_LIMIT = 1400;
 export const SELECTION_PACKETS = [
   {
     id: 'decision', title: 'The decision trail', pages: 220,
-    tag: 'Decision · dissent · implementation',
-    description: 'A policy instruction, the objections it overruled, and reports showing what happened next.',
-    value: 'Preserves the decision and evidence of its shortcomings.',
+    tag: 'Discussion · decision · implementation',
+    description: 'The discussion, instruction, and implementation report you will arrange and annotate next.',
+    evidence: [
+      chapterSample('A',0,'Discussion'),
+      chapterSample('B',0,'Instruction'),
+      chapterSample('C',1,'Implementation')
+    ],
+    value: 'Preserves the decision, objections, and an implementation problem.',
     flag: 'compilerDeskDecision'
   },
   {
     id: 'routine', title: 'The supporting file', pages: 180,
     tag: 'Routine reports · repeated detail',
     description: 'Daily summaries repeat facts already established in the manuscript. A few details may help an annotation.',
+    evidence: [
+      {label: 'Daily summary', excerpt: 'The proposal remains under discussion. No new instructions received.'},
+      {label: 'Next summary', excerpt: 'Discussions continue. The instructions remain unchanged.'},
+      {label: 'Useful detail', excerpt: 'The next meeting was postponed until Friday.'}
+    ],
     value: 'Keep the file traceable as supporting research, even if it is not printed.',
     flag: 'compilerDeskRoutine'
   }

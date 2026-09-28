@@ -27,6 +27,8 @@ try {
     await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await p.waitForTimeout(200);assert(await body.evaluate(e=>e.scrollTop>0),'Finger swipe must scroll the packet area');await body.evaluate(e=>e.scrollTop=0);await cdp.detach();
   }
   await p.screenshot({path:`${out}/${name}-open.png`});
+  assert.equal(await p.locator('.manuscript-record').count(),6);
+  assert.equal(await p.locator('.manuscript-evidence-heading').first().textContent(),'Fictional sample excerpts');
   const before=(await state()).player;await p.keyboard.press('ArrowDown');await p.keyboard.press('ArrowUp');assert.deepEqual((await state()).player,before);
   await click('.manuscript-submit');assert((await p.locator('[data-status]').innerText()).includes('missing the decision'));
   await click('[data-packet=routine]');assert.equal((await state()).compilerMission.selectionDesk.pages,1280);await click('.manuscript-submit');assert((await p.locator('[data-status]').innerText()).includes('missing the decision'));
@@ -38,7 +40,10 @@ try {
   if(name==='desktop'){
    // Real gamepad polling: toggle a selected packet off/on, then B to save/leave.
    await pressPad(0);assert.equal((await state()).compilerMission.selectionDesk.pages,1100);await pressPad(0);assert.equal((await state()).compilerMission.selectionDesk.pages,1320);await pressPad(1);await p.waitForSelector('.manuscript-desk',{state:'detached'});await enter();
-   await pressPad(13);await pressPad(13);assert(await p.locator('.manuscript-submit').evaluate(e=>e===document.activeElement));await pressPad(0);
+   // Down reads a tall packet before leaving it. Right moves directly between
+   // controls regardless of how many evidence lines the packet contains.
+   await pressPad(13);assert(await p.locator('.manuscript-body').evaluate(e=>e.scrollTop>0));
+   await pressPad(15);await pressPad(15);assert(await p.locator('.manuscript-submit').evaluate(e=>e===document.activeElement));await pressPad(0);
   }else{await p.screenshot({path:`${out}/${name}-ready.png`});await click('.manuscript-submit');}
   await p.waitForSelector('.manuscript-desk',{state:'detached'});assert.equal((await state()).compilerMission.completed,3);
   await drain();await completeChapterDesk(p,touch);assert.equal((await state()).compilerMission.completed,4);
