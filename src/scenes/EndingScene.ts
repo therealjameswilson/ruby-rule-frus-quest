@@ -1185,7 +1185,9 @@ export class EndingScene extends Phaser.Scene {
       onPageChange: (page) => {
         setVisibleEntities(page === "volume"
           ? ["Published FRUS volume", "Publication record button", "Return to title button"]
-          : ["Publication record", "Completion stats", "Skills practiced", "Volume button", "Return to title button"]);
+          : page === "process"
+            ? ["From archives to readers", "Plan and research", "Select and annotate", "Review and revise", "Clearance", "Edit and proof", "Publish", "Research access is not release", "Volume button", "Return to title button"]
+            : ["Publication record", "Completion stats", "Skills practiced", "Process button", "Return to title button"]);
         setVisibleThreats([]);
         setNearestInteractable(null);
       }

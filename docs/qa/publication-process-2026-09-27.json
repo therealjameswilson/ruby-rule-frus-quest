@@ -1,0 +1,572 @@
+[
+  {
+    "name": "desktop",
+    "layout": {
+      "key": "published-volume-v2",
+      "bounds": {
+        "top": 36,
+        "bottom": 164,
+        "left": 85.33333333333334,
+        "right": 170.66666666666669
+      },
+      "page": "volume"
+    },
+    "recordNavigation": true,
+    "processNavigation": true,
+    "processLayout": [
+      {
+        "text": "FROM ARCHIVES TO READERS",
+        "bounds": {
+          "type": 5,
+          "x": 67.5,
+          "y": 11.66796875,
+          "width": 121,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "HOW A VOLUME TAKES SHAPE",
+        "bounds": {
+          "type": 5,
+          "x": 75,
+          "y": 27.20947265625,
+          "width": 106,
+          "height": 7.5810546875
+        }
+      },
+      {
+        "text": "1  PLAN + RESEARCH",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 42.66796875,
+          "width": 84,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Set scope; trace records across archives.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 52.66796875,
+          "width": 147,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "2  SELECT + ANNOTATE",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 66.66796875,
+          "width": 92,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Explain decisions, context, and sources.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 76.66796875,
+          "width": 143,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "3  REVIEW + REVISE",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 90.66796875,
+          "width": 79,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Revise after both reviews; hand off to DPD.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 100.66796875,
+          "width": 154,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "4  CLEARANCE",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 114.66796875,
+          "width": 58,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Agencies review their information.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 124.66796875,
+          "width": 121,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "5  EDIT + PROOF",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 138.66796875,
+          "width": 65,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Show omissions; compare with originals.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 148.66796875,
+          "width": 145,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "6  PUBLISH",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 162.66796875,
+          "width": 44,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Release the reviewed documentary record.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 172.66796875,
+          "width": 153,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "RESEARCH ACCESS IS NOT RELEASE.",
+        "bounds": {
+          "type": 5,
+          "x": 62,
+          "y": 184.20947265625,
+          "width": 132,
+          "height": 7.5810546875
+        }
+      },
+      {
+        "text": "VOLUME",
+        "bounds": {
+          "type": 5,
+          "x": 50,
+          "y": 211.66796875,
+          "width": 34,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "TITLE",
+        "bounds": {
+          "type": 5,
+          "x": 178,
+          "y": 211.66796875,
+          "width": 22,
+          "height": 8.6640625
+        }
+      }
+    ],
+    "title": true,
+    "continue": true,
+    "errors": []
+  },
+  {
+    "name": "phone",
+    "layout": {
+      "key": "published-volume-v2",
+      "bounds": {
+        "top": 36,
+        "bottom": 164,
+        "left": 85.33333333333334,
+        "right": 170.66666666666669
+      },
+      "page": "volume"
+    },
+    "recordNavigation": true,
+    "processNavigation": true,
+    "processLayout": [
+      {
+        "text": "FROM ARCHIVES TO READERS",
+        "bounds": {
+          "type": 5,
+          "x": 67.5,
+          "y": 11.66796875,
+          "width": 121,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "HOW A VOLUME TAKES SHAPE",
+        "bounds": {
+          "type": 5,
+          "x": 75,
+          "y": 27.20947265625,
+          "width": 106,
+          "height": 7.5810546875
+        }
+      },
+      {
+        "text": "1  PLAN + RESEARCH",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 42.66796875,
+          "width": 84,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Set scope; trace records across archives.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 52.66796875,
+          "width": 147,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "2  SELECT + ANNOTATE",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 66.66796875,
+          "width": 92,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Explain decisions, context, and sources.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 76.66796875,
+          "width": 143,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "3  REVIEW + REVISE",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 90.66796875,
+          "width": 79,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Revise after both reviews; hand off to DPD.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 100.66796875,
+          "width": 154,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "4  CLEARANCE",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 114.66796875,
+          "width": 58,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Agencies review their information.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 124.66796875,
+          "width": 121,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "5  EDIT + PROOF",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 138.66796875,
+          "width": 65,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Show omissions; compare with originals.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 148.66796875,
+          "width": 145,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "6  PUBLISH",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 162.66796875,
+          "width": 44,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Release the reviewed documentary record.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 172.66796875,
+          "width": 153,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "RESEARCH ACCESS IS NOT RELEASE.",
+        "bounds": {
+          "type": 5,
+          "x": 62,
+          "y": 184.20947265625,
+          "width": 132,
+          "height": 7.5810546875
+        }
+      },
+      {
+        "text": "VOLUME",
+        "bounds": {
+          "type": 5,
+          "x": 50,
+          "y": 211.66796875,
+          "width": 34,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "TITLE",
+        "bounds": {
+          "type": 5,
+          "x": 178,
+          "y": 211.66796875,
+          "width": 22,
+          "height": 8.6640625
+        }
+      }
+    ],
+    "title": true,
+    "continue": true,
+    "errors": []
+  },
+  {
+    "name": "landscape",
+    "layout": {
+      "key": "published-volume-v2",
+      "bounds": {
+        "top": 36,
+        "bottom": 164,
+        "left": 85.33333333333334,
+        "right": 170.66666666666669
+      },
+      "page": "volume"
+    },
+    "recordNavigation": true,
+    "processNavigation": true,
+    "processLayout": [
+      {
+        "text": "FROM ARCHIVES TO READERS",
+        "bounds": {
+          "type": 5,
+          "x": 67.5,
+          "y": 11.66796875,
+          "width": 121,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "HOW A VOLUME TAKES SHAPE",
+        "bounds": {
+          "type": 5,
+          "x": 75,
+          "y": 27.20947265625,
+          "width": 106,
+          "height": 7.5810546875
+        }
+      },
+      {
+        "text": "1  PLAN + RESEARCH",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 42.66796875,
+          "width": 84,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Set scope; trace records across archives.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 52.66796875,
+          "width": 147,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "2  SELECT + ANNOTATE",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 66.66796875,
+          "width": 92,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Explain decisions, context, and sources.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 76.66796875,
+          "width": 143,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "3  REVIEW + REVISE",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 90.66796875,
+          "width": 79,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Revise after both reviews; hand off to DPD.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 100.66796875,
+          "width": 154,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "4  CLEARANCE",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 114.66796875,
+          "width": 58,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Agencies review their information.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 124.66796875,
+          "width": 121,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "5  EDIT + PROOF",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 138.66796875,
+          "width": 65,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Show omissions; compare with originals.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 148.66796875,
+          "width": 145,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "6  PUBLISH",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 162.66796875,
+          "width": 44,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "Release the reviewed documentary record.",
+        "bounds": {
+          "type": 5,
+          "x": 16,
+          "y": 172.66796875,
+          "width": 153,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "RESEARCH ACCESS IS NOT RELEASE.",
+        "bounds": {
+          "type": 5,
+          "x": 62,
+          "y": 184.20947265625,
+          "width": 132,
+          "height": 7.5810546875
+        }
+      },
+      {
+        "text": "VOLUME",
+        "bounds": {
+          "type": 5,
+          "x": 50,
+          "y": 211.66796875,
+          "width": 34,
+          "height": 8.6640625
+        }
+      },
+      {
+        "text": "TITLE",
+        "bounds": {
+          "type": 5,
+          "x": 178,
+          "y": 211.66796875,
+          "width": 22,
+          "height": 8.6640625
+        }
+      }
+    ],
+    "title": true,
+    "continue": true,
+    "errors": []
+  }
+]

@@ -14,7 +14,11 @@ await enter();
 const layout=await p.evaluate(()=>{const summary=window.game.scene.getScene('EndingScene').children.getByName('publication-summary');const book=summary.getByName('published-frus-volume-hero'),r=book.getBounds();return {key:book.texture.key,bounds:{top:r.top,bottom:r.bottom,left:r.left,right:r.right},page:summary.getData('page')};});
 assert.equal(layout.key,'published-volume-v2');assert(layout.bounds.top>=35&&layout.bounds.bottom<=166);assert.equal(layout.page,'volume');await p.screenshot({path:`${out}/${name}-volume.png`});
 await tap(67,216);assert.equal(await p.evaluate(()=>window.game.scene.getScene('EndingScene').children.getByName('publication-summary').getData('page')),'record');await p.screenshot({path:`${out}/${name}-record.png`});
+await tap(67,216);assert.equal(await p.evaluate(()=>window.game.scene.getScene('EndingScene').children.getByName('publication-summary').getData('page')),'process');
+const processLayout=await p.evaluate(()=>window.game.scene.getScene('EndingScene').children.getByName('publication-summary').list.filter(o=>typeof o.text==='string').map(o=>({text:o.text,bounds:o.getBounds()})));
+for(const {text,bounds:b} of processLayout)assert(b.x>=8&&b.x+b.width<=248&&b.y>=8&&b.y+b.height<=238,'Process page overflow: '+text);
+assert(processLayout.some(o=>o.text==='RESEARCH ACCESS IS NOT RELEASE.'));await p.screenshot({path:`${out}/${name}-process.png`});
 await tap(67,216);assert.equal(await p.evaluate(()=>window.game.scene.getScene('EndingScene').children.getByName('publication-summary').getData('page')),'volume');
-await tap(189,216);await p.waitForFunction(()=>window.game?.scene.isActive('TitleScene'));await enter();assert.equal(await p.evaluate(()=>JSON.parse(window.render_game_to_text()).finalGateCertification.status),'published');
-assert.deepEqual(errors,[]);results.push({name,layout,recordNavigation:true,title:true,continue:true,errors});await p.close();}
+await tap(189,216);await p.waitForFunction(()=>window.game?.scene.isActive('TitleScene'));await enter();await writeFile(`${out}/${name}-continued.json`,await p.evaluate(()=>window.render_game_to_text()));assert.equal(await p.evaluate(()=>JSON.parse(window.render_game_to_text()).finalGateCertification.status),'published');
+assert.deepEqual(errors,[]);results.push({name,layout,recordNavigation:true,processNavigation:true,processLayout,title:true,continue:true,errors});await p.close();}
 await writeFile(`${out}/results.json`,JSON.stringify(results,null,2));console.log(JSON.stringify(results));}finally{await browser.close();}

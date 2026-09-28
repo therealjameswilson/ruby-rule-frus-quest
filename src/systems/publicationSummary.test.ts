@@ -101,11 +101,14 @@ describe("publication reward and record pages", () => {
     const { content, onTitle, press, onPageChange } = fixture();
     press("record");
     expect(content.data.page).toBe("record");
+    press("process");
+    expect(content.data.page).toBe("process");
+    expect(content.children.map(node => node.text)).toContain("RESEARCH ACCESS IS NOT RELEASE.");
     press("volume");
     expect(content.data.page).toBe("volume");
     press("title");
     expect(onTitle).toHaveBeenCalledOnce();
-    expect(onPageChange.mock.calls).toEqual([["volume"], ["record"], ["volume"]]);
+    expect(onPageChange.mock.calls).toEqual([["volume"], ["record"], ["process"], ["volume"]]);
   });
 
   it("supports cancel from the record and direction selection of title", () => {
@@ -164,12 +167,12 @@ describe("secret publication reward", () => {
 
   it("cycles volume, certificate, stats, and volume without leaving the reward", () => {
     const { summary, content, onTitle } = fixture(false, true, certificate());
-    for (const page of ["certificate", "record", "volume"]) {
+    for (const page of ["certificate", "record", "process", "volume"]) {
       summary.update(input({ aJustPressed: true }));
       expect(content.data.page).toBe(page);
     }
     expect(onTitle).not.toHaveBeenCalled();
-    expect(swallowNextInputFrame).toHaveBeenCalledTimes(3);
+    expect(swallowNextInputFrame).toHaveBeenCalledTimes(4);
   });
 
   it("keeps both navigation targets and all checks available after repeated paging", () => {
