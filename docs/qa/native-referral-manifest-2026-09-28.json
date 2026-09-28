@@ -1,0 +1,29 @@
+{
+  "scope": "Bounded referral manifest fixtures",
+  "results": [
+    {
+      "name": "desktop",
+      "evidenceRequired": true,
+      "routesMustMatch": true,
+      "explicitFiling": true,
+      "touchKeyboardController": true,
+      "cleanup": true
+    },
+    {
+      "name": "phone",
+      "evidenceRequired": true,
+      "routesMustMatch": true,
+      "explicitFiling": true,
+      "touchKeyboardController": true,
+      "cleanup": true
+    },
+    {
+      "name": "landscape",
+      "evidenceRequired": true,
+      "routesMustMatch": true,
+      "explicitFiling": true,
+      "touchKeyboardController": true,
+      "cleanup": true
+    }
+  ]
+}

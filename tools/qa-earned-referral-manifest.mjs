@@ -51,9 +51,11 @@ try{
  assert.equal((await state()).roomTraversal.currentRoomId,'R1');
  assert.equal((await state()).sceneProgress.referralDispatchCopyFound,1);
  await move(104,76);await move(104,156);await key();await shot('draft');
- await key('ArrowDown');await key('ArrowDown');await key('ArrowDown');await key();await shot('rejected');
+ const manifest=async(selector)=>{const e=page.locator('.referral-manifest-desk '+selector);await e.scrollIntoViewIfNeeded();if(mobile)await e.tap();else await e.click();await page.waitForTimeout(150);};
+ await manifest('[data-focus-key=file]');await shot('rejected');
  assert(!(await state()).sceneProgress.referralManifestReviewComplete);
- await key('ArrowLeft');await shot('corrected');await key('ArrowDown');await key();await page.waitForTimeout(500);
+ await manifest('[data-route="2"]');await manifest('[data-route="2"]');await shot('corrected');
+ await manifest('[data-focus-key=file]');await page.waitForTimeout(500);
  assert.equal((await state()).sceneProgress.referralManifestReviewComplete,1);await shot('filed');
  if(process.argv.includes('--guide-check')){
    const before=await state();

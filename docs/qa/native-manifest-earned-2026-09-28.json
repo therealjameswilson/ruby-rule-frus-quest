@@ -1,0 +1,80 @@
+{
+  "mobile": true,
+  "manifestCorrected": true,
+  "treatmentDraftRestored": true,
+  "withholdingTreatmentFiled": true,
+  "bracketPressVerified": true,
+  "noDuplicateReward": true,
+  "proofingReached": true,
+  "toastPlacements": [
+    {
+      "name": "treatment-filed",
+      "toast": {
+        "type": 5,
+        "x": 44,
+        "y": 118.66796875,
+        "width": 80,
+        "height": 18.6640625
+      },
+      "hero": {
+        "type": 5,
+        "x": 65,
+        "y": 142,
+        "width": 32,
+        "height": 48
+      }
+    },
+    {
+      "name": "press-ready",
+      "toast": {
+        "type": 5,
+        "x": 109,
+        "y": 118.66796875,
+        "width": 132,
+        "height": 18.6640625
+      },
+      "hero": {
+        "type": 5,
+        "x": 158,
+        "y": 142,
+        "width": 32,
+        "height": 48
+      }
+    },
+    {
+      "name": "treatment-complete",
+      "toast": {
+        "type": 5,
+        "x": 129,
+        "y": 112.66796875,
+        "width": 108,
+        "height": 18.6640625
+      },
+      "hero": {
+        "type": 5,
+        "x": 166,
+        "y": 136,
+        "width": 32,
+        "height": 48
+      }
+    },
+    {
+      "name": "slip",
+      "toast": {
+        "type": 5,
+        "x": 52,
+        "y": 69.66796875,
+        "width": 100,
+        "height": 18.6640625
+      },
+      "hero": {
+        "type": 5,
+        "x": 83,
+        "y": 93,
+        "width": 32,
+        "height": 48
+      }
+    }
+  ],
+  "errors": []
+}
