@@ -3,10 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SourceNoteBoard } from "./sourceNoteBoard";
 import { bindPointerDown, getInput, swallowNextInputFrame, type InputState } from "../input/InputState";
 import { gameState, resetGameState } from "../game/state";
+import { retroAudio } from "./audio";
 
 vi.mock("phaser", () => ({ default: { Display: { Color: { HexStringToColor: () => ({ color: 0 }) } } } }));
 vi.mock("../input/InputState", () => ({ bindPointerDown: vi.fn(), getInput: vi.fn(() => ({})), swallowNextInputFrame: vi.fn() }));
-vi.mock("./audio", () => ({ retroAudio: { warning: vi.fn(), stamp: vi.fn() } }));
+vi.mock("./audio", () => ({ retroAudio: { warning: vi.fn(), annotatePaper: vi.fn() } }));
 
 class Display {
   visible = true;
@@ -62,6 +63,7 @@ describe("source note evidence repair board", () => {
     const f = fixture(); f.open(); f.input({ aJustPressed: true });
     f.pointer(0);
     expect(f.onChange).toHaveBeenCalledOnce(); expect(f.onFile).not.toHaveBeenCalled();
+    expect(retroAudio.annotatePaper).toHaveBeenCalledOnce();
     expect(gameState.currentChoice?.options[0].value).toBe("evidence_limited");
     f.input({ confirmJustPressed: true });
     expect(f.onFile).toHaveBeenCalledOnce(); expect(f.onCancel).not.toHaveBeenCalled();

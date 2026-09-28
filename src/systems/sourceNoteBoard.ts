@@ -24,19 +24,23 @@ export class SourceNoteBoard {
       .setDepth(1600).setScrollFactor(0).setVisible(false);
     this.container.add([
       scene.add.rectangle(128, 120, 256, 240, color(PALETTE.black), 0.7),
-      scene.add.rectangle(128, 120, 238, 186, color(PALETTE.black))
+      scene.add.rectangle(128, 120, 238, 206, color(PALETTE.black))
         .setStrokeStyle(1, color(PALETTE.terminalCyan))
     ]);
-    this.text(20, 36, "SOURCE NOTE 47 / TRAINING", PALETTE.goldStamp);
-    this.text(20, 53, "REPO  NATIONAL ARCHIVES\nCOLL  POLICY PLANNING\nFILE  ALLIANCE CONSULTATION", PALETTE.creamPaper).setLineSpacing(4);
-    this.text(20, 96, "NO READERSHIP EVIDENCE FOUND", PALETTE.terminalCyan);
-    this.button(128, 123, 216, 34, () => this.repair());
-    this.reader = this.text(28, 113, "", PALETTE.creamPaper).setLineSpacing(4);
-    this.button(77, 158, 112, 34, () => this.submit());
-    this.text(50, 154, "FILE NOTE", PALETTE.creamPaper);
-    this.button(190, 158, 100, 34, () => this.hide());
-    this.text(170, 154, "RETURN", PALETTE.creamPaper);
-    this.feedback = this.text(20, 191, "", PALETTE.goldStamp);
+    this.text(20, 24, "NOTE 47 / FICTIONAL RECORD", PALETTE.goldStamp);
+    this.text(20, 40, "REPO  NATIONAL ARCHIVES\nCOLL  POLICY PLANNING\nFILE  ALLIANCE CONSULTATION", PALETTE.creamPaper).setLineSpacing(2);
+    // The packet does not supply these fields. Keep that absence visible at
+    // the decision point, rather than implying the locator is a full footnote.
+    this.text(20, 75, "CLASSIFICATION: NOT RECORDED\nDISTRIBUTION: NOT RECORDED\nDRAFTING: NOT RECORDED", PALETTE.creamPaper).setLineSpacing(2);
+    this.text(20, 110, "CONTEXT: FOLDER TITLE ONLY", PALETTE.creamPaper);
+    this.text(20, 122, "NO READERSHIP EVIDENCE FOUND", PALETTE.terminalCyan);
+    this.button(128, 151, 216, 32, () => this.repair());
+    this.reader = this.text(28, 141, "", PALETTE.creamPaper).setLineSpacing(4);
+    this.button(77, 185, 112, 28, () => this.submit());
+    this.text(50, 181, "FILE NOTE", PALETTE.creamPaper);
+    this.button(190, 185, 100, 28, () => this.hide());
+    this.text(170, 181, "RETURN", PALETTE.creamPaper);
+    this.feedback = this.text(20, 207, "", PALETTE.goldStamp);
   }
 
   get active() { return this.container.visible; }
@@ -74,7 +78,7 @@ export class SourceNoteBoard {
     if (!this.repaired) {
       this.repaired = true;
       this.onChange?.();
-      retroAudio.stamp();
+      retroAudio.annotatePaper();
     }
     this.refresh();
   }
