@@ -1,3 +1,4 @@
+import { pressPortraitControl } from './portrait-input-fixture.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -9,6 +10,7 @@ const context=await browser.newContext({storageState:process.env.FRUS_QA_STORAGE
  viewport:mobile?{width:375,height:667}:{width:1024,height:960},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile?3:1});
 const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
 page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
+if(mobile)for(const device of [page.keyboard,page.mouse])for(const method of ['press','down','up','click','move','type'])if(typeof device[method]==='function')device[method]=()=>{throw Error(`Non-touch input: ${method}`);};
 const cdp=mobile?await context.newCDPSession(page):null;
 const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
 let box;
@@ -18,6 +20,7 @@ const touch=async(type,points)=>{
  await cdp.send('Input.dispatchTouchEvent',{type,touchPoints:points.map(([x,y])=>({x:box.x+x*box.width/256,y:box.y+y*box.height/240,id:1}))});
 };
 const key=async(k='Space',ms=50)=>{
+ if(mobile&&await pressPortraitControl(page,cdp,k,ms)){await page.waitForTimeout(150);return;}
  if(mobile){
   const directions={ArrowLeft:[-26,0],ArrowRight:[26,0],ArrowUp:[0,-26],ArrowDown:[0,26]};
   if(directions[k]){
@@ -27,7 +30,7 @@ const key=async(k='Space',ms=50)=>{
  }else{await page.keyboard.down(k);await page.waitForTimeout(ms);await page.keyboard.up(k);}
  await page.waitForTimeout(150);
 };
-const shot=async name=>{const data=await page.evaluate(()=>new Promise(r=>window.game.renderer.snapshot(i=>r(i.src))));await writeFile(`${out}/${name}.png`,Buffer.from(data.split(',')[1],'base64'));await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));if(mobile)await page.screenshot({path:`${out}/${name}-phone.png`});};
+const shot=async name=>{await page.screenshot({path:`${out}/${name}.png`});await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));};
 async function move(x,y){const tolerance=mobile?5:3;for(let i=0;i<100;i++){const p=(await state()).player,dx=x-p.x,dy=y-p.y;if(Math.abs(dx)<tolerance&&Math.abs(dy)<tolerance)return;const h=Math.abs(dx)>=tolerance;await key(h?dx>0?'ArrowRight':'ArrowLeft':dy>0?'ArrowDown':'ArrowUp',Math.min(100,Math.max(mobile?50:20,Math.abs(h?dx:dy)/72*1000)));}throw Error(`Cannot walk to ${x},${y}`);}
 try{
  await page.goto(new URL('?text=full',process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5211/').href);
@@ -41,6 +44,7 @@ try{
  await key('ArrowDown');await key();await shot('invisible-rejected');
  assert(!(await state()).inventory.includes('Red Pencil'));
  await key('ArrowUp');await key();await shot('bracket-added');
+ assert.equal((await state()).audioStatus,'quiet annotation mark');
  if(process.argv.includes('--reload-bracket')){
   const drafted=await state();
   assert.equal(drafted.sceneProgress.silentReadBracketDraft,1);
@@ -56,6 +60,7 @@ try{
   await key();await shot('bracket-reloaded');
  }
  await key();await page.waitForTimeout(300);await shot('draft-filed');
+ assert.equal((await state()).audioStatus,'paper filing and stamp');
  assert(!(await state()).inventory.includes('Red Pencil'));
  await key();await page.waitForTimeout(100);await shot('pencil-earned');
  assert((await state()).inventory.includes('Red Pencil'));
@@ -64,5 +69,5 @@ try{
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).roomTraversal.currentRoomId==='S1');await page.waitForTimeout(700);await shot('proof-room');
 
  await context.storageState({path:`${out}/earned-storage.json`});
- assert.deepEqual(errors,[]);console.log(`PASS ${mobile?'touch-only':'keyboard'} earned bracket repair, Red Pencil, and proof room arrival`);
+ assert.deepEqual(errors,[]);await writeFile(`${out}/result.json`,JSON.stringify({mobile,stage:'editor',passed:true,errors,final:{scene:(await state()).scene,room:(await state()).roomTraversal.currentRoomId,inventory:(await state()).inventory,documentPoints:(await state()).documentPoints}},null,2));console.log(`PASS ${mobile?'touch-only':'keyboard'} earned bracket repair, Red Pencil, and proof room arrival`);
 }finally{try{await shot('last');}catch(error){console.error('Final screenshot unavailable:',error.message);}await browser.close();}

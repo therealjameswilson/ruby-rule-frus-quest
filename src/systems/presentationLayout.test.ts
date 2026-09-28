@@ -31,14 +31,22 @@ describe('portrait play surface composition', () => {
     expect(docked.y + docked.height + 180).toBeLessThanOrEqual(view.y + view.height);
     expect(computePresentationLayout(view, false)).toEqual(plain);
   });
-  it.each([[359,651],[828,374],[1264,704]])('leaves short portrait, landscape and desktop unchanged (%sx%s)', (width,height) => {
+  it.each([[359,480],[828,374],[1264,704]])('leaves short portrait, landscape and desktop unchanged (%sx%s)', (width,height) => {
     const view = {x:8,y:8,width,height,dpr:3};
     expect(computePresentationLayout(view,true)).toEqual(computePresentationLayout(view));
     expect(computePresentationLayout(view,true).portraitDockEligible).toBe(false);
   });
+  it.each([[359,651],[304,552],[359,551]])('fits room and controls on a smaller phone (%sx%s)', (width,height) => {
+    const view={x:8,y:8,width,height,dpr:3};
+    const layout=computePresentationLayout(view,true);
+    expect(layout.portraitDockEligible).toBe(true);
+    expect(layout.width).toBe(width);
+    expect(layout.y).toBeGreaterThanOrEqual(view.y);
+    expect(layout.y+layout.height+180).toBeLessThanOrEqual(view.y+height);
+  });
   it('uses the unshifted fit for a stable eligibility threshold', () => {
-    const view={x:8,y:8,width:320,height:668,dpr:3};
+    const view={x:8,y:8,width:320,height:484,dpr:3};
     expect(computePresentationLayout(view,true).portraitDockEligible).toBe(true);
-    expect(computePresentationLayout({...view,height:667},true).portraitDockEligible).toBe(false);
+    expect(computePresentationLayout({...view,height:483},true).portraitDockEligible).toBe(false);
   });
 });

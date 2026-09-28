@@ -7,7 +7,7 @@ import { resetGameState } from "../game/state";
 
 vi.mock("phaser", () => ({ default: { Display: { Color: { HexStringToColor: () => ({ color: 0 }) } } } }));
 vi.mock("../input/InputState", () => ({ bindPointerDown: vi.fn(), getInput: vi.fn(() => ({})), swallowNextInputFrame: vi.fn() }));
-vi.mock("./audio", () => ({ retroAudio: { warning: vi.fn(), stamp: vi.fn() } }));
+vi.mock("./audio", () => ({ retroAudio: { warning: vi.fn(), annotatePaper: vi.fn() } }));
 
 class Display {
   visible = true;

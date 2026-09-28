@@ -1,0 +1,54 @@
+{
+  "cues": {
+    "correction": "quiet annotation mark",
+    "editorFiling": "paper filing and stamp",
+    "proofFiling": "paper filing and stamp"
+  },
+  "editor": {
+    "mobile": true,
+    "stage": "editor",
+    "passed": true,
+    "errors": [],
+    "final": {
+      "scene": "SilentReadScene",
+      "room": "S1",
+      "inventory": [
+        "Stapler Sword",
+        "Master Declass Key",
+        "Citation Stamp",
+        "FRUS Fragment: Front Matter",
+        "Source Note 47",
+        "Source Note 47 Citation Stamp",
+        "FRUS Fragment: Source Note",
+        "Telegram",
+        "Cross-Ref",
+        "Clearance Token",
+        "Concurrence Slip",
+        "Review Folder",
+        "AI Annotation Review Log",
+        "Red Pencil"
+      ],
+      "documentPoints": 126
+    }
+  },
+  "dockedPublication": {
+    "mobile": true,
+    "cpuThrottle": 1,
+    "startPoints": 201,
+    "finalPoints": 241,
+    "completedPackets": 5,
+    "certification": {
+      "status": "published",
+      "nearestGate": true,
+      "checklistComplete": true,
+      "certifiedBy": "Sam",
+      "requiredItem": "Buckram Key",
+      "message": "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
+    },
+    "errors": []
+  },
+  "productionPassed": true,
+  "tests": 2114,
+  "testFiles": 282,
+  "build": "passed"
+}

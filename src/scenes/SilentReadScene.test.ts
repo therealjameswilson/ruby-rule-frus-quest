@@ -8,7 +8,7 @@ import type { EditorialRepairRecord } from "../game/editorialRepair";
 vi.mock("phaser", () => ({ default: { Scene: class {}, GameObjects: { Sprite: class {} } } }));
 vi.mock("../entities/Player", () => ({ Player: class {} }));
 vi.mock("../entities/enemies/DanneLurker", () => ({ DanneLurker: class {} }));
-vi.mock("../systems/audio", () => ({ retroAudio: { confirm: vi.fn(), warning: vi.fn(), stamp: vi.fn(), blip: vi.fn() } }));
+vi.mock("../systems/audio", () => ({ retroAudio: { confirm: vi.fn(), fileDocket: vi.fn(), warning: vi.fn(), stamp: vi.fn(), blip: vi.fn() } }));
 vi.mock("../systems/save", () => ({ saveGameNow: vi.fn() }));
 vi.mock("../systems/snesPixelArt", () => ({ addSnesRewardBurst: vi.fn() }));
 vi.mock("../systems/reliability", () => ({ adjustReliability: vi.fn(), canAutoApplyProposal: vi.fn(), ReliabilityHud: class {} }));

@@ -1,3 +1,4 @@
+import { pressPortraitControl } from './portrait-input-fixture.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -19,6 +20,7 @@ const touch=async(type,points)=>{
  await cdp.send('Input.dispatchTouchEvent',{type,touchPoints:points.map(([x,y])=>({x:touchBox.x+x*touchBox.width/256,y:touchBox.y+y*touchBox.height/240,id:1}))});
 };
 const key=async(k='Space',ms=50)=>{
+ if(mobile&&await pressPortraitControl(page,cdp,k,ms)){await page.waitForTimeout(150);return;}
  if(mobile){
   const directions={ArrowLeft:[-26,0],ArrowRight:[26,0],ArrowUp:[0,-26],ArrowDown:[0,26]};
   if(directions[k]){

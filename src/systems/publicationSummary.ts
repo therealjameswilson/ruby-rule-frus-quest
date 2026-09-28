@@ -6,7 +6,7 @@ import type { TrueEndingCertificate } from "../game/trueEndingCertificate";
 import type { StatutoryClockReadout } from "../game/statutoryClock";
 import { bindPointerDown, swallowNextInputFrame, type InputState } from "../input/InputState";
 
-export type PublicationSummaryPage = "volume" | "certificate" | "record";
+export type PublicationSummaryPage = "volume" | "certificate" | "record" | "process";
 
 interface PublicationSummaryOptions {
   compiler: string;
@@ -60,7 +60,8 @@ export class PublicationSummary {
 
   private nextPage(): PublicationSummaryPage {
     if (this.page === "volume") return this.options.certificate ? "certificate" : "record";
-    return this.page === "certificate" ? "record" : "volume";
+    if (this.page === "certificate") return "record";
+    return this.page === "record" ? "process" : "volume";
   }
 
   private showPage(page: PublicationSummaryPage) {
@@ -87,7 +88,8 @@ export class PublicationSummary {
     if (backdrop) this.content.add(backdrop);
     if (this.page === "volume") this.drawVolume();
     else if (this.page === "certificate") this.drawCertificate();
-    else this.drawRecord();
+    else if (this.page === "record") this.drawRecord();
+    else this.drawProcess();
 
     [this.nextPage().toUpperCase(), "TITLE"].forEach((label, index) => {
       const x = index === 0 ? 67 : 189;
@@ -147,6 +149,25 @@ export class PublicationSummary {
       this.text(240, y, line.value, 8, line.complete ? PALETTE.terminalCyan : PALETTE.goldStamp, 1);
     });
     this.text(128, 184, "SOURCE: HISTORY.STATE.GOV", 6, PALETTE.creamPaper);
+  }
+
+  private drawProcess() {
+    this.text(128, 16, "FROM ARCHIVES TO READERS", 8, PALETTE.goldStamp);
+    this.text(128, 31, "HOW A VOLUME TAKES SHAPE", 7);
+    const stages = [
+      ["1  PLAN + RESEARCH", "Set scope; trace records across archives."],
+      ["2  SELECT + ANNOTATE", "Explain decisions, context, and sources."],
+      ["3  REVIEW + REVISE", "Revise after both reviews; hand off to DPD."],
+      ["4  CLEARANCE", "Agencies review their information."],
+      ["5  EDIT + PROOF", "Show omissions; compare with originals."],
+      ["6  PUBLISH", "Release the reviewed documentary record."]
+    ];
+    stages.forEach(([heading, detail], index) => {
+      const y = 47 + index * 24;
+      this.text(16, y, heading, 8, PALETTE.terminalCyan, 0);
+      this.text(16, y + 10, detail, 8, PALETTE.creamPaper, 0);
+    });
+    this.text(128, 188, "RESEARCH ACCESS IS NOT RELEASE.", 7, PALETTE.goldStamp);
   }
 
   private drawRecord() {

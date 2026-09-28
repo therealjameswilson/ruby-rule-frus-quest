@@ -1,0 +1,77 @@
+{
+  "editor": {
+    "passed": true,
+    "input": "touch only; keyboard/mouse guarded",
+    "scene": "SilentReadScene",
+    "room": "S1",
+    "documentPoints": 126,
+    "inventory": [
+      "Stapler Sword",
+      "Master Declass Key",
+      "Citation Stamp",
+      "FRUS Fragment: Front Matter",
+      "Source Note 47",
+      "Source Note 47 Citation Stamp",
+      "FRUS Fragment: Source Note",
+      "Telegram",
+      "Cross-Ref",
+      "Clearance Token",
+      "Concurrence Slip",
+      "Review Folder",
+      "AI Annotation Review Log",
+      "Red Pencil"
+    ],
+    "consoleErrors": []
+  },
+  "proof": {
+    "passed": true,
+    "input": "touch only; keyboard/mouse guarded",
+    "scene": "SilentReadScene",
+    "room": "S1",
+    "documentPoints": 157,
+    "inventory": [
+      "Stapler Sword",
+      "Master Declass Key",
+      "Citation Stamp",
+      "FRUS Fragment: Front Matter",
+      "Source Note 47",
+      "Source Note 47 Citation Stamp",
+      "FRUS Fragment: Source Note",
+      "Telegram",
+      "Cross-Ref",
+      "Clearance Token",
+      "Concurrence Slip",
+      "Review Folder",
+      "AI Annotation Review Log",
+      "Red Pencil",
+      "Proof Lens"
+    ],
+    "consoleErrors": []
+  },
+  "production": {
+    "passed": true,
+    "input": "touch only; keyboard/mouse guarded",
+    "scene": "BlackVaultLairScene",
+    "room": "DV1",
+    "documentPoints": 201,
+    "inventory": [
+      "Stapler Sword",
+      "Master Declass Key",
+      "Citation Stamp",
+      "FRUS Fragment: Front Matter",
+      "Source Note 47",
+      "Source Note 47 Citation Stamp",
+      "FRUS Fragment: Source Note",
+      "Telegram",
+      "Cross-Ref",
+      "Clearance Token",
+      "Concurrence Slip",
+      "Review Folder",
+      "AI Annotation Review Log",
+      "Red Pencil",
+      "Proof Lens",
+      "Buckram Key"
+    ],
+    "consoleErrors": []
+  }
+}

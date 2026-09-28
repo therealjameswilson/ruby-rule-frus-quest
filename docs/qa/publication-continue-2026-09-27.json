@@ -1,0 +1,82 @@
+[
+  {
+    "mobile": false,
+    "iteration": 0,
+    "restored": true,
+    "stored": true,
+    "active": [
+      "TitleScene",
+      "UIScene"
+    ]
+  },
+  {
+    "mobile": false,
+    "iteration": 1,
+    "restored": true,
+    "stored": true,
+    "active": [
+      "TitleScene",
+      "UIScene"
+    ]
+  },
+  {
+    "mobile": false,
+    "iteration": 2,
+    "restored": true,
+    "stored": true,
+    "active": [
+      "TitleScene",
+      "UIScene"
+    ]
+  },
+  {
+    "mobile": false,
+    "iteration": 3,
+    "restored": true,
+    "stored": true,
+    "active": [
+      "TitleScene",
+      "UIScene"
+    ]
+  },
+  {
+    "mobile": true,
+    "iteration": 0,
+    "restored": true,
+    "stored": true,
+    "active": [
+      "TitleScene",
+      "UIScene"
+    ]
+  },
+  {
+    "mobile": true,
+    "iteration": 1,
+    "restored": true,
+    "stored": true,
+    "active": [
+      "TitleScene",
+      "UIScene"
+    ]
+  },
+  {
+    "mobile": true,
+    "iteration": 2,
+    "restored": true,
+    "stored": true,
+    "active": [
+      "TitleScene",
+      "UIScene"
+    ]
+  },
+  {
+    "mobile": true,
+    "iteration": 3,
+    "restored": true,
+    "stored": true,
+    "active": [
+      "TitleScene",
+      "UIScene"
+    ]
+  }
+]
