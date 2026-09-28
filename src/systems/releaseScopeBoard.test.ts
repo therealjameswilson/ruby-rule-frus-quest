@@ -6,7 +6,7 @@ import { gameState, resetGameState } from "../game/state";
 
 vi.mock("phaser", () => ({ default: { Display: { Color: { HexStringToColor: () => ({ color: 0 }) } } } }));
 vi.mock("../input/InputState", () => ({ bindPointerDown: vi.fn(), getInput: vi.fn(() => ({})), swallowNextInputFrame: vi.fn() }));
-vi.mock("./audio", () => ({ retroAudio: { warning: vi.fn(), blip: vi.fn() } }));
+vi.mock("./audio", () => ({ retroAudio: { warning: vi.fn(), annotatePaper: vi.fn() } }));
 const view=vi.hoisted(()=>({toggle:(_part:0|1|2)=>{},file:()=>{},leave:()=>{},render:vi.fn(),input:vi.fn(),close:vi.fn()}));
 vi.mock("./releaseScopeDesk",()=>({ReleaseScopeDesk:class{
  active=true;

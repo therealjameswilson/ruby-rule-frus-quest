@@ -24,7 +24,7 @@ export class ReleaseScopeBoard {
   updateInput(){if(this.active)this.view!.updateInput(getInput());}
   private toggle(part:ReleaseScopePart){
     if(!this.active)return;this.mask=toggleReleaseScope(this.mask,part);this.onChange?.(this.mask);
-    this.message='Draft edited — not filed. The release note is unchanged.';retroAudio.blip();this.refresh();
+    this.message='Draft edited — not filed. The release note is unchanged.';retroAudio.annotatePaper();this.refresh();
   }
   private submit(){
     if(!this.active)return;const result=validateReleaseScope(this.mask);

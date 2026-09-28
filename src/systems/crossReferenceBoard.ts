@@ -28,10 +28,12 @@ export class CrossReferenceBoard {
   updateInput() { if (this.active) this.view!.updateInput(getInput()); }
   private select(draft: number) {
     if (!this.active) return;
-    this.draft = restoreCrossReferenceDraft(draft);
+    const next = restoreCrossReferenceDraft(draft);
+    if (!next || next === this.draft) return;
+    this.draft = next;
     this.onChange?.(this.draft);
     this.message = `Document ${CROSS_REFERENCE_CATALOG[this.draft - 1].number} pinned — not filed.`;
-    this.refresh(); retroAudio.blip();
+    this.refresh(); retroAudio.paperPickup();
   }
   private submit() {
     if (!this.active) return;

@@ -1,0 +1,21 @@
+{
+  "scope": "Actual desk actions and audio dispatch, not listening approval",
+  "results": [
+    {
+      "board": "crossReferenceBoard",
+      "sound": "paper packet pickup",
+      "draftOnly": true
+    },
+    {
+      "board": "releaseScopeBoard",
+      "sound": "quiet annotation mark",
+      "draftOnly": true
+    },
+    {
+      "board": "chronologyBoard",
+      "sound": "paper page turn",
+      "draftOnly": true
+    }
+  ],
+  "errors": []
+}

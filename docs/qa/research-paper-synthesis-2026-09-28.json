@@ -1,0 +1,54 @@
+{
+  "scope": "Offline synthesis levels and source cleanup, not human listening approval",
+  "result": [
+    {
+      "action": "pickup",
+      "peak": 0.09213073551654816,
+      "rms": 0.005806479863923069,
+      "tail": 0,
+      "clipped": 0,
+      "ended": 1
+    },
+    {
+      "action": "file",
+      "peak": 0.2184181660413742,
+      "rms": 0.010736249733784653,
+      "tail": 0,
+      "clipped": 0,
+      "ended": 1
+    },
+    {
+      "action": "mark",
+      "peak": 0.010036775842308998,
+      "rms": 0.00042498646943574784,
+      "tail": 0,
+      "clipped": 0,
+      "ended": 1
+    },
+    {
+      "action": "turn",
+      "peak": 0.029025565832853317,
+      "rms": 0.0014191420300336951,
+      "tail": 0,
+      "clipped": 0,
+      "ended": 1
+    },
+    {
+      "action": "stress",
+      "peak": 0.9205926656723022,
+      "rms": 0.04879254264455599,
+      "tail": 0,
+      "clipped": 0,
+      "ended": 8
+    },
+    {
+      "action": "cancel",
+      "peak": 0.0525069385766983,
+      "rms": 0.002222317018342502,
+      "tail": 0,
+      "clipped": 0,
+      "ended": 1
+    }
+  ],
+  "errors": []
+}

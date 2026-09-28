@@ -8673,3 +8673,11 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 - Build passes. Eight production browser visibility cases (two desks x desktop/375 portrait/844 landscape/320 phone) pass evidence, candidate, File visibility and unchanged evidence after wrong filing. Small-phone and landscape compositor screenshots inspected.
 - Existing native cross-reference and release-scope decision/input/lifecycle suites pass all three layouts with touch/keyboard/simulated controller. Standard client state inspected; known black native canvas capture persists. No new game logic; full unit suite not repeated.
 - Evidence docs/qa/persistent-desk-evidence-2026-09-28.{md,json}; screenshots /tmp/frus-desk-evidence-visible. Local only; not published. Goal active, physical hardware/listening and novice learning unverified.
+
+## 2026-09-28 — distinct paper sounds for research edits
+- Previous goal turn was progress: 03b40c7 kept comparison evidence visible in both desks.
+- Inspected scene-owned filing audio to avoid adding duplicate success sounds. Changed cross-reference pinning from generic beep to packet pickup, release markings to annotation sound, chronology movement to page turn. Re-pinning the same reference is now a quiet no-op with no redundant save callback; filing remains deliberate and scene-owned.
+- 283 files / 2117 tests pass and production build passes. New actual phone desk fixture verifies dispatch of all three distinct sounds, wrong-file warning, unfiled decisions and quiet reselection; no browser errors.
+- Extended offline paper synthesis QA to mark/turn alongside pickup/file/stress/cancel. All four waveforms distinct, no clipping, silent tails and expected source cleanup. Offline synthesis and dispatch checks are not human listening approval.
+- Standard game client state and screenshots inspected (known native black capture); compositor chronology screenshot inspected. Evidence docs/qa/research-edit-audio-2026-09-28.json and research-paper-synthesis-2026-09-28.json. WAVs /tmp/frus-research-paper-sounds.
+- Local only, not published. Full goal remains active; physical hardware/listening and novice comprehension remain unverified.

@@ -1,10 +1,11 @@
+import { retroAudio } from "./audio";
 import type Phaser from "phaser";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CrossReferenceBoard } from "./crossReferenceBoard";
 import { gameState, resetGameState } from "../game/state";
 vi.mock("phaser", () => ({ default: { Display: { Color: { HexStringToColor: () => ({ color: 0 }) } } } }));
 vi.mock("../input/InputState", () => ({ getInput: () => ({ aJustPressed: true }), swallowNextInputFrame: vi.fn() }));
-vi.mock("./audio", () => ({ retroAudio: { warning: vi.fn(), blip: vi.fn() } }));
+vi.mock("./audio", () => ({ retroAudio: { warning: vi.fn(), paperPickup: vi.fn() } }));
 const view = vi.hoisted(() => ({ select: (_value: number) => {}, file: () => {}, leave: () => {}, render: vi.fn(), input: vi.fn(), close: vi.fn() }));
 vi.mock("./crossReferenceDesk", () => ({ CrossReferenceDesk: class {
   active = true;
@@ -36,6 +37,12 @@ describe("cross-reference catalog decisions", () => {
     expect(f.file).not.toHaveBeenCalled(); expect(f.board.active).toBe(true);
     expect([gameState.reliability, gameState.documentPoints]).toEqual(before);
     view.select(2); view.file(); expect(f.file).toHaveBeenCalledExactlyOnceWith(2);
+  });
+  it("only rustles when a different record is pinned", () => {
+    const f = fixture(2); view.select(2);
+    expect(f.change).not.toHaveBeenCalled(); expect(retroAudio.paperPickup).not.toHaveBeenCalled();
+    view.select(1); expect(f.change).toHaveBeenCalledExactlyOnceWith(1);
+    expect(retroAudio.paperPickup).toHaveBeenCalledOnce(); expect(f.file).not.toHaveBeenCalled();
   });
   it("restores unfiled drafts and delegates input", () => {
     const f = fixture(2); expect(f.file).not.toHaveBeenCalled();
