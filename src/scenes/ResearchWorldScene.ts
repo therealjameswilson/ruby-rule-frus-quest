@@ -44,8 +44,8 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.disguise=disguiseIndex(gameState.sceneProgress.researchDanneDisguise);
     this.loadDisguise(this.disguise);
     if (researchZone(gameState.sceneProgress.researchWorldZone) === 1) {
-      for (const name of ['sweetgreen','james']) {
-        if (!this.textures.exists(`research-${name}-v2`)) this.load.image(`research-${name}-v2`, `assets/research-world/presentation/${name}-v2.png`);
+      for (const name of ['sweetgreen-v2','james-v3']) {
+        if (!this.textures.exists(`research-${name}`)) this.load.image(`research-${name}`, `assets/research-world/presentation/${name}.png`);
       }
     }
     for (const name of ['landmarks','sprites','landscape']) {
@@ -186,10 +186,12 @@ export class ResearchWorldScene extends Phaser.Scene {
     }
     this.solids.push(new Phaser.Geom.Rectangle(38,143,64,31));
     this.add.ellipse(91,192,13,3,0x294536,.25).setDepth(179);
-    if (this.textures.exists('research-james-v2')) {
-      const texture=this.textures.get('research-james-v2');
-      if(!texture.has('body'))texture.add('body',0,250,20,540,1490);
-      this.add.image(91,192,'research-james-v2','body').setOrigin(.5,1).setScale(42/1490).setDepth(192).setName('james-sweetgreen');
+    if (this.textures.exists('research-james-v3')) {
+      // Photo-based likeness; measured figure bounds retain the 42px height
+      // and keep his shoes planted at the existing interaction/shadow anchor.
+      const texture=this.textures.get('research-james-v3');
+      if(!texture.has('body'))texture.add('body',0,265,11,483,1479);
+      this.add.image(91,192,'research-james-v3','body').setOrigin(.5,1).setScale(42/1479).setDepth(192).setName('james-sweetgreen');
     } else this.add.sprite(91,190,'compiler_veteran',0).setOrigin(.5,.9).setDisplaySize(24,36).setDepth(190).setName('james-sweetgreen');
     this.label(104,194,'JAMES',280,7).setName('sweetgreen-james-label');
     // Salad bowl on the outdoor counter.
