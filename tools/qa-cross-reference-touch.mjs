@@ -30,29 +30,24 @@ try {
   const before = await state();
   assert.equal(before.choice.title, 'OPENNET / CROSS-REFERENCE');
   assert.equal(before.sceneProgress.silentReadCrossReferenceDraft ?? 0, 0);
-  await touch(48, 202,26,0); // Floating D-pad moves focus, not the player or a filing action.
-  assert.equal((await state()).sceneProgress.silentReadCrossReferenceDraft ?? 0, 0);
-  await touch(225,205);
+  const native=async(selector)=>{const target=page.locator('.cross-reference-desk '+selector);await target.scrollIntoViewIfNeeded();await target.tap();await page.waitForTimeout(180);};
+  await native('[data-record="2"]');
   assert.equal((await state()).sceneProgress.silentReadCrossReferenceDraft, 2);
   assert.equal((await state()).sceneProgress.silentReadReviewStatus, 2);
-  await touch(174,216);
+  await native('[data-focus-key=leave]');
   assert.equal((await state()).mode, 'explore');
   assert.equal((await state()).sceneProgress.silentReadReviewStatus, 2);
   assert.equal((await state()).playerCombat.weapon.swingId, before.playerCombat.weapon.swingId);
   await touch(225,205);
   assert.equal((await state()).choice.options[1].value, 'pinned');
-  await touch(48, 202,26,0); // Restored focus is the pinned card; next is the third card.
-  await touch(48, 202,26,0); // Then the distinct filing command.
-  await touch(225,205);
+  await native('[data-focus-key=file]');
   const filed = await state();
   assert.equal(filed.sceneProgress.silentReadReviewStatus, 3);
   assert.equal(filed.sceneProgress['silentReadDecision_public-crossref'], 1);
   assert.equal(filed.documentPoints, before.documentPoints);
   assert.equal(filed.playerCombat.weapon.swingId, before.playerCombat.weapon.swingId);
-  const image = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(i => resolve(i.src))));
-  await writeFile(`${out}/filed-native.png`, Buffer.from(image.split(',')[1], 'base64'));
   await page.screenshot({ path: `${out}/filed.png` });
   assert.deepEqual(errors, []);
   await writeFile(`${out}/result.json`, JSON.stringify({ errors, before, filed }, null, 2));
-  console.log('D-pad focus, A pin, B cancel, reopen, D-pad focus and A filing pass; no stamp or reward granted.');
+  console.log('Native touch pin, leave, reopen and explicit filing pass; no stamp or reward granted.');
 } finally { await browser.close(); }

@@ -1,0 +1,29 @@
+{
+  "scope": "Native desk fixtures, not earned campaign",
+  "results": [
+    {
+      "name": "desktop",
+      "rejectMissingAndWrong": true,
+      "explicitFiling": true,
+      "restore": true,
+      "citationUnchanged": true,
+      "cleanup": true
+    },
+    {
+      "name": "phone",
+      "rejectMissingAndWrong": true,
+      "explicitFiling": true,
+      "restore": true,
+      "citationUnchanged": true,
+      "cleanup": true
+    },
+    {
+      "name": "landscape",
+      "rejectMissingAndWrong": true,
+      "explicitFiling": true,
+      "restore": true,
+      "citationUnchanged": true,
+      "cleanup": true
+    }
+  ]
+}

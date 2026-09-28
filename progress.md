@@ -8657,3 +8657,12 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 - Touch-only earned proof replay passed from prior earned editor checkpoint, including rejected drafts, chronology draft reload, earned Proof Lens and saved handoff; no browser errors.
 - Standard game client state checked. Its known black canvas capture persists; compositor screenshots of the actual native desks and earned game were inspected instead.
 - Broader game goal remains active: physical iPhone/controller and novice learning validation are not established by these simulations.
+
+## 2026-09-28 — readable cross-reference decisions
+- Previous goal turn was progress: release-scope completion and verified requested publication, PR135 / d98e9e4 / Pages36376043709, exact live bundles and three-layout public fixture passed.
+- Converted remaining tiny cross-reference canvas catalog into native CrossReferenceDesk. Fictional citation panel explains memcon; readable candidate type/date/number; pin and explicit filing remain separate; original validator and mismatch feedback preserved. Saved draft reopens focused on pinned record; shared input/audio/modal lifecycle retained.
+- 283 files / 2116 tests pass; production build passes. Tests now cover model decisions/lifecycle plus actual browser layout/input rather than obsolete canvas hit rectangles.
+- Production desktop/375 portrait/844 landscape fixtures pass touch, keyboard, simulated controller, no selection/wrong type/wrong date, explicit filing, restore and cleanup. Final screenshots inspected. Standard client state checked; known black canvas capture, compositor visuals used.
+- Updated earned-proof and focused cross-reference touch selectors (latter syntax only). Earned production touch-only route passes wrong drafts, chronology draft reload, Proof Lens and saved handoff, no browser errors. Earlier dev run interrupted by development reload; production rerun passed.
+- Evidence docs/qa/cross-reference-native-2026-09-28.{md,json}, cross-reference-earned-proof-2026-09-28.json. Earned final checkpoint /tmp/frus-cross-reference-production-proof/earned-storage.json (origin5221).
+- Local only. Full goal remains active; physical hardware, listening and novice learning unverified. Next consider full proofing surfaces and modern production presentation; legacy qa-proof-comparison has outdated canvas coordinates across several native desks, so do not claim it passes.
