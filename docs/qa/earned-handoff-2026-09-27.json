@@ -1,0 +1,24 @@
+{
+  "scope": "Current earned-checkpoint continuation using touch only at 375x667; no progression or position injection. Not a fresh campaign or physical iPhone run.",
+  "routing": {
+    "mobile": true,
+    "packetsRouted": true,
+    "editorialAndRoutingNotRelease": true,
+    "wrongRouteRejected": true,
+    "crossingOpened": true,
+    "vaultEntered": true,
+    "reloaded": true,
+    "errors": []
+  },
+  "clearance": {
+    "mobile": true,
+    "reviewFiled": true,
+    "missingEntryRejected": true,
+    "chronologyRepaired": true,
+    "tokenEarned": true,
+    "reviewNotPublication": true,
+    "referralEntered": true,
+    "reloadedWithoutDuplicateReward": true,
+    "errors": []
+  }
+}

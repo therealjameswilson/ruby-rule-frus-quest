@@ -5,7 +5,7 @@ assert(process.env.FRUS_QA_STORAGE, 'Provide the preceding earned checkpoint via
 const out=process.env.FRUS_QA_OUT ?? '/private/tmp/frus-earned-clearance';await mkdir(out,{recursive:true});
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE});
 const mobile=process.argv.includes('--mobile');
-const context=await browser.newContext({storageState:process.env.FRUS_QA_STORAGE,...(mobile?{viewport:{width:390,height:844},hasTouch:true,isMobile:true}:{})});
+const context=await browser.newContext({storageState:process.env.FRUS_QA_STORAGE,...(mobile?{viewport:{width:375,height:667},hasTouch:true,isMobile:true}:{})});
 const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
 page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
 const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
@@ -86,6 +86,7 @@ try{
   assert(burst,'Pickup celebration must use the detailed icon too');
  }
  assert((await state()).inventory.includes('Clearance Token'));
+ assert(!(await state()).sceneProgress.finalGatePublished,'A review token does not publish the volume');
  await move(216,132);await move(216,120);await key('ArrowRight',1200);
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='ReferralVaultScene');
  await page.waitForTimeout(700);await shot('referral-arrival');
@@ -106,6 +107,6 @@ try{
  assert((await state()).player.y>restored.player.y,'Movement must resume after the handoff reload');
 
  await context.storageState({path:`${out}/earned-storage.json`});
- await writeFile(`${out}/result.json`,JSON.stringify({mobile,reviewFiled:true,missingEntryRejected:true,chronologyRepaired:true,tokenEarned:true,referralEntered:true,reloadedWithoutDuplicateReward:true,errors},null,2));
+ await writeFile(`${out}/result.json`,JSON.stringify({mobile,reviewFiled:true,missingEntryRejected:true,chronologyRepaired:true,tokenEarned:true,reviewNotPublication:true,referralEntered:true,reloadedWithoutDuplicateReward:true,errors},null,2));
  assert.deepEqual(errors,[]);console.log('PASS earned review batch, missing-entry rejection, chronology repair, Clearance Token, referral arrival and reload');
 }finally{await shot('last');await browser.close();}
