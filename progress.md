@@ -8717,3 +8717,11 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 - Saved-state audit confirms both routed records workflow/reviewStatus become referred while agency responses remain unchanged. Initial audit assumed reviewStatus would stay submitted and correctly failed that overly strict assumption; inspected records confirmed normal submitted→referred transition, not release, and corrected evidence assertion. No gameplay workaround.
 - Evidence docs/qa/native-referral-manifest-2026-09-28.json, native-manifest-earned-2026-09-28.json, native-manifest-routing-state-2026-09-28.json. Earned save /tmp/frus-native-manifest-earned/earned-storage.json origin5221.
 - Local only, not published. Full goal active; physical hardware/listening and novice comprehension unverified. Referral treatment remains a compact canvas surface to assess next.
+
+## 2026-09-28 — readable referral treatment limits
+- Previous goal turn progressed with 8356f34 native referral manifest and earned referral route.
+- Replaced compact canvas treatment choices with native case cards, persistent consent/withholding evidence and plain-language consequences. Pending consent requires HOLD; the withheld document stays in the appeal trail. Appeal does not imply release. Existing validator and draft encoding preserved; edits never file automatically.
+- 286 files / 2127 tests and build pass. Desktop, 375 portrait and 844 landscape fixtures verify both rejection conditions, independent edits, restoration, touch/keyboard/simulated controller and cleanup. Phone/landscape compositor screenshots inspected; standard client state checked with known black canvas capture limitation.
+- Production-preview touch-only earned replay passed saved treatment reload, filing, bracket press, Concurrence Slip, no duplicate reward and proofing arrival without errors. Process handle expired before final poll; completed result.json and final earned storage verified directly.
+- Evidence docs/qa/native-referral-treatment-2026-09-28.{md,json} and native-treatment-earned-2026-09-28.json. Earned checkpoint /tmp/frus-native-treatment-earned/earned-storage.json, origin5221.
+- Local only, not published. Full goal active. Physical hardware, human listening and novice comprehension remain unverified.

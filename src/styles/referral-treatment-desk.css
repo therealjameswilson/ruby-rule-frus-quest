@@ -1,0 +1,11 @@
+.referral-treatment-desk .manuscript-panel{max-width:940px}
+.referral-treatment-desk .manuscript-body{display:block}
+.treatment-cases{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.treatment-case{padding:20px;background:#1c3339;border:1px solid #6b8479;border-radius:12px}
+.treatment-case h2{font-size:18px;margin:0 0 12px}.treatment-evidence{font-size:14px;color:#edcf96;line-height:1.5;margin:0 0 16px}
+.treatment-choice{display:flex;flex-direction:column;gap:8px;width:100%;padding:16px;text-align:left;background:#f0e5c7;color:#293b3a;border:1px solid #e1c795;border-radius:10px;min-height:60px}
+.treatment-choice strong{font-size:19px}.treatment-choice span{font-size:12px}
+.treatment-effect{font-size:14px;line-height:1.5;color:#c5d8cc;margin:16px 0 0}
+.referral-treatment-desk .manuscript-close,.referral-treatment-desk .manuscript-submit{min-height:48px}
+@media(max-width:760px){.treatment-cases{grid-template-columns:1fr}.treatment-case{padding:16px}}
+@media(max-width:480px){.referral-treatment-desk .manuscript-heading>div{width:100%}.referral-treatment-desk .manuscript-eyebrow{max-width:calc(100% - 100px);line-height:1.5}.referral-treatment-desk .manuscript-heading h1{font-size:25px}}
