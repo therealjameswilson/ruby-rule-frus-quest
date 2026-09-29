@@ -19,7 +19,7 @@ export class ManuscriptDesk {
   get active() { return this.controls.active; }
 
   constructor(private progress: Record<string,number>, private onSave:()=>void, private onSubmit:()=>void, private onCancel:()=>void) {
-    this.root.className='manuscript-desk';
+    this.root.className='manuscript-desk selection-desk';
     this.root.setAttribute('role','dialog');this.root.setAttribute('aria-modal','true');this.root.setAttribute('aria-labelledby','manuscript-title');
     // Static authored markup; no archive/source text is interpreted as HTML.
     this.root.innerHTML=`<section class="manuscript-panel">
@@ -27,7 +27,7 @@ export class ManuscriptDesk {
       <div class="manuscript-budget"><div><span>DOCUMENT PAGES</span><strong data-pages></strong></div><div class="manuscript-meter" role="meter" aria-label="Document page budget" aria-valuemin="0" aria-valuemax="1400"><i class="manuscript-base"></i><i data-added></i></div><p data-remaining></p><small>Annotation sheets are outside this limit.</small></div>
       <div class="manuscript-body"><section class="manuscript-coverage" data-reading-start aria-label="Coverage added by these exercise packets"><h2>What these packets add <span data-coverage-count></span></h2><div data-coverage></div></section><section class="manuscript-candidates" aria-label="Research packets"><h2>On your desk <span>Tap a packet to place it</span></h2><div class="manuscript-packets"></div></section>
       <aside class="manuscript-trays"><div class="manuscript-bound-volume" aria-hidden="true"><span>FOREIGN<br>RELATIONS<br>OF THE<br>UNITED STATES</span><i>WORKING MANUSCRIPT</i></div><h2>In the manuscript</h2><p data-tray></p><h2>Source file</h2><p data-outside></p><p class="manuscript-danne">DANN-E: “Print everything. Bigger book, bigger genius!”</p></aside></div>
-      <footer class="manuscript-footer"><p data-status role="status" aria-live="polite">Your existing manuscript has 1,100 document pages. Compare the two packets before filing.</p><button class="manuscript-submit" type="button">File selection <span>→</span></button><small>Illustrative packets • Arrows / D-pad to move · A / Enter to select · B / Esc to leave</small></footer>
+      <footer class="manuscript-footer"><p data-status role="status" aria-live="polite">Your existing manuscript has 1,100 document pages. Compare the three packets before filing.</p><button class="manuscript-submit" type="button">File selection <span>→</span></button><small>Illustrative packets • Arrows / D-pad to move · A / Enter to select · B / Esc to leave</small></footer>
     </section>`;
     this.status=this.root.querySelector('[data-status]')!;this.count=this.root.querySelector('[data-pages]')!;
     this.remaining=this.root.querySelector('[data-remaining]')!;this.meter=this.root.querySelector('.manuscript-meter')!;

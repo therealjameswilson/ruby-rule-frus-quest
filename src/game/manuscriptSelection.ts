@@ -31,6 +31,14 @@ export const SELECTION_PACKETS = [
     ],
     value: 'Keep the file traceable as supporting research, even if it is not printed.',
     flag: 'compilerDeskRoutine'
+  },
+  {
+    id: 'approval', title: 'The approval alone', pages: 80,
+    tag: 'Decision · narrower coverage',
+    description: 'Print the approved instruction without the discussion or the later implementation report.',
+    evidence: [chapterSample('B',0,'Instruction'), chapterSample('B',1,'Reporting requirement')],
+    value: 'Fits the budget, but leaves the objections and the resource shortfall in the source file. Exercise B is already in the decision-trail packet.',
+    flag: 'compilerDeskApproval'
   }
 ] as const;
 export type SelectionPacketId = typeof SELECTION_PACKETS[number]['id'];
@@ -41,7 +49,7 @@ export function manuscriptSelectionReadout(progress: Readonly<Record<string, num
     remaining:MANUSCRIPT_PAGE_LIMIT-pages, annotationCountsTowardLimit:false, packets,
     coverage: CHAPTER_EXHIBITS.map((record,index)=>({
       id:record.id, label:['Objections','Approved instruction','Resource shortfall'][index],
-      locator:record.locator, inManuscript:packets[0].selected
+      locator:record.locator, inManuscript:packets[0].selected || (record.id==='B' && packets.find(packet=>packet.id==='approval')!.selected)
     }))};
 }
 export function toggleSelectionPacket(progress: Record<string, number>, id: SelectionPacketId) {
@@ -51,6 +59,9 @@ export function toggleSelectionPacket(progress: Record<string, number>, id: Sele
 export function evaluateManuscriptSelection(progress: Readonly<Record<string, number>>) {
   const state = manuscriptSelectionReadout(progress);
   if (state.remaining<0) return {ok:false, message:`${-state.remaining} pages over the document limit. Compare what each packet contributes; retain useful unprinted evidence for annotation.`};
+  const approval = state.packets.find(packet=>packet.id==='approval')!.selected;
+  if (state.packets[0].selected && approval) return {ok:false, message:'Exercise B is selected twice. Keep one copy of the approval and preserve the surrounding discussion and implementation evidence.'};
+  if (approval && !state.packets[0].selected) return {ok:false, message:'The approval fits, but the decision story is incomplete. Exercise A records objections; Exercise C reports a resource shortfall. Do not leave out that important evidence merely to present an uncomplicated success.'};
   if (!state.packets[0].selected) return {ok:false, message:'The manuscript is missing the decision trail. Space alone is not enough: Exercise A records objections; B gives the approval; C reports a resource shortfall. The daily summaries do not replace that evidence.'};
   return {ok:true, message:'Decision trail selected. Supporting file retained for annotation and further research.'};
 }

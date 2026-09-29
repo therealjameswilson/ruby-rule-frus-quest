@@ -48,3 +48,18 @@
 .desk-evidence-strip strong{font-size:14px;line-height:1.4;color:#edd496}
 @media(max-width:760px){.desk-evidence-strip{padding:10px 22px}}
 @media(max-height:550px){.desk-evidence-strip{padding:7px 20px}}
+
+@media(max-width:380px) and (max-height:650px){
+ .selection-desk .manuscript-heading{padding:12px 16px;gap:12px;align-items:center}
+ .selection-desk .manuscript-eyebrow{display:none}
+ .selection-desk .manuscript-heading h1{font-size:22px;margin:0;padding:0}
+ .selection-desk .manuscript-close{position:static;min-height:44px;padding:8px 12px}
+ .selection-desk .manuscript-budget{padding:10px 16px;grid-template-columns:1fr auto;gap:6px 12px}
+ .selection-desk .manuscript-budget strong{font-size:18px;white-space:nowrap}
+ .selection-desk .manuscript-budget p{grid-column:2;grid-row:1;font-size:11px}
+ .selection-desk .manuscript-meter{grid-column:1/-1;grid-row:2;height:8px}
+ .selection-desk .manuscript-budget small{grid-column:1/-1}
+ .selection-desk .manuscript-footer{padding:10px 16px;gap:8px}
+ .selection-desk .manuscript-footer p{font-size:12px;line-height:1.4}
+ .selection-desk .manuscript-submit{min-height:48px;padding:10px}
+}
