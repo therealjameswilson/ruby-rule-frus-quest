@@ -44,7 +44,7 @@ export class ChronologyBoard {
   private shift(direction:-1|1){
     if(!this.active)return;
     const next=this.task.shift(this.slot,direction);
-    if(next!==this.slot){this.slot=next;this.onChange?.(next);retroAudio.blip();}
+    if(next!==this.slot){this.slot=next;this.onChange?.(next);retroAudio.turnPaper();}
     this.message=this.slot?'Draft edited — not filed.':this.task.initialMessage;
     this.refresh();
   }

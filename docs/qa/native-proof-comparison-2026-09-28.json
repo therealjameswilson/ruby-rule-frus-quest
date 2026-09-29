@@ -1,0 +1,29 @@
+{
+  "scope": "Bounded native proof fixtures",
+  "results": [
+    {
+      "name": "desktop",
+      "faithfulUnchanged": true,
+      "twoRepairsRequired": true,
+      "explicitFiling": true,
+      "restore": true,
+      "touchKeyboardController": true
+    },
+    {
+      "name": "phone",
+      "faithfulUnchanged": true,
+      "twoRepairsRequired": true,
+      "explicitFiling": true,
+      "restore": true,
+      "touchKeyboardController": true
+    },
+    {
+      "name": "landscape",
+      "faithfulUnchanged": true,
+      "twoRepairsRequired": true,
+      "explicitFiling": true,
+      "restore": true,
+      "touchKeyboardController": true
+    }
+  ]
+}

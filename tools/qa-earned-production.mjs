@@ -54,10 +54,10 @@ try {
  await key();await shot('index-stamped');
  assert.equal((await state()).sceneProgress.silentReadReviewStep,7);
  await move(192,132);await key();await shot('proof-comparison');
- await key('ArrowLeft');await key();await shot('altered-proof-rejected');
+ const proof=async(selector)=>{const e=page.locator('.proof-comparison-desk '+selector);await e.scrollIntoViewIfNeeded();if(mobile)await e.tap();else await e.click();await page.waitForTimeout(150);};
+ await proof('[data-focus-key=file]');await shot('altered-proof-rejected');
  assert(!(await state()).inventory.includes('Buckram Key'));
- await key('ArrowRight');await key();await key('ArrowRight');await key('ArrowRight');await key();
- await key('ArrowRight');await key('ArrowRight');await key();await shot('proof-filed');
+ await proof('[data-fragment="0"]');await proof('[data-fragment="2"]');await proof('[data-focus-key=file]');await shot('proof-filed');
  assert.equal((await state()).audioStatus,'paper filing and stamp');
  assert(!(await state()).inventory.includes('Buckram Key'));
  await key();await page.waitForTimeout(500);await shot('key-earned');

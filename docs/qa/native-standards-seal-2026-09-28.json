@@ -1,0 +1,29 @@
+{
+  "scope": "Bounded standards seal fixtures, not earned publication",
+  "results": [
+    {
+      "name": "desktop",
+      "liveRecheck": true,
+      "blockedRecordVisible": true,
+      "explicitSeal": true,
+      "touchKeyboardController": true,
+      "cleanup": true
+    },
+    {
+      "name": "phone",
+      "liveRecheck": true,
+      "blockedRecordVisible": true,
+      "explicitSeal": true,
+      "touchKeyboardController": true,
+      "cleanup": true
+    },
+    {
+      "name": "landscape",
+      "liveRecheck": true,
+      "blockedRecordVisible": true,
+      "explicitSeal": true,
+      "touchKeyboardController": true,
+      "cleanup": true
+    }
+  ]
+}

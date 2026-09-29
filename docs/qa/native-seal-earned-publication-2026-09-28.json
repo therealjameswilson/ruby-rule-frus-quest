@@ -1,0 +1,16 @@
+{
+  "mobile": true,
+  "cpuThrottle": 1,
+  "startPoints": 201,
+  "finalPoints": 241,
+  "completedPackets": 5,
+  "certification": {
+    "status": "published",
+    "nearestGate": true,
+    "checklistComplete": true,
+    "certifiedBy": "Sam",
+    "requiredItem": "Buckram Key",
+    "message": "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
+  },
+  "errors": []
+}

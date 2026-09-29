@@ -1,0 +1,10 @@
+.editorial-repair-desk .manuscript-panel{max-width:940px}
+.editorial-repair-desk .manuscript-body{display:block}
+.repair-reader-proof{padding:24px;background:#f2ead7;border:1px solid #b9aa8a;border-radius:12px;color:#293a3b}
+.repair-reader-proof h2{font-size:14px}.repair-reader-proof [data-indication]{font:22px/1.5 Georgia,serif;min-height:40px;margin:16px 0}
+.repair-explanation{font-size:14px;line-height:1.5;color:#45605a}
+.editorial-repair-desk[data-repaired=false] [data-indication]{color:#865449}
+.repair-add{margin-top:18px;background:#263f43;border:1px solid #799386;color:#e5ecdc;border-radius:10px;padding:14px 18px;min-height:48px}
+.repair-add[hidden]{display:none}
+.editorial-repair-desk .manuscript-close,.editorial-repair-desk .manuscript-submit{min-height:48px}
+@media(max-width:480px){.editorial-repair-desk .manuscript-heading>div{width:100%}.editorial-repair-desk .manuscript-eyebrow{max-width:calc(100% - 100px);line-height:1.5}.editorial-repair-desk .manuscript-heading h1{font-size:25px}.repair-reader-proof{padding:18px}.repair-reader-proof [data-indication]{font-size:21px}.repair-add{width:100%}}

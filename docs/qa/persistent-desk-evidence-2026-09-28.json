@@ -1,0 +1,53 @@
+{
+  "scope": "Bounded scrolling and comparison fixtures",
+  "results": [
+    {
+      "name": "desktop",
+      "kind": "reference",
+      "evidenceVisibleWhileComparing": true,
+      "unchangedAfterWrongFiling": true
+    },
+    {
+      "name": "desktop",
+      "kind": "release",
+      "evidenceVisibleWhileComparing": true,
+      "unchangedAfterWrongFiling": true
+    },
+    {
+      "name": "phone",
+      "kind": "reference",
+      "evidenceVisibleWhileComparing": true,
+      "unchangedAfterWrongFiling": true
+    },
+    {
+      "name": "phone",
+      "kind": "release",
+      "evidenceVisibleWhileComparing": true,
+      "unchangedAfterWrongFiling": true
+    },
+    {
+      "name": "landscape",
+      "kind": "reference",
+      "evidenceVisibleWhileComparing": true,
+      "unchangedAfterWrongFiling": true
+    },
+    {
+      "name": "landscape",
+      "kind": "release",
+      "evidenceVisibleWhileComparing": true,
+      "unchangedAfterWrongFiling": true
+    },
+    {
+      "name": "small-phone",
+      "kind": "reference",
+      "evidenceVisibleWhileComparing": true,
+      "unchangedAfterWrongFiling": true
+    },
+    {
+      "name": "small-phone",
+      "kind": "release",
+      "evidenceVisibleWhileComparing": true,
+      "unchangedAfterWrongFiling": true
+    }
+  ]
+}

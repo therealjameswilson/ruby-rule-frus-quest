@@ -43,18 +43,12 @@ try {
     await touch([], "touchEnd"); await page.waitForTimeout(130);
   };
   const key = async (name, ms = 65) => {
+    if(mobile && await pressPortraitControl(page,cdp,name,ms)){await page.waitForTimeout(100);return;}
     await page.keyboard.down(name); await page.waitForTimeout(ms);
     await page.keyboard.up(name); await page.waitForTimeout(100);
   };
   const action = async () => { if(mobile&&await pressPortraitControl(page,cdp,"Space",65)){await page.waitForTimeout(130);return;} return mobile ? tap(225,205) : key("Space"); };
-  const pushUp = async () => {
-    if(mobile&&await pressPortraitControl(page,cdp,"ArrowUp",600)){await page.waitForTimeout(100);return;}
-    if (mobile) {
-      await touch([[48, 202]], "touchStart"); await touch([[48, 176]], "touchMove");
-      await page.waitForTimeout(600); await touch([], "touchEnd");
-    } else await key("ArrowUp",600);
-    await page.waitForTimeout(100);
-  };
+  const pushUp = async () => { await key("ArrowUp",600);await page.waitForTimeout(100); };
   const move = async (x, y) => {
     for (let tries = 0; tries < 65; tries += 1) {
       const p = (await state()).player, dx = x - p.x, dy = y - p.y;
@@ -64,11 +58,7 @@ try {
       const sign = Math.sign(horizontal ? dx : dy);
       const ms = Math.min(180, Math.max(16, Math.max(Math.abs(dx), Math.abs(dy)) * 6));
       if(mobile&&await pressPortraitControl(page,cdp,horizontal?sign>0?"ArrowRight":"ArrowLeft":sign>0?"ArrowDown":"ArrowUp",ms)){await page.waitForTimeout(80);continue;}
-      if (mobile) {
-        await touch([[48, 202]], "touchStart");
-        await touch([[48 + (horizontal ? sign * 26 : 0), 202 + (horizontal ? 0 : sign * 26)]], "touchMove");
-        await page.waitForTimeout(ms); await touch([], "touchEnd"); await page.waitForTimeout(80);
-      } else await key(horizontal ? sign > 0 ? "ArrowRight" : "ArrowLeft" : sign > 0 ? "ArrowDown" : "ArrowUp", ms);
+      await key(horizontal ? sign > 0 ? "ArrowRight" : "ArrowLeft" : sign > 0 ? "ArrowDown" : "ArrowUp", ms);
     }
     throw new Error(`Could not walk to ${x},${y}; player=${JSON.stringify((await state()).player)}`);
   };
@@ -111,25 +101,15 @@ try {
   let current = await shot("human-seal");
   assert.equal(current.mode, "choice");
   assert.equal(current.buckramBinding.completed, 2);
-  const layout = await page.evaluate(() => {
-    const board = window.game.scene.getScene("EndingScene").children.getByName("binding-certification-board");
-    return board.list.filter(child => typeof child.text === "string" || (child.type === "Rectangle" && [90, 110].includes(child.width)))
-      .map(child => { const b = child.getBounds(); return { type: child.type, text: child.text, x: b.x, y: b.y, width: b.width, height: b.height }; });
-  });
-  const canvas = await page.locator("#game-shell canvas:not(#pixel-proof-overlay)").boundingBox();
-  for (const item of layout) {
-    assert(item.x >= 9 && item.x + item.width <= 247 && item.y >= 28 && item.y + item.height <= 212, `Panel overflow: ${JSON.stringify(item)}`);
-    if (item.type === "Rectangle") {
-      assert(item.y + item.height < 176, "Decision target overlaps the touch A hit area");
-      assert(item.height * canvas.height / 240 >= 44, "Decision touch target is smaller than 44 CSS pixels");
-    }
-  }
-  await writeFile(`${out}/standards-layout.json`, JSON.stringify(layout, null, 2));
+  const sealAction=async(key)=>{const e=page.locator(`.binding-certification-desk [data-focus-key=${key}]`);if(mobile)await e.tap();else await e.click();await page.waitForTimeout(150);};
+  const layout=await page.locator('.binding-certification-desk button').evaluateAll(buttons=>buttons.map(e=>{const r=e.getBoundingClientRect();return {width:r.width,height:r.height,top:r.top,bottom:r.bottom};}));
+  for(const item of layout)assert(item.width>=44&&item.height>=44&&item.top>=0,'Native seal controls must stay accessible');
+  await writeFile(`${out}/standards-layout.json`,JSON.stringify(layout,null,2));
   const stationary = current.player;
   const swing = current.playerCombat.weapon.swingId;
   await page.waitForTimeout(850);
   assert.deepEqual((await state()).player, stationary);
-  if (mobile) await tap(192, 158); else await key("x");
+  await sealAction("leave");
   assert.equal((await state()).mode, "explore");
   assert.equal((await state()).playerCombat.weapon.swingId, swing);
   const beforeResume = await state();
@@ -143,7 +123,7 @@ try {
   assert.deepEqual(current.documentCandidates, initial.documentCandidates);
   await action();
   assert.equal((await state()).mode, "choice");
-  if (mobile) await tap(80, 158); else await action();
+  await sealAction("seal");
   current = await state();
   assert.equal(current.buckramBinding.completed, 5);
   assert.equal(current.sceneProgress.kelloggFinalCertificationComplete, 1);

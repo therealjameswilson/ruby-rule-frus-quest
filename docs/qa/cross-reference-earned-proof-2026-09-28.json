@@ -1,0 +1,29 @@
+{
+  "mobile": true,
+  "stage": "proof",
+  "passed": true,
+  "chronologyDraftReload": true,
+  "errors": [],
+  "final": {
+    "scene": "SilentReadScene",
+    "room": "S1",
+    "inventory": [
+      "Stapler Sword",
+      "Master Declass Key",
+      "Citation Stamp",
+      "FRUS Fragment: Front Matter",
+      "Source Note 47",
+      "Source Note 47 Citation Stamp",
+      "FRUS Fragment: Source Note",
+      "Telegram",
+      "Cross-Ref",
+      "Clearance Token",
+      "Concurrence Slip",
+      "Review Folder",
+      "AI Annotation Review Log",
+      "Red Pencil",
+      "Proof Lens"
+    ],
+    "documentPoints": 157
+  }
+}

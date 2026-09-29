@@ -6,7 +6,7 @@ import {EDITOR_CHRONOLOGY_EVIDENCE,editorChronologySequence,restoreEditorChronol
 vi.mock('phaser',()=>({default:{Display:{Color:{HexStringToColor:()=>({color:0})}}}}));
 const view=vi.hoisted(()=>({shift:(_d:-1|1)=>{},file:()=>{},leave:()=>{},render:vi.fn(),input:vi.fn(),close:vi.fn()}));
 vi.mock('../input/InputState',()=>({getInput:()=>({aJustPressed:true}),swallowNextInputFrame:vi.fn()}));
-vi.mock('./audio',()=>({retroAudio:{warning:vi.fn(),blip:vi.fn()}}));
+vi.mock('./audio',()=>({retroAudio:{warning:vi.fn(),turnPaper:vi.fn()}}));
 vi.mock('./chronologyDesk',()=>({ChronologyDesk:class{
   active=true;
   constructor(_task:unknown,shift:(d:-1|1)=>void,file:()=>void,leave:()=>void){Object.assign(view,{shift,file,leave});}

@@ -1,0 +1,9 @@
+.referral-manifest-desk .manuscript-panel{max-width:940px}
+.referral-manifest-desk .manuscript-body{display:block}
+.manifest-limit{font-size:15px;color:#c4d6cd;line-height:1.5;margin:0 0 20px}
+.manifest-routes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.manifest-route{display:flex;flex-direction:column;gap:16px;align-items:flex-start;text-align:left;background:#243c40;color:#e9ecdd;border:1px solid #71887d;border-radius:12px;padding:20px;min-height:185px}
+.manifest-route strong{font-size:17px;line-height:1.4}.manifest-agency{font-size:18px;font-weight:700;color:#edd496}.manifest-route small{font-size:12px;margin-top:auto;color:#bbd3c6}
+.referral-manifest-desk .manuscript-close,.referral-manifest-desk .manuscript-submit{min-height:48px}
+@media(max-width:760px){.manifest-routes{grid-template-columns:1fr}.manifest-route{min-height:140px;padding:16px}}
+@media(max-width:480px){.referral-manifest-desk .manuscript-heading>div{width:100%}.referral-manifest-desk .manuscript-eyebrow{max-width:calc(100% - 100px);line-height:1.5}.referral-manifest-desk .manuscript-heading h1{font-size:25px}}

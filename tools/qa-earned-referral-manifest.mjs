@@ -51,9 +51,11 @@ try{
  assert.equal((await state()).roomTraversal.currentRoomId,'R1');
  assert.equal((await state()).sceneProgress.referralDispatchCopyFound,1);
  await move(104,76);await move(104,156);await key();await shot('draft');
- await key('ArrowDown');await key('ArrowDown');await key('ArrowDown');await key();await shot('rejected');
+ const manifest=async(selector)=>{const e=page.locator('.referral-manifest-desk '+selector);await e.scrollIntoViewIfNeeded();if(mobile)await e.tap();else await e.click();await page.waitForTimeout(150);};
+ await manifest('[data-focus-key=file]');await shot('rejected');
  assert(!(await state()).sceneProgress.referralManifestReviewComplete);
- await key('ArrowLeft');await shot('corrected');await key('ArrowDown');await key();await page.waitForTimeout(500);
+ await manifest('[data-route="2"]');await manifest('[data-route="2"]');await shot('corrected');
+ await manifest('[data-focus-key=file]');await page.waitForTimeout(500);
  assert.equal((await state()).sceneProgress.referralManifestReviewComplete,1);await shot('filed');
  if(process.argv.includes('--guide-check')){
    const before=await state();
@@ -69,12 +71,12 @@ try{
  }
  await key();assert.equal((await state()).sceneProgress.referralTreatmentDocketCarried,1);
  await move(104,180);await move(80,180);await key();await shot('treatment-draft');
- await key('ArrowDown');await key('ArrowDown');await key();await shot('treatment-rejected');
+ const treatment=async(key)=>{const e=page.locator(`.referral-treatment-desk [data-focus-key=${key}]`);await e.scrollIntoViewIfNeeded();if(mobile)await e.tap();else await e.click();await page.waitForTimeout(150);};
+ await treatment('file');await shot('treatment-rejected');
  assert.equal((await state()).sceneProgress.referralTreatmentStep,0);
- await key('ArrowUp');await key('ArrowUp');await key();
- await key('ArrowDown');await key('ArrowDown');await key();
+ await treatment('permission');await treatment('file');
  assert.equal((await state()).sceneProgress.referralTreatmentStep,0,'One corrected field is not a filed review');
- await key('ArrowUp');await key();await key('x');
+ await treatment('withholding');await treatment('leave');
  assert.equal((await state()).sceneProgress.referralTreatmentStep,0,'Closing the edited draft must not file it');
  assert.equal((await state()).sceneProgress.referralTreatmentDraft,3);
  if(process.argv.includes('--reload-treatment')){
@@ -84,7 +86,7 @@ try{
   assert.equal((await state()).sceneProgress.referralTreatmentStep,0);
   await shot('treatment-reloaded');
  }
- await key();await key('ArrowDown');await key('ArrowDown');await key();
+ await key();await treatment('file');
  assert.equal((await state()).sceneProgress.referralTreatmentStep,2);await shot('treatment-filed');
  if(process.argv.includes('--wrong-desk')){
   const before=await state();await key();

@@ -1,0 +1,11 @@
+.binding-certification-desk .manuscript-panel{max-width:940px}
+.binding-certification-desk .manuscript-body{display:block}
+.binding-ledger{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.binding-check{display:grid;grid-template-columns:1fr auto;gap:8px 16px;padding:20px;border:1px solid #a08777;border-radius:12px;background:#302e2b}
+.binding-check[data-complete=true]{background:#193332;border-color:#547d6c}
+.binding-check h2{font-size:15px;margin:0}.binding-check>strong{font-size:23px;color:#edd496}
+.binding-check>span{font-size:12px;color:#edc1a7}.binding-check[data-complete=true]>span{color:#b1ddbe}
+.binding-check p{grid-column:1/-1;font-size:14px;line-height:1.5;color:#c6d3ca;margin:0}
+.binding-certification-desk .manuscript-close,.binding-certification-desk .manuscript-submit{min-height:48px}
+@media(max-width:760px){.binding-ledger{grid-template-columns:1fr}.binding-check{padding:16px}}
+@media(max-width:480px){.binding-certification-desk .manuscript-heading>div{width:100%}.binding-certification-desk .manuscript-eyebrow{max-width:calc(100% - 110px);line-height:1.5}.binding-certification-desk .manuscript-heading h1{font-size:25px}}

@@ -1,0 +1,29 @@
+{
+  "scope": "Bounded treatment fixtures",
+  "results": [
+    {
+      "name": "desktop",
+      "bothFieldsRequired": true,
+      "explicitFiling": true,
+      "restore": true,
+      "touchKeyboardController": true,
+      "cleanup": true
+    },
+    {
+      "name": "phone",
+      "bothFieldsRequired": true,
+      "explicitFiling": true,
+      "restore": true,
+      "touchKeyboardController": true,
+      "cleanup": true
+    },
+    {
+      "name": "landscape",
+      "bothFieldsRequired": true,
+      "explicitFiling": true,
+      "restore": true,
+      "touchKeyboardController": true,
+      "cleanup": true
+    }
+  ]
+}

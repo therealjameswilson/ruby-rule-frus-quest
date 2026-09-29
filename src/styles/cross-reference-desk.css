@@ -1,0 +1,13 @@
+.cross-reference-desk .manuscript-panel{max-width:940px}
+.cross-reference-desk .manuscript-body{display:block}
+.reference-target{border:1px solid #859d95;background:#122a2e;border-radius:12px;padding:20px;margin-bottom:20px}
+.reference-target h2{font-size:13px;color:#bdcfc7;margin-bottom:10px}
+.reference-target strong{font-size:18px;color:#edd496}
+.reference-target p{font-size:14px;color:#d0e1d7;line-height:1.5;margin:12px 0 0}
+.reference-catalog{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.reference-card{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:14px;border:1px solid #859d95;border-radius:12px;padding:20px;background:#1c3339;color:#e3eadc;text-align:left;min-height:180px}
+.reference-card[aria-pressed=true]{border-color:#edcf89;background:#334747}
+.reference-number{font-size:13px;color:#c5d3c7}.reference-card strong{font-size:17px;line-height:1.4}.reference-card>span:not(.reference-number){font-size:15px}.reference-pin{font-size:13px;color:#edd496;margin-top:auto}
+.cross-reference-desk .manuscript-close,.cross-reference-desk .manuscript-submit{min-height:48px}
+@media(max-width:760px){.reference-card{padding:16px 12px}.reference-catalog{gap:10px}}
+@media(max-width:480px){.reference-catalog{grid-template-columns:1fr}.reference-card{min-height:150px}.cross-reference-desk .manuscript-heading>div{width:100%}.cross-reference-desk .manuscript-eyebrow{max-width:calc(100% - 100px);line-height:1.5}.cross-reference-desk .manuscript-heading h1{font-size:25px}}

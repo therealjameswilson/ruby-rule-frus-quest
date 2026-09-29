@@ -8657,3 +8657,71 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 - Touch-only earned proof replay passed from prior earned editor checkpoint, including rejected drafts, chronology draft reload, earned Proof Lens and saved handoff; no browser errors.
 - Standard game client state checked. Its known black canvas capture persists; compositor screenshots of the actual native desks and earned game were inspected instead.
 - Broader game goal remains active: physical iPhone/controller and novice learning validation are not established by these simulations.
+
+## 2026-09-28 — readable cross-reference decisions
+- Previous goal turn was progress: release-scope completion and verified requested publication, PR135 / d98e9e4 / Pages36376043709, exact live bundles and three-layout public fixture passed.
+- Converted remaining tiny cross-reference canvas catalog into native CrossReferenceDesk. Fictional citation panel explains memcon; readable candidate type/date/number; pin and explicit filing remain separate; original validator and mismatch feedback preserved. Saved draft reopens focused on pinned record; shared input/audio/modal lifecycle retained.
+- 283 files / 2116 tests pass; production build passes. Tests now cover model decisions/lifecycle plus actual browser layout/input rather than obsolete canvas hit rectangles.
+- Production desktop/375 portrait/844 landscape fixtures pass touch, keyboard, simulated controller, no selection/wrong type/wrong date, explicit filing, restore and cleanup. Final screenshots inspected. Standard client state checked; known black canvas capture, compositor visuals used.
+- Updated earned-proof and focused cross-reference touch selectors (latter syntax only). Earned production touch-only route passes wrong drafts, chronology draft reload, Proof Lens and saved handoff, no browser errors. Earlier dev run interrupted by development reload; production rerun passed.
+- Evidence docs/qa/cross-reference-native-2026-09-28.{md,json}, cross-reference-earned-proof-2026-09-28.json. Earned final checkpoint /tmp/frus-cross-reference-production-proof/earned-storage.json (origin5221).
+- Local only. Full goal remains active; physical hardware, listening and novice learning unverified. Next consider full proofing surfaces and modern production presentation; legacy qa-proof-comparison has outdated canvas coordinates across several native desks, so do not claim it passes.
+
+## 2026-09-28 — persistent evidence while comparing
+- Previous goal turn was progress: 28b97f8 made cross-reference decisions readable and passed earned production proof route.
+- Reproduced from phone screenshot that scrolling to candidates hides the citation; release authorization likewise scrolls away. Added compact fixed evidence strips above both scrolling bodies, populated from existing authoritative constants, so comparisons do not require remembering a hidden target.
+- Build passes. Eight production browser visibility cases (two desks x desktop/375 portrait/844 landscape/320 phone) pass evidence, candidate, File visibility and unchanged evidence after wrong filing. Small-phone and landscape compositor screenshots inspected.
+- Existing native cross-reference and release-scope decision/input/lifecycle suites pass all three layouts with touch/keyboard/simulated controller. Standard client state inspected; known black native canvas capture persists. No new game logic; full unit suite not repeated.
+- Evidence docs/qa/persistent-desk-evidence-2026-09-28.{md,json}; screenshots /tmp/frus-desk-evidence-visible. Local only; not published. Goal active, physical hardware/listening and novice learning unverified.
+
+## 2026-09-28 — distinct paper sounds for research edits
+- Previous goal turn was progress: 03b40c7 kept comparison evidence visible in both desks.
+- Inspected scene-owned filing audio to avoid adding duplicate success sounds. Changed cross-reference pinning from generic beep to packet pickup, release markings to annotation sound, chronology movement to page turn. Re-pinning the same reference is now a quiet no-op with no redundant save callback; filing remains deliberate and scene-owned.
+- 283 files / 2117 tests pass and production build passes. New actual phone desk fixture verifies dispatch of all three distinct sounds, wrong-file warning, unfiled decisions and quiet reselection; no browser errors.
+- Extended offline paper synthesis QA to mark/turn alongside pickup/file/stress/cancel. All four waveforms distinct, no clipping, silent tails and expected source cleanup. Offline synthesis and dispatch checks are not human listening approval.
+- Standard game client state and screenshots inspected (known native black capture); compositor chronology screenshot inspected. Evidence docs/qa/research-edit-audio-2026-09-28.json and research-paper-synthesis-2026-09-28.json. WAVs /tmp/frus-research-paper-sounds.
+- Local only, not published. Full goal remains active; physical hardware/listening and novice comprehension remain unverified.
+
+## 2026-09-28 — original-versus-proof reading desk
+- Previous goal turn progressed with 8ddbf13 distinct research edit sounds.
+- Replaced tiny canvas ProofComparisonBoard presentation with native ProofComparisonDesk: fixed original text, large inspectable typeset fragments, source-preserving correction feedback, separate explicit File action, draft restoration and shared input/audio/modal lifecycle.
+- Retained original repair bits and match validator. Faithful words stay unchanged. Correcting “will” to “may” explains tentative versus certain meaning; restoring Secto explains preserving designator plus number. No automatic filing or reward.
+- 284 files / 2121 tests and build pass. Three-layout native fixtures pass both required repairs, unchanged faithful fragments, restoration, explicit filing, touch/keyboard/simulated controller and cleanup, no browser errors.
+- Updated earned-production harness to native controls. Production-preview touch-only continuation from prior earned Proof Lens checkpoint passes rejected altered proof, both corrections, filing, Buckram Key and BlackVaultLairScene arrival, no errors. New earned save /tmp/frus-native-proof-earned-production/earned-storage.json (origin5221).
+- Phone and landscape desk screenshots plus earned proof-filed compositor inspected. Standard client state inspected; known black native capture persists. Evidence docs/qa/native-proof-comparison-2026-09-28.json and native-proof-earned-production-2026-09-28.json.
+- Local only; not published. Full goal active. Physical hardware/listening and novice learning remain unverified; inspect remaining editorial repair/binding presentation and update older legacy canvas QA before relying on it.
+
+## 2026-09-28 — readable final standards attestation
+- Previous goal turn progressed with 0eb7796 native original/proof comparison and earned Buckram Key route.
+- Converted BindingCertificationBoard to native BindingCertificationDesk. Four explained checklist rows, persistent editorial commitment, visible Seal/Return controls, shared reading/navigation/audio lifecycle. Live evidence re-read on Seal remains mandatory; stale ready snapshots cannot authorize changed records. No change to readiness rules or scene-owned publication checks.
+- 284 files / 2121 tests and build pass. Three-layout native fixtures verify live invalidation, updated hidden-cut row, deliberate sealing, touch/keyboard/controller reading and input, cancel/shutdown and >=44px controls. Screenshots inspected; standard client state good, known black native canvas capture.
+- Current qa-bindery-assembly updated for native seal selectors; removed native snapshot capture before compositor and uses visible portrait controls. Earned 375 touch production route from /tmp/frus-touch-earned-boss-0927/earned-bindery-storage.json passes automatic page assembly, Return/reload, attestation, publication and published continue. 241 points, no errors, document candidates preserved.
+- First legacy qa-bindery-finale attempt stopped on obsolete manual assembly expectation; its edits reverted, not counted as a pass. Only current assembly harness is validated.
+- Evidence docs/qa/native-standards-seal-2026-09-28.{md,json}, native-seal-earned-publication-2026-09-28.json. Artifacts /tmp/frus-native-seal-earned-current including pending-seal-storage and earned publication save.
+- Local only, not published. Full goal remains active. Physical hardware/listening, novice learning and whole-game presentation consistency still require evidence.
+
+## 2026-09-28 — visible withholding indications and separate proof review
+- Previous goal turn progressed with 14219a6 native final standards checklist and earned publication continuation.
+- Replaced tiny canvas EditorialRepairBoard with native EditorialRepairDesk. Retained evidence stays visible; the reader-facing indication renders as actual italic text; copy distinguishes disclosure of withheld text from declassification/release. Draft and proof stages have different actions; proof cannot invent a missing draft correction.
+- Existing record strings, first-time saved bracket state, repair callbacks and draft/proof filing rules preserved. Human filing remains separate from edit and scene-owned reward.
+- 284 files / 2119 tests and build pass. Six native cases (two records, desktop/375 portrait/844 landscape) pass correct italic text, unknown extent preserved, no early filing, no proof-table edit, touch/keyboard/controller, restore/cancel. Phone draft and proof screenshots inspected.
+- Updated earned editor harness to native controls. Production touch-only route from prior earned referral checkpoint passes wrong filing rejection, bracket-draft reload, explicit filing, Red Pencil reward and S1 proof-room arrival without browser errors. Save /tmp/frus-native-editorial-earned/earned-storage.json, origin5221.
+- Evidence docs/qa/native-editorial-repair-2026-09-28.json and native-editorial-earned-2026-09-28.json. Standard client state checked; known black native capture, compositor screenshots used.
+- Local only, not published. Full goal active. Physical hardware/listening and novice comprehension unverified. Legacy qa-editorial-repair and qa-proof-comparison still contain old canvas interaction assumptions; use updated earned-editor and native fixture until those are refreshed.
+
+## 2026-09-28 — readable referral manifest source comparison
+- Previous goal turn progressed with d321aec native withholding repair and earned draft reload/Red Pencil route.
+- Replaced small referral manifest canvas table with native ReferralManifestDesk: full document labels, readable draft agency buttons, persistent recovered dispatch evidence, explicit file/save controls, routing-versus-release explanation and shared reading/input lifecycle. StateChat stays text-only. Existing source-copy requirement and route validator preserved; edit sound uses annotation foley.
+- 285 files / 2123 tests and build pass. Three-layout native fixtures pass missing-source rejection even for correct routes, wrong-route rejection, correction without auto approval, restore, touch/keyboard/controller and cleanup. Phone/landscape compositor screenshots inspected; standard client state checked with known black native capture limitation.
+- Updated earned referral-manifest harness. Production 375 touch replay passes correction, treatment draft reload, visible excision, Concurrence Slip, no duplicate reward and proofing arrival without browser errors.
+- Saved-state audit confirms both routed records workflow/reviewStatus become referred while agency responses remain unchanged. Initial audit assumed reviewStatus would stay submitted and correctly failed that overly strict assumption; inspected records confirmed normal submitted→referred transition, not release, and corrected evidence assertion. No gameplay workaround.
+- Evidence docs/qa/native-referral-manifest-2026-09-28.json, native-manifest-earned-2026-09-28.json, native-manifest-routing-state-2026-09-28.json. Earned save /tmp/frus-native-manifest-earned/earned-storage.json origin5221.
+- Local only, not published. Full goal active; physical hardware/listening and novice comprehension unverified. Referral treatment remains a compact canvas surface to assess next.
+
+## 2026-09-28 — readable referral treatment limits
+- Previous goal turn progressed with 8356f34 native referral manifest and earned referral route.
+- Replaced compact canvas treatment choices with native case cards, persistent consent/withholding evidence and plain-language consequences. Pending consent requires HOLD; the withheld document stays in the appeal trail. Appeal does not imply release. Existing validator and draft encoding preserved; edits never file automatically.
+- 286 files / 2127 tests and build pass. Desktop, 375 portrait and 844 landscape fixtures verify both rejection conditions, independent edits, restoration, touch/keyboard/simulated controller and cleanup. Phone/landscape compositor screenshots inspected; standard client state checked with known black canvas capture limitation.
+- Production-preview touch-only earned replay passed saved treatment reload, filing, bracket press, Concurrence Slip, no duplicate reward and proofing arrival without errors. Process handle expired before final poll; completed result.json and final earned storage verified directly.
+- Evidence docs/qa/native-referral-treatment-2026-09-28.{md,json} and native-treatment-earned-2026-09-28.json. Earned checkpoint /tmp/frus-native-treatment-earned/earned-storage.json, origin5221.
+- Local only, not published. Full goal active. Physical hardware, human listening and novice comprehension remain unverified.

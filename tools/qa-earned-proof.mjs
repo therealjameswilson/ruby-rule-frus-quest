@@ -43,9 +43,10 @@ try {
  await move(96,124);await move(96,198);await move(128,198);await key();
  await move(96,198);await move(96,132);await move(48,132);await key();await shot('catalog');
  assert((await state()).choice);
- await key();await key();await shot('wrong-reference');
+ const reference=async(selector)=>{const target=page.locator('.cross-reference-desk '+selector);await target.scrollIntoViewIfNeeded();if(mobile)await target.tap();else await target.click();await page.waitForTimeout(150);};
+ await reference('[data-record="1"]');await reference('[data-focus-key=file]');await shot('wrong-reference');
  assert.equal((await state()).sceneProgress.silentReadReviewStep,1);
- await key('ArrowLeft');await key('ArrowLeft');await key();await key();await shot('reference-filed');
+ await reference('[data-record="2"]');await reference('[data-focus-key=file]');await shot('reference-filed');
  await key();await shot('reference-stamped');
  assert.equal((await state()).sceneProgress.silentReadReviewStep,2);
  await move(96,132);await move(208,132);await key();await shot('release');
