@@ -8,7 +8,7 @@ export const COMPILER_SOP_SOURCE = "FRUS Compiling and Review Process (August 20
 export type CompilerCheckpoint = "research_plan" | "review_submission";
 export type CompilerPhase = "Planning" | "Research" | "Compilation" | "Review and revision" | "DPD submission";
 
-interface CompilerTask {
+export interface CompilerTask {
   id: string;
   phase: CompilerPhase;
   checkpoint: CompilerCheckpoint;

@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';import{mkdir,writeFile}from'node:fs/promises';
+const{chromium}=await import(process.env.PLAYWRIGHT_MODULE??'playwright');const base=process.env.FRUS_QA_URL??'http://127.0.0.1:5217/',out=process.env.FRUS_QA_OUT??'/tmp/frus-native-compiler-decisions';await mkdir(out,{recursive:true});const b=await chromium.launch(),results=[];
+try{for(const[name,width,height]of[['desktop',1280,900],['phone',375,667],['landscape',844,390]]){
+ const p=await b.newPage({viewport:{width,height},hasTouch:true}),errors=[];p.on('pageerror',e=>errors.push(String(e)));
+ await p.addInitScript(()=>{window.qaPad={id:'QA',index:0,connected:true,axes:[0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};Object.defineProperty(navigator,'getGamepads',{value:()=>[window.qaPad]});});
+ await p.goto(base+'?scene=ArchiveScene');await p.waitForFunction(()=>window.game?.scene.isActive('ArchiveScene'));await p.waitForTimeout(300);
+ const tasks=await p.evaluate(async()=>{const{COMPILER_TASKS}=await import('/src/game/compilerMission.ts');return COMPILER_TASKS.filter(t=>!['selection','backup','revision'].includes(t.id));});
+ const show=async task=>{await p.evaluate(task=>{const s=window.game.scene.getScene('ArchiveScene');s.dialog.hide();window.qaSelected=[];window.qaCancelled=0;s.researchChoice.showCompilerDecision(task,o=>window.qaSelected.push(o.value),()=>window.qaCancelled++);},task);await p.waitForTimeout(200);};
+ for(const task of tasks){await show(task);assert.deepEqual(await p.evaluate(()=>window.qaSelected),[]);assert.equal(await p.locator('.compiler-decision-context').innerText(),task.context);if(width<760){const title=await p.locator('.compiler-decision-desk h1').boundingBox(),close=await p.locator('[data-focus-key=leave]').boundingBox();assert(title.y>=close.y+close.height,'Return must not cover the question');}await p.screenshot({path:out+'/'+name+'-'+task.id+'.png'});
+  const option=p.locator('[data-compiler-answer='+task.correct+']');await option.scrollIntoViewIfNeeded();const rect=await option.boundingBox();assert(rect.height>=44&&rect.x>=0&&rect.x+rect.width<=width);await option.tap();assert.deepEqual(await p.evaluate(()=>window.qaSelected),[task.correct]);assert.equal(await p.locator('.compiler-decision-desk').count(),0);
+ }
+ await show(tasks[2]);await p.keyboard.press('ArrowRight');await p.keyboard.press('Enter');assert.deepEqual(await p.evaluate(()=>window.qaSelected),[tasks[2].options[1].value]);
+ const pad=async i=>{await p.evaluate(i=>window.qaPad.buttons[i]={pressed:true,value:1},i);await p.waitForTimeout(100);await p.evaluate(i=>window.qaPad.buttons[i]={pressed:false,value:0},i);await p.waitForTimeout(100);};
+ await show(tasks[2]);await pad(15);await pad(0);assert.deepEqual(await p.evaluate(()=>window.qaSelected),[tasks[2].options[1].value]);
+ await show(tasks[2]);await p.keyboard.press('Escape');assert.equal(await p.evaluate(()=>window.qaCancelled),1);assert.deepEqual(await p.evaluate(()=>window.qaSelected),[]);
+ await show(tasks[2]);await p.evaluate(()=>window.game.scene.stop('ArchiveScene'));assert.equal(await p.locator('.compiler-decision-desk').count(),0);assert.deepEqual(errors,[]);results.push({name,tasks:tasks.map(t=>t.id),nativeTouch:true,keyboardController:true,cancelAndShutdown:true,errors});await p.close();
+}await writeFile(out+'/result.json',JSON.stringify({scope:'Native SOP decision fixtures; earned route checked separately',results},null,2));console.log('PASS 21 compiler decision layouts and input lifecycle');}finally{await b.close();}

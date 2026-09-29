@@ -21,3 +21,18 @@ it('honors a music preference change made while reading, including silence',()=>
 it('preserves focus across an audio context that has not been created yet',()=>{
  Object.assign(audio,{context:null,musicGain:null});const release=audio.holdReadingMix();expect(audio.getDebugState().readingMixActive).toBe(true);release();expect(audio.getDebugState().readingMixActive).toBe(false);expect(target).not.toHaveBeenCalled();
 });
+
+it('keeps the harmonic timeline but drops melody and percussion until the last reading owner closes',async()=>{
+ const {ORIGINAL_SCORE}=await import('./originalScore');
+ const play=vi.fn(),pulse=vi.fn();
+ const runtime=audio as unknown as {scoreVoice:unknown;musicStep:number;playMusicStep:(theme:typeof ORIGINAL_SCORE[string],at:number)=>void};
+ runtime.scoreVoice={play,pulse};runtime.musicStep=0;
+ const a=audio.holdReadingMix(),b=audio.holdReadingMix();
+ runtime.playMusicStep(ORIGINAL_SCORE.danneCombat,10);
+ expect(play).toHaveBeenCalled();
+ expect(play.mock.calls.every(call=>['pad','bass'].includes(call[4]))).toBe(true);
+ expect(pulse).not.toHaveBeenCalled();expect(runtime.musicStep).toBe(1);
+ a();runtime.playMusicStep(ORIGINAL_SCORE.danneCombat,10.3);expect(pulse).not.toHaveBeenCalled();
+ b();runtime.playMusicStep(ORIGINAL_SCORE.danneCombat,10.6);expect(pulse).toHaveBeenCalledWith(2,10.6,ORIGINAL_SCORE.danneCombat.stepMs/1000);
+ expect(runtime.musicStep).toBe(3);
+});

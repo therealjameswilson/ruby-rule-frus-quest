@@ -1,0 +1,30 @@
+{
+  "mobile": true,
+  "cpuThrottle": 1,
+  "startPoints": 201,
+  "finalPoints": 241,
+  "completedPackets": 5,
+  "certification": {
+    "status": "published",
+    "nearestGate": true,
+    "checklistComplete": true,
+    "certifiedBy": "Sam",
+    "requiredItem": "Buckram Key",
+    "message": "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
+  },
+  "errors": [],
+  "runtime": "46f0e0e",
+  "scope": "Earned touch emulation chain, not physical Safari or unaided human play",
+  "boss": {
+    "phases": [
+      "colossus",
+      "swarm",
+      "cloud"
+    ],
+    "cycles": 7,
+    "retries": 1,
+    "seconds": 66.621,
+    "deadlineMissed": false
+  },
+  "storageSha256": "e07350fda6c53b2428e8d6897639dfe9a727fec8c31410347ac91833e55d1915"
+}

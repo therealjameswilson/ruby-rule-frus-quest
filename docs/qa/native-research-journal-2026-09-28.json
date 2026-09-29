@@ -1,0 +1,42 @@
+[
+  {
+    "name": "desktop",
+    "empty": true,
+    "allPlaces": true,
+    "collectionDetails": true,
+    "noProgressMutation": true,
+    "stationary": true,
+    "touchKeyboardController": true,
+    "cleanup": true
+  },
+  {
+    "name": "phone",
+    "empty": true,
+    "allPlaces": true,
+    "collectionDetails": true,
+    "noProgressMutation": true,
+    "stationary": true,
+    "touchKeyboardController": true,
+    "cleanup": true
+  },
+  {
+    "name": "small",
+    "empty": true,
+    "allPlaces": true,
+    "collectionDetails": true,
+    "noProgressMutation": true,
+    "stationary": true,
+    "touchKeyboardController": true,
+    "cleanup": true
+  },
+  {
+    "name": "landscape",
+    "empty": true,
+    "allPlaces": true,
+    "collectionDetails": true,
+    "noProgressMutation": true,
+    "stationary": true,
+    "touchKeyboardController": true,
+    "cleanup": true
+  }
+]

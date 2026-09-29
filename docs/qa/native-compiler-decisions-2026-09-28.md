@@ -1,0 +1,9 @@
+# Readable planning and manuscript review decisions
+
+An earned mobile replay from the filed annotation packet showed that planning and review decisions still used small canvas text, unlike the manuscript work surfaces. CompilerDecisionDesk now presents the existing seven decisions with native text, large touch targets and shared keyboard/controller reading, focus/audio and modal lifecycle. Task wording, answers, order, feedback, save conditions and completion gates are unchanged. Return pauses the checkpoint without granting the current task.
+
+Validation: 286 files / 2,126 tests, final typecheck and fresh-directory production build pass. Seven decisions across desktop, 375 portrait and 844 landscape (21 cases) pass touch selection, keyboard/simulated controller, cancel and shutdown. Visual inspection found a Return/heading overlap on portrait; fixed eyebrow spacing and added an overlap assertion. Final screenshots inspected. Standard client returned OfficeScene state; its black native capture limitation remains, compositor images provide visual evidence.
+
+A fixed-production touch-only route from the earned filed-annotation save passed collection of supporting documents, no movement-release ghost selection, missing/over-budget rejection, corrected draft reopen, chronology and annotation backup, both reviews, revision, front matter, Joint Historian review, signed submission and NetworkScene entry with no browser errors. Saved-state audit confirms those steps completed without granting publication. The final change after that route was portrait header spacing, covered by the final 21-case layout run and build. Traces and screenshots: /tmp/frus-native-compiler-earned; next earned storage has origin5226.
+
+Physical iPhone/controller feel and novice understanding remain unverified. Older QA that directly chooses compiler decisions through canvas rows needs the updated compiler checkpoint helper before reuse. No deployment this turn.

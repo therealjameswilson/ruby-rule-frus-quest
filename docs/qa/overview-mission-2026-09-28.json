@@ -1,0 +1,42 @@
+[
+  {
+    "name": "desktop",
+    "tabs": true,
+    "reading": true,
+    "stationary": true,
+    "noReward": true,
+    "touchKeyboardController": true,
+    "shutdown": true,
+    "errors": []
+  },
+  {
+    "name": "phone",
+    "tabs": true,
+    "reading": true,
+    "stationary": true,
+    "noReward": true,
+    "touchKeyboardController": true,
+    "shutdown": true,
+    "errors": []
+  },
+  {
+    "name": "small",
+    "tabs": true,
+    "reading": true,
+    "stationary": true,
+    "noReward": true,
+    "touchKeyboardController": true,
+    "shutdown": true,
+    "errors": []
+  },
+  {
+    "name": "landscape",
+    "tabs": true,
+    "reading": true,
+    "stationary": true,
+    "noReward": true,
+    "touchKeyboardController": true,
+    "shutdown": true,
+    "errors": []
+  }
+]

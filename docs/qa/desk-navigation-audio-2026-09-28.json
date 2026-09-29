@@ -1,0 +1,40 @@
+{
+  "scope": "Actual keyboard/controller focus and audio dispatch; offline waveform, not human listening approval",
+  "results": [
+    {
+      "name": "desktop",
+      "focusCues": 3,
+      "scrollAndOpenSilent": true,
+      "mute": true,
+      "noAccidentalFiling": true,
+      "noHeroMovement": true,
+      "readingMixReleased": true,
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "focusCues": 3,
+      "scrollAndOpenSilent": true,
+      "mute": true,
+      "noAccidentalFiling": true,
+      "noHeroMovement": true,
+      "readingMixReleased": true,
+      "errors": []
+    },
+    {
+      "name": "landscape",
+      "focusCues": 3,
+      "scrollAndOpenSilent": true,
+      "mute": true,
+      "noAccidentalFiling": true,
+      "noHeroMovement": true,
+      "readingMixReleased": true,
+      "errors": []
+    }
+  ],
+  "waveform": {
+    "peak": 0.017236284911632538,
+    "rms": 0.0014793287435004672,
+    "tail": 0
+  }
+}

@@ -1,0 +1,11 @@
+# Native production overview
+
+Replaced OfficeScene's45-page production dialogue with a read-only native overview: Next task, Progress, Research. Retains the next board task and rationale, compiler mission counts and next task, station directions, review-level guidance, all39 check labels/statuses/tasks, source-family coverage and official links. Full URLs are readable and keyboard-focusable. Source anchors now participate in shared DeskControls navigation alongside buttons.
+
+Opening sets choice mode and pauses office movement, actions and lurker updates. Return/cancel/shutdown dispose the native panel and release its reading mix without changing production progress. All production checks completed still directs the player to human certification rather than claiming publication.
+
+Validation:287files/2142tests pass after final shared-controls change; typecheck/build and diff check pass. Final build/tmp/frus-production-overview-final-build, current dev5236. Standard client ran OfficeScene with movement/text state; native canvas capture remains black, compositor fixtures inspected instead.
+
+qa-production-overview covers1280x900,375x667,320x568,844x390. Checks tab content, scrolling when overflow exists,48px return control containment, unchanged player/points/sceneProgress while open, source anchor focus, keyboard/touch/controller return, controller tab selection, completed-board presentation fixture and scene shutdown cleanup. The completed-board fixture changes only the view model, not earned progress. Initial desktop scroll assertion wrongly required scrolling when content fit; corrected. Landscape Return button was42px from shared CSS; runtime override fixes it to48px. An attempted nonexistent deskControls.test.ts filter was replaced by the full suite and browser integration fixtures.
+
+Raw evidence/tmp/frus-production-overview-verified. Inspected small phone next task, landscape research, and phone completed state. No deployment or claim of physical-device testing/novice understanding. Next assess whether the board's legacy39-check next-task ordering agrees with the active10-task compiler mission; this change preserved the existing ordering rather than redesigning progression.

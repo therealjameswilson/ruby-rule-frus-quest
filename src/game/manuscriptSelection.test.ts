@@ -45,3 +45,21 @@ describe('manuscript selection desk',()=>{
   expect(manuscriptSelectionReadout(restored).annotationCountsTowardLimit).toBe(false);
  });
 });
+
+it('rejects a budget-compliant approval-only narrative and reports its real coverage',()=>{
+ const p:Record<string,number>={};toggleSelectionPacket(p,'approval');
+ expect(manuscriptSelectionReadout(p).pages).toBe(1180);
+ expect(manuscriptSelectionReadout(p).coverage.filter(r=>r.inManuscript).map(r=>r.id)).toEqual(['B']);
+ expect(evaluateManuscriptSelection(p)).toMatchObject({ok:false});
+ expect(evaluateManuscriptSelection(p).message).toContain('resource shortfall');
+ toggleSelectionPacket(p,'routine');expect(manuscriptSelectionReadout(p).remaining).toBe(40);
+ expect(evaluateManuscriptSelection(p).ok).toBe(false);
+});
+it('rejects duplicate approval evidence at the limit and accepts a corrected draft',()=>{
+ const p:Record<string,number>={};toggleSelectionPacket(p,'decision');toggleSelectionPacket(p,'approval');
+ expect(manuscriptSelectionReadout(p).remaining).toBe(0);
+ expect(evaluateManuscriptSelection(p).message).toContain('selected twice');
+ const restored=JSON.parse(JSON.stringify(p));expect(evaluateManuscriptSelection(restored).ok).toBe(false);
+ toggleSelectionPacket(restored,'approval');expect(evaluateManuscriptSelection(restored).ok).toBe(true);
+ expect(restored.compilerSop_selection).toBeUndefined();
+});

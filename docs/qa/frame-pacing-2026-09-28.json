@@ -1,0 +1,82 @@
+[
+  {
+    "scene": "ResearchWorldScene",
+    "stats": {
+      "frames": 298,
+      "median": 16.699999999999818,
+      "p95": 16.700000000000728,
+      "over33": 1,
+      "over50": 0
+    },
+    "errors": [],
+    "finalScene": "ResearchWorldScene",
+    "player": {
+      "x": 17,
+      "y": 188
+    }
+  },
+  {
+    "scene": "OfficeScene",
+    "stats": {
+      "frames": 300,
+      "median": 16.699999999999818,
+      "p95": 16.799999999999727,
+      "over33": 0,
+      "over50": 0
+    },
+    "errors": [],
+    "finalScene": "OfficeScene",
+    "player": {
+      "x": 216,
+      "y": 196
+    }
+  },
+  {
+    "scene": "ArchiveScene",
+    "stats": {
+      "frames": 259,
+      "median": 16.699999999999818,
+      "p95": 33.40000000000009,
+      "over33": 0,
+      "over50": 0
+    },
+    "errors": [],
+    "finalScene": "ArchiveScene",
+    "player": {
+      "x": 234,
+      "y": 184
+    }
+  },
+  {
+    "scene": "NetworkScene",
+    "stats": {
+      "frames": 264,
+      "median": 16.699999999999818,
+      "p95": 33.30000000000018,
+      "over33": 0,
+      "over50": 0
+    },
+    "errors": [],
+    "finalScene": "NetworkScene",
+    "player": {
+      "x": 234,
+      "y": 196
+    }
+  },
+  {
+    "scene": "BlackVaultLairScene",
+    "stats": {
+      "frames": 300,
+      "median": 16.699999999999818,
+      "p95": 16.700000000000728,
+      "over33": 0,
+      "over50": 0
+    },
+    "errors": [],
+    "finalScene": "BlackVaultLairScene",
+    "player": {
+      "x": 239,
+      "y": 202
+    }
+  }
+]

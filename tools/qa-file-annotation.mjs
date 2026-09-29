@@ -44,7 +44,12 @@ try{
  assert((await westLabels()).includes('LOCK'), 'Carried packet should visibly lock the Office return');
  await move(88,84);await move(88,154);await move(128,154);await key();await shot('review');
  console.log(JSON.stringify((await state()).choice));
- await page.waitForTimeout(500);await key('ArrowDown');await key();await page.waitForTimeout(600);await shot('filed');
+ const choose=async key=>{const e=page.locator('.annotation-packet-desk [data-focus-key='+key+']');await e.scrollIntoViewIfNeeded();if(mobile)await e.tap();else await e.click();await page.waitForTimeout(150);};
+ await choose('file');assert(!(await state()).sceneProgress.annotationDraftingComplete);
+ await choose('single_folder');await choose('file');assert(!(await state()).sceneProgress.repositoryCoverageMapComplete);await shot('rejected');
+ await choose('coverage');assert(!(await state()).sceneProgress.annotationDraftingComplete);
+ await choose('leave');await key();assert.equal(await page.locator('[aria-pressed=true]').count(),0);
+ await choose('coverage');await choose('file');await page.waitForTimeout(600);await shot('filed');
  assert.equal((await state()).sceneProgress.annotationDraftingComplete,1);
  assert((await westLabels()).includes('OFFICE'), 'Filing must restore the Office sign without reloading the room');
  assert(!(await westLabels()).includes('LOCK'));

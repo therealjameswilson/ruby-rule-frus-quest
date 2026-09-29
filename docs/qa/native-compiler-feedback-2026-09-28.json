@@ -1,0 +1,41 @@
+{
+  "scope": "Bounded feedback fixtures; earned progression checked separately",
+  "results": [
+    {
+      "name": "desktop",
+      "explanations": 10,
+      "explicitContinue": true,
+      "rejectedFeedback": true,
+      "keyboardController": true,
+      "cancelAndShutdown": true,
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "explanations": 10,
+      "explicitContinue": true,
+      "rejectedFeedback": true,
+      "keyboardController": true,
+      "cancelAndShutdown": true,
+      "errors": []
+    },
+    {
+      "name": "small-phone",
+      "explanations": 10,
+      "explicitContinue": true,
+      "rejectedFeedback": true,
+      "keyboardController": true,
+      "cancelAndShutdown": true,
+      "errors": []
+    },
+    {
+      "name": "landscape",
+      "explanations": 10,
+      "explicitContinue": true,
+      "rejectedFeedback": true,
+      "keyboardController": true,
+      "cancelAndShutdown": true,
+      "errors": []
+    }
+  ]
+}

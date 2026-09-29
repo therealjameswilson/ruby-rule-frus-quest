@@ -1,3 +1,4 @@
+import { pressPortraitControl } from './portrait-input-fixture.mjs';
 import { completeCompilerCheckpoint } from './qa-compiler-checkpoint-helper.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -22,24 +23,13 @@ if (mobile) for (const device of [page.keyboard, page.mouse]) {
     }
 }
 async function completeOpeningCheckpoint() {
-    if (!mobile) return completeCompilerCheckpoint(page);
-    const answers = [['The working group has a subseries plan.', 'route'], ['Prepare your research plan', 'approve']];
-    const initial = await state();
-    if (!answers.some(([prefix]) => initial.choice?.title.startsWith(prefix))) return;
-    for (let n = 0; n < 40; n++) {
-        const current = await state();
-        if (current.mode === 'dialog') { await touch(225,205); await page.waitForTimeout(180); continue; }
-        const answer = answers.find(([prefix]) => current.choice?.title.startsWith(prefix));
-        if (!answer) return;
-        const index = current.choice.options.findIndex(option => option.value === answer[1]);
-        assert(index >= 0, 'Opening decision must offer the researched answer');
-        const bounds = await page.evaluate(index => {
-            const row = window.game.scene.getScene('OfficeScene').choice.rows[index].getBounds();
-            return { x: row.centerX, y: row.centerY };
-        }, index);
-        await click(bounds.x, bounds.y); await page.waitForTimeout(180);
-    }
-    throw Error('Touch opening checkpoint did not finish');
+    await completeCompilerCheckpoint(page,mobile,async current=>{
+        const title=current.choice?.title??'';
+        if(title.startsWith('DECISION RECORDED')||title.startsWith('The working group')||title.startsWith('Prepare your research plan')){
+            const id=title.startsWith('DECISION RECORDED')?'feedback':title.startsWith('The working group')?'plan':'research';
+            await shot('opening-native-'+id);
+        }
+    });
 }
 
 async function point(x, y, id = 1) { const b = await page.locator('canvas').first().boundingBox(); return { x: b.x + x * b.width / 256, y: b.y + y * b.height / 240, id }; }
@@ -51,11 +41,12 @@ else {
     const p = await point(x, y);
     await page.mouse.click(p.x, p.y, { delay: 45 });
 } await page.waitForTimeout(100); }
-async function press(key = 'Space', wait = 150) { if (mobile)
-    await touch(...(key === 'x' ? [174, 216] : key === 'm' ? [120, 216] : [225, 205]));
+async function press(key = 'Space', wait = 150) { if (mobile) {
+    if(!await pressPortraitControl(page,cdp,key,45))await touch(...(key === 'x' ? [174, 216] : key === 'm' ? [120, 216] : [225, 205]));
+}
 else
     await page.keyboard.press(key, { delay: 45 }); await page.waitForTimeout(wait); await completeOpeningCheckpoint(); }
-async function direction(key, ms = 85) { if (mobile) {
+async function direction(key, ms = 85) { if (mobile && await pressPortraitControl(page,cdp,key,ms)){await page.waitForTimeout(20);return;} if (mobile) {
     const [dx, dy] = { ArrowLeft: [-26, 0], ArrowRight: [26, 0], ArrowUp: [0, -26], ArrowDown: [0, 26] }[key];
     await touch(48, 202, dx, dy, ms);
 }
@@ -75,7 +66,7 @@ async function move(x, y) { for (let n = 0; n < 120; n++) {
     await direction(Math.abs(dx) > Math.abs(dy) ? dx > 0 ? 'ArrowRight' : 'ArrowLeft' : dy > 0 ? 'ArrowDown' : 'ArrowUp', duration);
 } throw Error(`movement failed ${x},${y}`); }
 async function scene(key) { await page.waitForFunction(key => window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene === key, key); await page.waitForTimeout(650); }
-async function shot(label) { const s = await state(); results.push({ label, elapsedMs: Date.now() - auditStarted, state: s }); const data = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(i => resolve(i.src)))); await writeFile(`${out}/${label}-native.png`, Buffer.from(data.split(',')[1], 'base64')); await page.screenshot({ path: `${out}/${label}.png` }); await context.storageState({ path: `${out}/earned-storage.json` }); console.log(label, s.scene, s.guideCounter?.phase, s.guideCounter?.attempts, s.reliability); }
+async function shot(label) { const s = await state(); results.push({ label, elapsedMs: Date.now() - auditStarted, state: s }); await page.screenshot({ path: `${out}/${label}.png` }); await context.storageState({ path: `${out}/earned-storage.json` }); console.log(label, s.scene, s.guideCounter?.phase, s.guideCounter?.attempts, s.reliability); }
 async function phase(value) { await page.waitForFunction(value => JSON.parse(window.render_game_to_text()).guideCounter?.phase === value, value, { timeout: 12000, polling: 'raf' }); }
 try {
     await page.goto(new URL('?text=full', base).href);
@@ -346,6 +337,9 @@ try {
     await shot('09-archive-entry');
     assert.equal((await state()).guideCounter, null);
     assert.deepEqual(errors, []);
+    assert.equal((await state()).sceneProgress.compilerSop_plan,1);
+    assert.equal((await state()).sceneProgress.compilerSop_research,1);
+    await writeFile(`${out}/summary.json`,JSON.stringify({mobile,freshStart:true,nativePlanning:true,kathyDeparted:true,guideCounterEarned:true,reloaded:true,archiveReached:true,elapsedMs:Date.now()-auditStarted,errors},null,2));
     console.log('PASS', mobile ? 'touch' : 'desktop', 'fresh opening, harmless miss, pause, return, reward, Continue, Archive');
 }
 catch (error) {

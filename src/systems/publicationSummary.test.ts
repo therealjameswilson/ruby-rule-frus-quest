@@ -1,3 +1,5 @@
+const reading = vi.hoisted(() => ({ release: vi.fn(), hold: vi.fn(), navigate: vi.fn() }));
+vi.mock("./audio", () => ({ retroAudio: { holdReadingMix: () => { reading.hold(); return reading.release; }, deskNavigate: reading.navigate } }));
 vi.mock("./publicationBackdrop", () => ({ publicationBackdrop: () => null }));
 import type Phaser from "phaser";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -41,7 +43,9 @@ class Node {
 
 function fixture(appealed = false, hasTexture = true, certificate?: TrueEndingCertificate) {
   const content = new Node();
+  const shutdown = vi.fn();
   const scene = {
+    events: { once: shutdown },
     add: {
       container: () => content,
       rectangle: () => new Node(),
@@ -60,7 +64,7 @@ function fixture(appealed = false, hasTexture = true, certificate?: TrueEndingCe
   const onPageChange = vi.fn();
   const summary = new PublicationSummary(scene, { compiler: "Sam", stats, clock: getStatutoryClockStateReadout(), volumesCompleted: 1, textureKeys: ["hero"], certificate, onTitle, canAct, onPageChange });
   const press = (name: string) => content.children.find((node) => node.name === `publication-${name}`)?.press?.();
-  return { summary, content, onTitle, canAct, press, onPageChange };
+  return { summary, content, onTitle, canAct, press, onPageChange, shutdown };
 }
 
 const input = (fields: Partial<InputState>) => fields as Readonly<InputState>;
@@ -82,7 +86,7 @@ describe("publication reward and record pages", () => {
   it("shows the native hero without stats covering it", () => {
     const { content } = fixture();
     expect(content.children.find((node) => node.name === "published-frus-volume-hero")?.scale).toBe(1);
-    expect(content.children.map((node) => node.text)).toContain("PUBLISHED CLEAN");
+    expect(content.children.map((node) => node.text)).toContain("REVIEWED VOLUME PUBLISHED");
     expect(content.children.map((node) => node.text)).not.toContain("RELIABILITY");
   });
 
@@ -104,11 +108,14 @@ describe("publication reward and record pages", () => {
     press("process");
     expect(content.data.page).toBe("process");
     expect(content.children.map(node => node.text)).toContain("RESEARCH ACCESS IS NOT RELEASE.");
+    press("readers");
+    expect(content.data.page).toBe("readers");
+    expect(content.children.map(node => node.text)).toContain("PUBLICATION DOES NOT OPEN EVERY FILE");
     press("volume");
     expect(content.data.page).toBe("volume");
     press("title");
     expect(onTitle).toHaveBeenCalledOnce();
-    expect(onPageChange.mock.calls).toEqual([["volume"], ["record"], ["process"], ["volume"]]);
+    expect(onPageChange.mock.calls).toEqual([["volume"], ["record"], ["process"], ["readers"], ["volume"]]);
   });
 
   it("supports cancel from the record and direction selection of title", () => {
@@ -118,6 +125,29 @@ describe("publication reward and record pages", () => {
     expect(content.data.page).toBe("volume");
     summary.update(input({ navRightJustPressed: true }));
     summary.update(input({ aJustPressed: true }));
+    expect(onTitle).toHaveBeenCalledOnce();
+  });
+
+  it("uses one reading mix across detail pages and releases it on return or shutdown", () => {
+    const { summary, content, press, shutdown } = fixture();
+    summary.update(input({ confirmJustPressed: true }));
+    expect(content.data.page).toBe("record");
+    press("process"); press("readers");
+    expect(reading.hold).toHaveBeenCalledOnce();
+    summary.update(input({ cancelJustPressed: true }));
+    expect(reading.release).toHaveBeenCalledOnce();
+    press("record");
+    expect(reading.hold).toHaveBeenCalledTimes(2);
+    shutdown.mock.calls[0][1]();
+    expect(reading.release).toHaveBeenCalledTimes(2);
+    shutdown.mock.calls[0][1]();
+    expect(reading.release).toHaveBeenCalledTimes(2);
+  });
+
+  it("releases reading music before returning to title", () => {
+    const { press, onTitle } = fixture();
+    press("record"); press("title");
+    expect(reading.release).toHaveBeenCalledOnce();
     expect(onTitle).toHaveBeenCalledOnce();
   });
 
@@ -165,14 +195,14 @@ describe("secret publication reward", () => {
     expect(content.children.map((node) => node.text)).not.toContain("PRODUCTION BOARD");
   });
 
-  it("cycles volume, certificate, stats, and volume without leaving the reward", () => {
+  it("cycles certificate, record, process, readers, and volume without leaving the reward", () => {
     const { summary, content, onTitle } = fixture(false, true, certificate());
-    for (const page of ["certificate", "record", "process", "volume"]) {
+    for (const page of ["certificate", "record", "process", "readers", "volume"]) {
       summary.update(input({ aJustPressed: true }));
       expect(content.data.page).toBe(page);
     }
     expect(onTitle).not.toHaveBeenCalled();
-    expect(swallowNextInputFrame).toHaveBeenCalledTimes(4);
+    expect(swallowNextInputFrame).toHaveBeenCalledTimes(5);
   });
 
   it("keeps both navigation targets and all checks available after repeated paging", () => {
@@ -203,7 +233,7 @@ describe("secret publication reward", () => {
   it("retains honest open checks for incomplete or older saved records", () => {
     const { content, press } = fixture(false, false, certificate(false));
     expect(content.children.map((node) => node.text)).toContain("CERTIFICATION STILL OPEN");
-    expect(content.children.map((node) => node.text)).not.toContain("PUBLISHED CLEAN");
+    expect(content.children.map((node) => node.text)).not.toContain("REVIEWED VOLUME PUBLISHED");
     press("certificate");
     expect(content.children.filter((node) => node.text === "!")).toHaveLength(9);
     expect(content.children.filter((node) => node.text === "OPEN")).toHaveLength(9);

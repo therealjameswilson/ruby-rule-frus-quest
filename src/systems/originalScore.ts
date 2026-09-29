@@ -82,3 +82,8 @@ export function scoreEventsAtStep(theme: ScoreTheme, index: number): ScoreEvent[
     offset:step * .08, duration:step * .6, volume:.008, part:"counter"});
   return events;
 }
+
+/** Keep the harmonic timeline moving while document work takes the foreground. */
+export function readingScoreEvents(events: ScoreEvent[]): ScoreEvent[] {
+  return events.filter(event => event.part === "pad" || event.part === "bass");
+}

@@ -67,6 +67,7 @@ import { DanneLurker } from "../entities/enemies/DanneLurker";
 import type { BureaucraticWallBehavior } from "../entities/BureaucraticWall";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
+import { AnnotationPacketDesk } from "../systems/annotationPacketDesk";
 import { SourceNoteBoard } from "../systems/sourceNoteBoard";
 import {
   decideInteractionFeedback,
@@ -427,6 +428,7 @@ export class ArchiveScene extends Phaser.Scene {
   private dialog!: DialogBox;
   private researchChoice!: ChoicePrompt;
   private sourceNoteBoard!: SourceNoteBoard;
+  private annotationPacketDesk!: AnnotationPacketDesk;
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
   private objectiveText!: Phaser.GameObjects.Text;
@@ -558,6 +560,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.dialog = new DialogBox(this);
     this.researchChoice = new ChoicePrompt(this);
     this.sourceNoteBoard = new SourceNoteBoard(this);
+    this.annotationPacketDesk = new AnnotationPacketDesk(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.reliability.setSummaryVisible(false);
@@ -573,7 +576,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.player = new Player(this, 128, 184);
     this.danneLurker = new DanneLurker(this, 214, 74, {
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible || this.dialog.active
-        || this.inventory.active || this.reliability.active || this.researchChoice.active || this.sourceNoteBoard.active || Boolean(this.archiveKeyRewardCue?.active),
+        || this.inventory.active || this.reliability.active || this.researchChoice.active || this.annotationPacketDesk?.active || this.sourceNoteBoard.active || Boolean(this.archiveKeyRewardCue?.active),
       waypoints: [
         { x: 214, y: 74 },
         { x: 142, y: 54 },
@@ -598,7 +601,7 @@ export class ArchiveScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     if (gameState.mode !== "explore" || input.menuJustPressed || input.pauseJustPressed
-      || this.roomTransitionLocked || this.sourceNoteBoard.active || this.researchChoice.active
+      || this.roomTransitionLocked || this.annotationPacketDesk?.active || this.sourceNoteBoard.active || this.researchChoice.active
       || this.dialog.active || this.inventory.active || this.reliability.active) this.attackBuffer.clear();
     if (gameState.mode !== "explore" || this.currentRoomId !== "AS" || this.roomTransitionLocked
       || input.aJustPressed || input.pauseJustPressed || input.menuJustPressed) {
@@ -606,6 +609,14 @@ export class ArchiveScene extends Phaser.Scene {
       this.annotationCartPressure?.setVisible(false);
     }
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
+    if (this.annotationPacketDesk?.active) {
+      this.updateDanneLurker(delta, false);
+      this.interactionPrompt.update(delta, null);
+      this.toast.update(delta, this.player.position);
+      this.player.update(delta, false);
+      this.annotationPacketDesk.updateInput();
+      return;
+    }
     if (this.sourceNoteBoard.active) {
       this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
@@ -3054,7 +3065,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private reviewFirstFootnote() {
-    if (!readSourceNoteTrail(gameState.sceneProgress).ready || this.sourceNoteBoard.active || this.researchChoice.active) return;
+    if (!readSourceNoteTrail(gameState.sceneProgress).ready || this.annotationPacketDesk?.active || this.sourceNoteBoard.active || this.researchChoice.active) return;
     this.interactionPrompt.update(0, null);
     this.clearSourceNoteRouteCue();
     this.sourceNoteBoard.show(gameState.sceneProgress.sourceNote47ReadershipCorrected === 1,
@@ -3506,7 +3517,17 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private reviewResearchDecision(id: ArchiveResearchReviewId, onApprove: () => void) {
-    if (this.researchChoice.active) return;
+    if (this.researchChoice.active || this.annotationPacketDesk?.active) return;
+    if (id === "coverage") {
+      this.interactionPrompt.update(0, null);
+      this.clearSourceNoteRouteCue();
+      this.annotationPacketDesk.show(value => recordArchiveResearchReview("coverage", value), () => {
+        this.resumeArchiveReview();
+        onApprove();
+        saveGameNow();
+      }, () => this.resumeArchiveReview());
+      return;
+    }
     const review = ARCHIVE_RESEARCH_REVIEWS[id];
     this.interactionPrompt.update(0, null);
     this.clearSourceNoteRouteCue();
@@ -3522,8 +3543,7 @@ export class ArchiveScene extends Phaser.Scene {
       if (!result.ok) retroAudio.warning();
       this.resumeArchiveReview();
       setLatestMessage(result.message);
-      const cue = result.ok ? "REVIEW RECORDED"
-        : id === "coverage" ? "MAP REPOSITORIES + ACCESS GAPS" : "RETAIN THE FULL POLICY RECORD";
+      const cue = result.ok ? "REVIEW RECORDED" : "RETAIN THE FULL POLICY RECORD";
       this.toast.show(cue, this.player.position, result.ok ? "info" : "warn");
       // The approved action may unlock a route or reveal documents. Let its
       // more specific feedback take precedence over the review receipt.

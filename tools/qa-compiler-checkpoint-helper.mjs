@@ -5,7 +5,7 @@ import {completeLibraryRequest} from './library-request-actions.mjs';
 import {completeChapterDesk} from './chapter-desk-actions.mjs';
 import {completeRevisionDesk} from './revision-desk-actions.mjs';
 // Select the researched workflow answers through controls, never by changing flags.
-export async function completeCompilerCheckpoint(page,touch=false) {
+export async function completeCompilerCheckpoint(page,touch=false,observe=async()=>{}) {
  const click=async selector=>{const element=page.locator(selector);await element.scrollIntoViewIfNeeded();if(touch)await element.tap();else await element.click();};
  const canvasTap=async(x,y)=>{const r=await page.locator('canvas').first().boundingBox();await page.touchscreen.tap(r.x+x*r.width/256,r.y+y*r.height/240);};
  const advance=async()=>{if(!touch)await page.keyboard.press('Space',{delay:45});else if(await page.locator('#portrait-touch-dock').isVisible())await click('#portrait-touch-dock [data-control="space"]');else await canvasTap(225,205);};
@@ -16,13 +16,19 @@ export async function completeCompilerCheckpoint(page,touch=false) {
  if(!answers.some(([prefix])=>current.choice?.title.startsWith(prefix))&&!(await nativeDesk()))return;
  for(let n=0;n<100;n++){
   current=await state();
+  await observe(current);
   if(current.mode==='dialog'){await advance();await page.waitForTimeout(160);continue;}
+  if(await page.locator('.compiler-feedback-desk').count()){await click('.compiler-feedback-desk [data-focus-key=continue]');await page.waitForTimeout(180);continue;}
   if(await page.locator('.library-packet').count()){await completeLibraryPacket(page);continue;}
   if(await page.locator('.library-source-note').count()){await completeLibrarySourceNote(page);continue;}
   if(await page.locator('.library-comparison').count()){await completeLibraryComparison(page);continue;}
   if(await page.locator('.library-request').count()){await completeLibraryRequest(page);continue;}
   if(await page.locator('.revision-desk').count()){await completeRevisionDesk(page,touch);continue;}
   if(await page.locator('.chapter-desk').count()){await completeChapterDesk(page,touch);continue;}
+  if(await page.locator('.compiler-decision-desk').count()){
+   const answer=answers.find(([prefix])=>current.choice?.title.startsWith(prefix));if(!answer)throw Error('Unrecognized compiler decision');
+   await click('[data-compiler-answer='+answer[1]+']');await page.waitForTimeout(180);continue;
+  }
   if(await nativeDesk()){
    for(const [id,wanted] of [['decision',true],['routine',false]]){
     const button=page.locator(`[data-packet=${id}]`);

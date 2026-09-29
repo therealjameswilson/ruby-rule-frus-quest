@@ -1,0 +1,76 @@
+{
+  "build": "46f0e0e",
+  "scope": "Chained touch emulation, 375x667; earned progress, not physical hardware",
+  "runs": {
+    "treatment": {
+      "mobile": true,
+      "manifestCorrected": true,
+      "treatmentDraftRestored": true,
+      "withholdingTreatmentFiled": true,
+      "bracketPressVerified": true,
+      "noDuplicateReward": true,
+      "errors": [],
+      "editorialRoomReached": true,
+      "note": "Old output label said proofingReached; inspected arrival is editorial room E1. Updated fixture now asserts E1.",
+      "storageSha256": "040d82b8d0a7af755070441109c322975a8122c27cbc9f3adb5121c5ae5384c5"
+    },
+    "editor": {
+      "mobile": true,
+      "stage": "editor",
+      "passed": true,
+      "errors": [],
+      "final": {
+        "scene": "SilentReadScene",
+        "room": "S1",
+        "inventory": [
+          "Stapler Sword",
+          "Master Declass Key",
+          "Citation Stamp",
+          "FRUS Fragment: Front Matter",
+          "Source Note 47",
+          "Source Note 47 Citation Stamp",
+          "FRUS Fragment: Source Note",
+          "Telegram",
+          "Cross-Ref",
+          "Clearance Token",
+          "Concurrence Slip",
+          "Review Folder",
+          "AI Annotation Review Log",
+          "Red Pencil"
+        ],
+        "documentPoints": 126
+      },
+      "storageSha256": "f8a80bc0ddc26ff7f44a7fa4843f5438533ce393527fa45db3af6798d972e1da"
+    },
+    "proof": {
+      "mobile": true,
+      "stage": "proof",
+      "passed": true,
+      "chronologyDraftReload": true,
+      "errors": [],
+      "final": {
+        "scene": "SilentReadScene",
+        "room": "S1",
+        "inventory": [
+          "Stapler Sword",
+          "Master Declass Key",
+          "Citation Stamp",
+          "FRUS Fragment: Front Matter",
+          "Source Note 47",
+          "Source Note 47 Citation Stamp",
+          "FRUS Fragment: Source Note",
+          "Telegram",
+          "Cross-Ref",
+          "Clearance Token",
+          "Concurrence Slip",
+          "Review Folder",
+          "AI Annotation Review Log",
+          "Red Pencil",
+          "Proof Lens"
+        ],
+        "documentPoints": 157
+      },
+      "storageSha256": "fb8866edc9da699112adfb0df14d75c034d6f3051f55fdb7bbe67f18af23e3f7"
+    }
+  }
+}

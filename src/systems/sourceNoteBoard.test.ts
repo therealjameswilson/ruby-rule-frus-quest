@@ -1,102 +1,45 @@
-import type Phaser from "phaser";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SourceNoteBoard } from "./sourceNoteBoard";
-import { bindPointerDown, getInput, swallowNextInputFrame, type InputState } from "../input/InputState";
-import { gameState, resetGameState } from "../game/state";
-import { retroAudio } from "./audio";
-
-vi.mock("phaser", () => ({ default: { Display: { Color: { HexStringToColor: () => ({ color: 0 }) } } } }));
-vi.mock("../input/InputState", () => ({ bindPointerDown: vi.fn(), getInput: vi.fn(() => ({})), swallowNextInputFrame: vi.fn() }));
-vi.mock("./audio", () => ({ retroAudio: { warning: vi.fn(), annotatePaper: vi.fn() } }));
-
-class Display {
-  visible = true;
-  text = "";
-  children: Display[] = [];
-  add(value: Display | Display[]) { this.children.push(...(Array.isArray(value) ? value : [value])); return this; }
-  setName() { return this; }
-  setDepth() { return this; }
-  setScrollFactor() { return this; }
-  setVisible(value: boolean) { this.visible = value; return this; }
-  setStrokeStyle() { return this; }
-  setLineSpacing() { return this; }
-  setText(value: string) { this.text = value; return this; }
-}
-
+import type Phaser from 'phaser';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { SourceNoteBoard } from './sourceNoteBoard';
+import { getInput, type InputState } from '../input/InputState';
+import { gameState, resetGameState } from '../game/state';
+import { retroAudio } from './audio';
+vi.mock('phaser',()=>({default:{Display:{Color:{HexStringToColor:()=>({color:0})}}}}));
+const views = vi.hoisted(() => [] as any[]);
+vi.mock('./sourceNoteDesk', () => ({SourceNoteDesk: class {
+ active = true; render = vi.fn(); updateInput = vi.fn();
+ constructor(public repair: () => void, public file: () => void, public leave: () => void) { views.push(this); }
+ close() { this.active = false; }
+}}));
+vi.mock('../input/InputState', () => ({getInput: vi.fn(() => ({})), swallowNextInputFrame: vi.fn()}));
+vi.mock('./audio', () => ({retroAudio: {warning: vi.fn(), annotatePaper: vi.fn()}}));
 function fixture(repaired = false) {
-  const objects: Display[] = [];
-  const create = () => { const object = new Display(); objects.push(object); return object; };
-  const scene = { events: { emit: vi.fn() }, add: { container: create, rectangle: create,
-    text: (_x: number, _y: number, text: string) => create().setText(text) } };
-  const board = new SourceNoteBoard(scene as unknown as Phaser.Scene);
-  const onChange = vi.fn(), onFile = vi.fn(), onCancel = vi.fn();
-  const pointer = (index: number) => vi.mocked(bindPointerDown).mock.calls[index][1]();
-  const input = (input: Partial<InputState>) => { vi.mocked(getInput).mockReturnValue(input as InputState); board.updateInput(); };
-  const open = () => board.show(repaired, onChange, onFile, onCancel);
-  return { board, objects, onChange, onFile, onCancel, pointer, input, open };
+ const once = vi.fn(), scene = {events: {emit: vi.fn(), once}};
+ const board = new SourceNoteBoard(scene as unknown as Phaser.Scene);
+ const changed = vi.fn(), filed = vi.fn(), cancelled = vi.fn();
+ const open = () => board.show(repaired, changed, filed, cancelled);
+ return {board, changed, filed, cancelled, open, shutdown: () => once.mock.calls[0][1]()};
 }
-
-beforeEach(() => { resetGameState(); vi.clearAllMocks(); vi.mocked(getInput).mockReturnValue({} as InputState); });
-
-describe("source note evidence repair board", () => {
-  it("does not grant progress on open or from hidden controls", () => {
-    const f = fixture(); f.pointer(0); f.pointer(1);
-    expect(f.onChange).not.toHaveBeenCalled(); expect(f.onFile).not.toHaveBeenCalled();
-    f.open();
-    expect(f.board.active).toBe(true);
-    expect(f.onFile).not.toHaveBeenCalled();
-    expect(gameState.currentChoice?.options[0].value).toBe("unsupported_readership");
-    expect(swallowNextInputFrame).toHaveBeenCalled();
-  });
-
-  it("rejects unsupported filing without charging hearts or points", () => {
-    const f = fixture(); f.open();
-    const before = [gameState.reliability, gameState.documentPoints];
-    f.pointer(1);
-    expect(f.board.active).toBe(true);
-    expect(f.onFile).not.toHaveBeenCalled();
-    expect(f.objects.some(object => object.text === "CHECK THE READERSHIP CLAIM")).toBe(true);
-    expect([gameState.reliability, gameState.documentPoints]).toEqual(before);
-  });
-
-  it("repairs once, then requires a distinct human filing input", () => {
-    const f = fixture(); f.open(); f.input({ aJustPressed: true });
-    f.pointer(0);
-    expect(f.onChange).toHaveBeenCalledOnce(); expect(f.onFile).not.toHaveBeenCalled();
-    expect(retroAudio.annotatePaper).toHaveBeenCalledOnce();
-    expect(gameState.currentChoice?.options[0].value).toBe("evidence_limited");
-    f.input({ confirmJustPressed: true });
-    expect(f.onFile).toHaveBeenCalledOnce(); expect(f.onCancel).not.toHaveBeenCalled();
-    expect(f.board.active).toBe(false);
-    f.pointer(1); expect(f.onFile).toHaveBeenCalledOnce();
-  });
-
-  it("names the repair action before selection and the retained evidence limit afterward", () => {
-    const f = fixture(); f.open();
-    expect(f.objects.some(object => object.text === "DRAFT: PRESIDENT READ IT\nREMOVE UNSUPPORTED CLAIM")).toBe(true);
-    f.pointer(0);
-    expect(f.objects.some(object => object.text === "READERS: NOT ESTABLISHED\nEVIDENCE LIMIT RETAINED")).toBe(true);
-    expect(f.onFile).not.toHaveBeenCalled();
-  });
-
-  it("allows pointer repair and filing and resumes a repaired but unfiled packet", () => {
-    const f = fixture(true); f.open(); f.pointer(0); f.pointer(1);
-    expect(f.onChange).not.toHaveBeenCalled(); expect(f.onFile).toHaveBeenCalledOnce();
-  });
-
-  it("supports Return, B, Esc and cancel without falling through to combat", () => {
-    const f = fixture(); f.open(); f.pointer(2);
-    expect(f.onCancel).toHaveBeenCalledOnce();
-    for (const key of ["bJustPressed", "pauseJustPressed", "cancelJustPressed"] as const) {
-      f.open(); f.input({ [key]: true, aJustPressed: true });
-      expect(f.board.active).toBe(false);
-    }
-    expect(f.onCancel).toHaveBeenCalledTimes(4); expect(f.onFile).not.toHaveBeenCalled();
-    expect(gameState.currentChoice).toBeNull();
-  });
-
-  it("can select Return in either navigation direction", () => {
-    const f = fixture(); f.open(); f.input({ navLeftJustPressed: true }); f.input({ aJustPressed: true });
-    expect(f.onCancel).toHaveBeenCalledOnce();
-  });
+beforeEach(() => {resetGameState(); vi.clearAllMocks(); views.length = 0;});
+describe('source note evidence repair', () => {
+ it('rejects unsupported filing without spending hearts or points', () => {
+  const f = fixture(); f.open(); const before = [gameState.reliability, gameState.documentPoints];
+  views[0].file(); expect(f.filed).not.toHaveBeenCalled(); expect(f.board.active).toBe(true);
+  expect(views[0].render).toHaveBeenLastCalledWith(false, expect.stringMatching(/readership/), true);
+  expect([gameState.reliability, gameState.documentPoints]).toEqual(before);
+ });
+ it('repairs once and requires a separate filing; stale callbacks cannot grant progress', () => {
+  const f = fixture(); f.open(); const v = views[0];v.repair();v.repair();
+  expect(f.changed).toHaveBeenCalledOnce();expect(retroAudio.annotatePaper).toHaveBeenCalledOnce();expect(f.filed).not.toHaveBeenCalled();
+  expect(gameState.currentChoice?.options[0].value).toBe('evidence_limited');
+  v.file();v.file();v.repair();expect(f.filed).toHaveBeenCalledOnce();expect(f.cancelled).not.toHaveBeenCalled();expect(f.board.active).toBe(false);
+ });
+ it('restores a corrected draft without auto filing or repeating the edit', () => {
+  const f=fixture(true);f.open();expect(f.filed).not.toHaveBeenCalled();views[0].repair();expect(f.changed).not.toHaveBeenCalled();views[0].file();expect(f.filed).toHaveBeenCalledOnce();
+ });
+ it('delegates input and cleans up on leave or scene shutdown', () => {
+  const f=fixture();f.open();const input={navDownJustPressed:true} as InputState;vi.mocked(getInput).mockReturnValue(input);f.board.updateInput();expect(views[0].updateInput).toHaveBeenCalledWith(input);
+  views[0].leave();expect(f.cancelled).toHaveBeenCalledOnce();expect(gameState.currentChoice).toBeNull();
+  f.open();f.shutdown();expect(f.cancelled).toHaveBeenCalledTimes(2);expect(f.filed).not.toHaveBeenCalled();expect(f.board.active).toBe(false);
+ });
 });

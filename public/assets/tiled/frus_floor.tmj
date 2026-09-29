@@ -53,27 +53,27 @@
         { "id": 12, "name": "research_phase", "type": "trigger", "x": 105, "y": 160, "width": 185, "height": 520, "properties": [
           { "name": "label", "type": "string", "value": "Research" },
           { "name": "action", "type": "string", "value": "room-dialog" },
-          { "name": "text", "type": "string", "value": "Research: gather documents and verify the source trail." }
+          { "name": "text", "type": "string", "value": "Begin with a policy decision, then compare the relevant records. Presidential NSC files, State central files, and office lot files may reveal different parts of the story. A folder listing is a lead: inspect the document and record its source before relying on it." }
         ] },
         { "id": 13, "name": "compilation_phase", "type": "trigger", "x": 360, "y": 160, "width": 245, "height": 520, "properties": [
           { "name": "label", "type": "string", "value": "Compilation" },
           { "name": "action", "type": "string", "value": "room-dialog" },
-          { "name": "text", "type": "string", "value": "Compilation: select documents that explain the policy record." }
+          { "name": "text", "type": "string", "value": "Select records that explain major decisions and diplomacy, including important disagreements. A convenient or flattering document is not enough. Keep evidence of policy failures; use annotation to connect relevant material that cannot all be printed." }
         ] },
         { "id": 14, "name": "declass_phase", "type": "trigger", "x": 640, "y": 160, "width": 270, "height": 520, "properties": [
           { "name": "label", "type": "string", "value": "Declassification Review" },
           { "name": "action", "type": "string", "value": "room-dialog" },
-          { "name": "text", "type": "string", "value": "Declass review: route equities, record decisions, and show excisions." }
+          { "name": "text", "type": "string", "value": "Research access is not permission to publish. Obtain the necessary review decisions, preserve the approved text, and mark withheld passages. If a whole document is withheld, account for it with its heading, source note, and page count." }
         ] },
         { "id": 15, "name": "annotation_phase", "type": "trigger", "x": 940, "y": 160, "width": 245, "height": 520, "properties": [
           { "name": "label", "type": "string", "value": "Annotation" },
           { "name": "action", "type": "string", "value": "room-dialog" },
-          { "name": "text", "type": "string", "value": "Annotation: explain references without guessing beyond the evidence." }
+          { "name": "text", "type": "string", "value": "Help readers understand the evidence. Record the source, original classification, distribution, and drafting information when established. Explain related records and context with citations. Do not turn an uncertain claim, such as who read a document, into an invented fact." }
         ] },
         { "id": 16, "name": "publication_phase", "type": "trigger", "x": 1220, "y": 160, "width": 230, "height": 520, "properties": [
           { "name": "label", "type": "string", "value": "Publication" },
           { "name": "action", "type": "string", "value": "room-dialog" },
-          { "name": "text", "type": "string", "value": "Publication: bind the certified volume and send it to readers." }
+          { "name": "text", "type": "string", "value": "Check the proof against the source and keep editorial changes visible where required. Arrange documents by Washington time; place a conversation by when it occurred, not when its memorandum was drafted. Preserve the source notes and withholding notices through publication." }
         ] }
       ]
     }

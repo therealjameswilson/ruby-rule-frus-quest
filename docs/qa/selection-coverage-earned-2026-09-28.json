@@ -1,0 +1,257 @@
+{
+  "mobile": true,
+  "earnedSupportingDocuments": true,
+  "manuscriptHandoff": {
+    "source": "FRUS Compiling and Review Process (August 2026), user-supplied SOP",
+    "volume": {
+      "assigned": null,
+      "title": null,
+      "statusChecked": "2026-09-26",
+      "researchReady": true,
+      "packets": [
+        {
+          "library": "reagan",
+          "topic": "Thatcher visit and allied consultation",
+          "stage": 0,
+          "receipts": []
+        },
+        {
+          "library": "bush41",
+          "topic": "NSC policy formation and source coverage",
+          "stage": 0,
+          "receipts": []
+        },
+        {
+          "library": "clinton",
+          "topic": "Clinton–Yeltsin memcons and telcons",
+          "stage": 0,
+          "receipts": []
+        },
+        {
+          "library": "bush43",
+          "topic": "April 2001 EP-3 incident",
+          "stage": 0,
+          "receipts": []
+        }
+      ]
+    },
+    "selectionDesk": {
+      "basePages": 1100,
+      "pageLimit": 1400,
+      "pages": 1320,
+      "remaining": 80,
+      "annotationCountsTowardLimit": false,
+      "packets": [
+        {
+          "id": "decision",
+          "title": "The decision trail",
+          "pages": 220,
+          "selected": true
+        },
+        {
+          "id": "routine",
+          "title": "The supporting file",
+          "pages": 180,
+          "selected": false
+        },
+        {
+          "id": "approval",
+          "title": "The approval alone",
+          "pages": 80,
+          "selected": false
+        }
+      ],
+      "coverage": [
+        {
+          "id": "A",
+          "label": "Objections",
+          "locator": "Exercise A · page 1",
+          "inManuscript": true
+        },
+        {
+          "id": "B",
+          "label": "Approved instruction",
+          "locator": "Exercise B · page 1",
+          "inManuscript": true
+        },
+        {
+          "id": "C",
+          "label": "Resource shortfall",
+          "locator": "Exercise C · page 2",
+          "inManuscript": true
+        }
+      ]
+    },
+    "chapterDesk": {
+      "step": 2,
+      "order": [
+        "A",
+        "B",
+        "C"
+      ],
+      "chronologyReady": true,
+      "evidenceReady": true,
+      "annotation": "The implementation report noted “a resource shortfall.”",
+      "exhibits": [
+        {
+          "id": "A",
+          "title": "Memorandum of conversation",
+          "dateLabel": "Conversation date",
+          "event": "Day 1",
+          "prepared": "Written up on Day 5",
+          "locator": "Exercise A · page 1"
+        },
+        {
+          "id": "B",
+          "title": "Approved instruction",
+          "dateLabel": "Issued",
+          "event": "Day 3",
+          "prepared": "Draft prepared on Day 2",
+          "locator": "Exercise B · page 1"
+        },
+        {
+          "id": "C",
+          "title": "Implementation report",
+          "dateLabel": "Report date",
+          "event": "Day 6",
+          "prepared": "Filed on Day 6",
+          "locator": "Exercise C · page 2"
+        }
+      ],
+      "selectedExcerpt": [
+        "The field office acknowledged receipt of the instruction.",
+        "Field staff reported a resource shortfall."
+      ],
+      "source": "C",
+      "highlightedLine": 1,
+      "components": [
+        {
+          "id": "documents",
+          "title": "Documents 1–3",
+          "attached": true
+        },
+        {
+          "id": "annotations",
+          "title": "Chapter annotation file",
+          "attached": true
+        },
+        {
+          "id": "backup",
+          "title": "Numbered backup · 1",
+          "attached": true
+        }
+      ],
+      "chapterSubmitted": true,
+      "illustrativeExhibits": true
+    },
+    "revisionDesk": {
+      "illustrativeExhibits": true,
+      "originalReviewCopy": "The resource shortfall was fully resolved.",
+      "comments": [
+        {
+          "id": "coverage",
+          "bit": 1,
+          "author": "Supervisor · first review",
+          "text": "Footnote 2 jumps from the resource shortfall to a claimed resolution. Locate a follow-up report before closing this gap.",
+          "read": true
+        },
+        {
+          "id": "support",
+          "bit": 2,
+          "author": "General Editor · second review",
+          "text": "“Fully resolved” exceeds the evidence supplied. Revise the annotation against a specific passage and retain numbered backup.",
+          "read": true
+        }
+      ],
+      "source": 2,
+      "locator": "Exercise E · page 2",
+      "excerpt": [
+        "Field staff received the instruction on Day 7.",
+        "The resource shortfall continued; further assistance was requested."
+      ],
+      "highlightedLine": 1,
+      "markedEvidence": {
+        "locator": "Exercise E · page 2",
+        "line": 2,
+        "text": "The resource shortfall continued; further assistance was requested."
+      },
+      "applied": true,
+      "revisionCopy": "The follow-up report stated: “The resource shortfall continued; further assistance was requested.”",
+      "backupAttached": true,
+      "complete": true
+    },
+    "enabled": true,
+    "completed": 10,
+    "total": 10,
+    "phase": "DPD handoff complete",
+    "nextTask": "Declassification, editing, and publication remain",
+    "documentPages": 1320,
+    "documentPageLimit": 1400,
+    "annotationSheetsCountTowardLimit": false,
+    "dpdSubmitted": true,
+    "tasks": [
+      {
+        "id": "plan",
+        "phase": "Planning",
+        "objective": "ROUTE THE VOLUME PLAN",
+        "complete": true
+      },
+      {
+        "id": "research",
+        "phase": "Research",
+        "objective": "GET RESEARCH APPROVAL",
+        "complete": true
+      },
+      {
+        "id": "selection",
+        "phase": "Compilation",
+        "objective": "SELECT POLICY RECORDS",
+        "complete": true
+      },
+      {
+        "id": "backup",
+        "phase": "Compilation",
+        "objective": "ASSEMBLE CHAPTER BACKUP",
+        "complete": true
+      },
+      {
+        "id": "first_review",
+        "phase": "Review and revision",
+        "objective": "SUBMIT FIRST REVIEW",
+        "complete": true
+      },
+      {
+        "id": "second_review",
+        "phase": "Review and revision",
+        "objective": "SUBMIT SECOND REVIEW",
+        "complete": true
+      },
+      {
+        "id": "revision",
+        "phase": "Review and revision",
+        "objective": "REVISE BOTH REVIEWS",
+        "complete": true
+      },
+      {
+        "id": "front_matter",
+        "phase": "DPD submission",
+        "objective": "CLEAR FRONT MATTER",
+        "complete": true
+      },
+      {
+        "id": "joint_historian",
+        "phase": "DPD submission",
+        "objective": "CHECK CIA PROVENANCE",
+        "complete": true
+      },
+      {
+        "id": "submission",
+        "phase": "DPD submission",
+        "objective": "HAND OFF TO DPD",
+        "complete": true
+      }
+    ]
+  },
+  "networkReached": true,
+  "errors": []
+}

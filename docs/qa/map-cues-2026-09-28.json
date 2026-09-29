@@ -1,0 +1,198 @@
+{
+  "scope": "24 direct-entry presentation fixtures, not progression",
+  "rows": [
+    {
+      "layout": "phone",
+      "map": "historian_office",
+      "objective": "ARCHIVE GUIDE",
+      "action": "USE MARKED TARGET",
+      "footer": "A RETURN TO WORLD MAP",
+      "prompt": "ENTER"
+    },
+    {
+      "layout": "phone",
+      "map": "nara_stacks",
+      "objective": "FOLDER: ARCHIVE B2",
+      "action": "RETREAT; NEED FOLDER",
+      "footer": "RETREAT - NEED FOLDER",
+      "prompt": null
+    },
+    {
+      "layout": "phone",
+      "map": "foggy_bottom",
+      "objective": "TRUMAN BUILDING",
+      "action": "USE MARKED TARGET",
+      "footer": "A RETURN TO WORLD MAP",
+      "prompt": "ENTER"
+    },
+    {
+      "layout": "phone",
+      "map": "west_wing",
+      "objective": "SITUATION ROOM",
+      "action": "USE MARKED TARGET",
+      "footer": "A RETURN TO WORLD MAP",
+      "prompt": "ENTER"
+    },
+    {
+      "layout": "phone",
+      "map": "black_vault",
+      "objective": "STAMP: GUIDE CAVERN",
+      "action": "RETREAT; NEED STAMP",
+      "footer": "RETREAT - NEED STAMP",
+      "prompt": null
+    },
+    {
+      "layout": "phone",
+      "map": "frus_floor",
+      "objective": "PRODUCTION ROOMS",
+      "action": "USE MARKED TARGET",
+      "footer": "A RETURN TO WORLD MAP",
+      "prompt": "ENTER"
+    },
+    {
+      "layout": "phone",
+      "map": "embassy",
+      "objective": "FOLDER: ARCHIVE B2",
+      "action": "RETREAT; NEED FOLDER",
+      "footer": "RETREAT - NEED FOLDER",
+      "prompt": null
+    },
+    {
+      "layout": "phone",
+      "map": "capitol_hill",
+      "objective": "FOLDER: ARCHIVE B2",
+      "action": "USE MARKED TARGET",
+      "footer": "A RETURN TO WORLD MAP",
+      "prompt": "ENTER"
+    },
+    {
+      "layout": "landscape",
+      "map": "historian_office",
+      "objective": "ARCHIVE GUIDE",
+      "action": "USE MARKED TARGET",
+      "footer": "A RETURN TO WORLD MAP",
+      "prompt": "ENTER"
+    },
+    {
+      "layout": "landscape",
+      "map": "nara_stacks",
+      "objective": "FOLDER: ARCHIVE B2",
+      "action": "RETREAT; NEED FOLDER",
+      "footer": "RETREAT - NEED FOLDER",
+      "prompt": null
+    },
+    {
+      "layout": "landscape",
+      "map": "foggy_bottom",
+      "objective": "TRUMAN BUILDING",
+      "action": "USE MARKED TARGET",
+      "footer": "A RETURN TO WORLD MAP",
+      "prompt": "ENTER"
+    },
+    {
+      "layout": "landscape",
+      "map": "west_wing",
+      "objective": "SITUATION ROOM",
+      "action": "USE MARKED TARGET",
+      "footer": "A RETURN TO WORLD MAP",
+      "prompt": "ENTER"
+    },
+    {
+      "layout": "landscape",
+      "map": "black_vault",
+      "objective": "STAMP: GUIDE CAVERN",
+      "action": "RETREAT; NEED STAMP",
+      "footer": "RETREAT - NEED STAMP",
+      "prompt": null
+    },
+    {
+      "layout": "landscape",
+      "map": "frus_floor",
+      "objective": "PRODUCTION ROOMS",
+      "action": "USE MARKED TARGET",
+      "footer": "A RETURN TO WORLD MAP",
+      "prompt": "ENTER"
+    },
+    {
+      "layout": "landscape",
+      "map": "embassy",
+      "objective": "FOLDER: ARCHIVE B2",
+      "action": "RETREAT; NEED FOLDER",
+      "footer": "RETREAT - NEED FOLDER",
+      "prompt": null
+    },
+    {
+      "layout": "landscape",
+      "map": "capitol_hill",
+      "objective": "FOLDER: ARCHIVE B2",
+      "action": "USE MARKED TARGET",
+      "footer": "A RETURN TO WORLD MAP",
+      "prompt": "ENTER"
+    },
+    {
+      "layout": "desktop",
+      "map": "historian_office",
+      "objective": "ARCHIVE GUIDE",
+      "action": "USE MARKED TARGET",
+      "footer": "Z RETURN TO WORLD MAP",
+      "prompt": "ENTER"
+    },
+    {
+      "layout": "desktop",
+      "map": "nara_stacks",
+      "objective": "FOLDER: ARCHIVE B2",
+      "action": "RETREAT; NEED FOLDER",
+      "footer": "RETREAT - NEED FOLDER",
+      "prompt": null
+    },
+    {
+      "layout": "desktop",
+      "map": "foggy_bottom",
+      "objective": "TRUMAN BUILDING",
+      "action": "USE MARKED TARGET",
+      "footer": "Z RETURN TO WORLD MAP",
+      "prompt": "ENTER"
+    },
+    {
+      "layout": "desktop",
+      "map": "west_wing",
+      "objective": "SITUATION ROOM",
+      "action": "USE MARKED TARGET",
+      "footer": "Z RETURN TO WORLD MAP",
+      "prompt": "ENTER"
+    },
+    {
+      "layout": "desktop",
+      "map": "black_vault",
+      "objective": "STAMP: GUIDE CAVERN",
+      "action": "RETREAT; NEED STAMP",
+      "footer": "RETREAT - NEED STAMP",
+      "prompt": null
+    },
+    {
+      "layout": "desktop",
+      "map": "frus_floor",
+      "objective": "PRODUCTION ROOMS",
+      "action": "USE MARKED TARGET",
+      "footer": "Z RETURN TO WORLD MAP",
+      "prompt": "ENTER"
+    },
+    {
+      "layout": "desktop",
+      "map": "embassy",
+      "objective": "FOLDER: ARCHIVE B2",
+      "action": "RETREAT; NEED FOLDER",
+      "footer": "RETREAT - NEED FOLDER",
+      "prompt": null
+    },
+    {
+      "layout": "desktop",
+      "map": "capitol_hill",
+      "objective": "FOLDER: ARCHIVE B2",
+      "action": "USE MARKED TARGET",
+      "footer": "Z RETURN TO WORLD MAP",
+      "prompt": "ENTER"
+    }
+  ],
+  "errors": []
+}

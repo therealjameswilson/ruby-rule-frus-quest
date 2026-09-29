@@ -1,0 +1,30 @@
+const {chromium}=await import(process.env.PLAYWRIGHT_MODULE??'playwright');
+import {mkdir,writeFile} from 'node:fs/promises';import assert from 'node:assert/strict';
+const out=process.env.FRUS_QA_OUT??'/tmp/frus-production-overview-qa';await mkdir(out,{recursive:true});const b=await chromium.launch(),results=[];
+try{for(const [name,width,height] of [['desktop',1280,900],['phone',375,667],['small',320,568],['landscape',844,390]]){
+ const p=await b.newPage({viewport:{width,height},hasTouch:true}),errors=[];p.on('pageerror',e=>errors.push(String(e)));
+ await p.addInitScript(()=>{window.pad={id:'QA',index:0,connected:true,mapping:'standard',axes:[0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};Object.defineProperty(navigator,'getGamepads',{value:()=>[window.pad]});});
+ await p.goto(new URL('?scene=OfficeScene',process.env.FRUS_QA_URL??'http://127.0.0.1:5236/').href);await p.waitForFunction(()=>window.game?.scene.isActive('OfficeScene'));await p.waitForTimeout(350);
+ const state=()=>p.evaluate(()=>JSON.parse(window.render_game_to_text()));
+ const before=await state();const open=async()=>{await p.evaluate(()=>{const s=window.game.scene.getScene('OfficeScene');s.dialog.hide();s.openProductionBoard();});await p.waitForTimeout(300);};await open();
+ assert.match(await p.locator('.production-reading h2').innerText(),/Talk to Kathy/);
+ await p.screenshot({path:out+'/'+name+'-next.png'});
+ const close=p.locator('.production-overview [data-focus-key=leave]');const r=await close.boundingBox();assert(r.width>=44&&r.height>=44&&r.y>=0&&r.y+r.height<=height);
+ const overflow=await p.locator('.production-overview .manuscript-body').evaluate(e=>e.scrollHeight>e.clientHeight+4);await p.keyboard.press('ArrowDown');if(overflow)assert(await p.locator('.production-overview .manuscript-body').evaluate(e=>e.scrollTop)>0);
+ await p.locator('.production-tabs button').nth(1).tap();assert(await p.locator('.production-reading article').count()>10);
+ await p.locator('.production-tabs button').nth(2).tap();assert.match(await p.locator('.production-reading').innerText(),/not proof of exhaustive research/);
+ await p.screenshot({path:out+'/'+name+'-research.png'});
+ assert.deepEqual((await state()).player,before.player);assert.equal((await state()).documentPoints,before.documentPoints);assert.deepEqual((await state()).sceneProgress,before.sceneProgress);
+ await p.keyboard.press('ArrowRight');assert.equal(await p.evaluate(()=>document.activeElement.tagName),'A');
+ await p.keyboard.press('Escape');assert.equal(await p.locator('.production-overview').count(),0);
+ await open();const pad=async(i)=>{await p.evaluate(i=>window.pad.buttons[i]={pressed:true,value:1},i);await p.waitForTimeout(100);await p.evaluate(i=>window.pad.buttons[i]={pressed:false,value:0},i);await p.waitForTimeout(100);};await pad(15);await pad(0);assert.equal(await p.locator('.production-tabs button[aria-pressed=true]').innerText(),'Progress');await pad(1);assert.equal(await p.locator('.production-overview').count(),0);
+ await open();await close.tap();assert.equal(await p.locator('.production-overview').count(),0);
+ await open();await p.evaluate(()=>{const v=window.game.scene.getScene('OfficeScene').productionOverview;v.board={...v.board,nextStep:null,completed:v.board.total};v.render(0);});
+ assert.match(await p.locator('.production-reading h2').innerText(),/Talk to Kathy/);
+ await p.evaluate(()=>{const v=window.game.scene.getScene('OfficeScene').productionOverview;v.guidance={objective:'Enter the Archive Guide through the south door.',published:false};v.render(0);});
+ assert.match(await p.locator('.production-reading h2').innerText(),/Enter the Archive/);
+ await p.evaluate(()=>{const v=window.game.scene.getScene('OfficeScene').productionOverview;v.guidance.published=true;v.render(0);});
+ assert.equal(await p.locator('.production-reading h2').innerText(),'Volume published');await p.screenshot({path:out+'/'+name+'-complete.png'});
+ await p.evaluate(()=>window.game.scene.stop('OfficeScene'));assert.equal(await p.locator('.production-overview').count(),0);assert.deepEqual(errors,[]);
+ results.push({name,tabs:true,reading:true,stationary:true,noReward:true,touchKeyboardController:true,shutdown:true,errors});await p.close();
+}await writeFile(out+'/result.json',JSON.stringify(results,null,2));console.log('PASS production overview four layouts');}finally{await b.close();}

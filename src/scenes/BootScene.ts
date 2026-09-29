@@ -1,7 +1,5 @@
-import { SUPPORTING_SPRITES } from '../art/supportingSprites';
 import { startWithPlayerArt } from "../systems/playerArtLoading";
 import { installBootProgress } from '../systems/bootProgress';
-import { DANNE_BOSS_HD } from "../art/danneBossPresentation";
 import Phaser from "phaser";
 import { OFFICIAL_FRUS_ART } from "../assets/officialFrus";
 import { installArtSharpness } from "../systems/artSharpness";
@@ -22,7 +20,6 @@ import {
   DANNE_VFX_ASSETS
 } from "../game/danneAtlas";
 import {
-  SNES_ANTAGONIST_ASSETS,
   SNES_ARCHIVE_COMPASS_RELIC_ASSET,
   SNES_ARCHIVE_PROP_ASSET,
   SNES_ARCHIVE_ROOM_DETAIL_ASSET,
@@ -154,9 +151,6 @@ export class BootScene extends Phaser.Scene {
     for (const asset of DANNE_RUNTIME_SPRITE_ASSETS) {
       this.load.image(asset.key, asset.path);
     }
-    this.load.spritesheet(DANNE_BOSS_HD.key, DANNE_BOSS_HD.path, {
-      frameWidth: DANNE_BOSS_HD.frameW, frameHeight: DANNE_BOSS_HD.frameH
-    });
     this.load.spritesheet(DANNE_BOSS_SPRITE_ASSET.key, DANNE_BOSS_SPRITE_ASSET.path, {
       frameWidth: DANNE_BOSS_SPRITE_ASSET.frameW,
       frameHeight: DANNE_BOSS_SPRITE_ASSET.frameH
@@ -236,9 +230,6 @@ export class BootScene extends Phaser.Scene {
       this.makeSnesProductionColleagueTextureIfMissing(colleagueAsset.key, colleagueAsset.id);
     }
     this.makeSnesProductionColleagueFrameSheetIfMissing();
-    for (const antagonistAsset of SNES_ANTAGONIST_ASSETS) {
-      this.makeSnesAntagonistTextureIfMissing(antagonistAsset.key);
-    }
     this.makeBureaucraticWallTextureIfMissing();
     for (const wallAsset of SNES_BUREAUCRATIC_WALL_ASSETS) {
       this.makeSnesWallTextureIfMissing(wallAsset.key);
@@ -399,10 +390,6 @@ export class BootScene extends Phaser.Scene {
       width: SNES_PUBLISHED_FRUS_PRIZE_ASSET.dimensions.width,
       height: SNES_PUBLISHED_FRUS_PRIZE_ASSET.dimensions.height
     });
-    for (const antagonistAsset of SNES_ANTAGONIST_ASSETS) {
-      const art=SUPPORTING_SPRITES[antagonistAsset.key];
-      this.load.image(art.key,art.path);
-    }
     for (const wallAsset of SNES_BUREAUCRATIC_WALL_ASSETS) {
       this.load.svg(wallAsset.key, wallAsset.path, { width: 32, height: 32 });
     }
@@ -1219,132 +1206,6 @@ export class BootScene extends Phaser.Scene {
       SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET.dimensions.width,
       SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET.dimensions.height
     );
-    g.destroy();
-  }
-
-  private makeSnesAntagonistTextureIfMissing(key: string) {
-    if (this.textures.exists(key)) return;
-    const g = this.add.graphics();
-    if (key.includes("mice")) {
-      const mice = [
-        { x: 4, y: 8, w: 9, h: 4 },
-        { x: 9, y: 14, w: 11, h: 5 },
-        { x: 17, y: 24, w: 9, h: 3 }
-      ];
-      for (const mouse of mice) {
-        g.fillStyle(color(PALETTE.black));
-        g.fillRect(mouse.x - 1, mouse.y - 1, mouse.w + 2, mouse.h + 2);
-        g.fillRect(mouse.x - 2, mouse.y + 1, 3, 2);
-        g.fillRect(mouse.x + mouse.w, mouse.y + 1, 3, 2);
-        g.fillStyle(color(PALETTE.stoneGray));
-        g.fillRect(mouse.x, mouse.y, mouse.w, mouse.h);
-        g.fillRect(mouse.x - 1, mouse.y + 2, 2, 1);
-        g.fillStyle(color(PALETTE.stoneDark));
-        g.fillRect(mouse.x + 1, mouse.y - 1, 2, 1);
-        g.fillRect(mouse.x + mouse.w - 3, mouse.y - 1, 2, 1);
-        g.fillStyle(color(PALETTE.sepiaInk));
-        g.fillRect(mouse.x + mouse.w + 2, mouse.y + 2, 4, 1);
-      }
-      g.fillStyle(color(PALETTE.creamPaper));
-      g.fillRect(2, 22, 8, 5);
-      g.fillRect(20, 6, 8, 5);
-      g.fillStyle(color(PALETTE.deepRuby));
-      g.fillRect(4, 25, 4, 1);
-      g.fillRect(22, 9, 4, 1);
-      g.generateTexture(key, 32, 32);
-      g.destroy();
-      return;
-    }
-    if (key.includes("bees")) {
-      const bees = [
-        { x: 4, y: 16, w: 4, h: 2 },
-        { x: 13, y: 9, w: 5, h: 3 },
-        { x: 23, y: 17, w: 5, h: 3 },
-        { x: 14, y: 23, w: 4, h: 2 }
-      ];
-      for (const bee of bees) {
-        g.fillStyle(color(PALETTE.black));
-        g.fillRect(bee.x - 1, bee.y, bee.w + 2, bee.h + 1);
-        g.fillStyle(color(PALETTE.terminalCyan));
-        g.fillRect(bee.x, bee.y - 2, 2, 2);
-        g.fillRect(bee.x + bee.w, bee.y - 1, 2, 2);
-        g.fillStyle(color(PALETTE.goldStamp));
-        g.fillRect(bee.x, bee.y, bee.w, bee.h);
-        g.fillStyle(color(PALETTE.black));
-        g.fillRect(bee.x + 1, bee.y, 1, bee.h);
-        g.fillRect(bee.x + bee.w - 1, bee.y, 1, bee.h);
-        g.fillStyle(color(PALETTE.creamPaper));
-        g.fillRect(bee.x + bee.w + 2, bee.y + 1, 1, 1);
-      }
-      g.fillStyle(color(PALETTE.goldStamp));
-      g.fillRect(9, 13, 2, 1);
-      g.fillRect(20, 14, 2, 1);
-      g.fillRect(11, 21, 2, 1);
-      g.generateTexture(key, 32, 32);
-      g.destroy();
-      return;
-    }
-    if (key.includes("federal-shutdown")) {
-      g.fillStyle(color(PALETTE.black));
-      g.fillRect(7, 3, 18, 3);
-      g.fillRect(5, 6, 22, 4);
-      g.fillRect(4, 10, 24, 14);
-      g.fillRect(3, 22, 26, 5);
-      g.fillStyle(color(PALETTE.stoneGray));
-      g.fillRect(7, 6, 18, 3);
-      g.fillStyle(color(PALETTE.deepRuby));
-      g.fillRect(5, 11, 22, 12);
-      g.fillStyle(color(PALETTE.buckramHighlight));
-      g.fillRect(7, 12, 18, 2);
-      g.fillStyle(color(PALETTE.creamPaper));
-      g.fillRect(7, 16, 18, 5);
-      g.fillStyle(color(PALETTE.black));
-      g.fillRect(9, 17, 3, 1);
-      g.fillRect(14, 17, 4, 1);
-      g.fillRect(20, 17, 3, 1);
-      g.fillStyle(color(PALETTE.goldStamp));
-      g.fillRect(4, 23, 24, 3);
-      g.fillStyle(color(PALETTE.deepRuby));
-      g.fillRect(6, 23, 4, 3);
-      g.fillRect(14, 23, 4, 3);
-      g.fillRect(22, 23, 4, 3);
-      g.fillStyle(color(PALETTE.black));
-      g.fillRect(2, 27, 6, 3);
-      g.fillRect(24, 27, 6, 3);
-      g.generateTexture(key, 32, 32);
-      g.destroy();
-      return;
-    }
-    g.fillStyle(color(PALETTE.black));
-    g.fillRect(10, 2, 12, 2);
-    g.fillRect(8, 4, 16, 5);
-    g.fillRect(10, 9, 12, 8);
-    g.fillRect(7, 17, 18, 11);
-    g.fillRect(4, 13, 9, 7);
-    g.fillRect(21, 18, 8, 10);
-    g.fillRect(7, 28, 7, 3);
-    g.fillRect(18, 28, 7, 3);
-    g.fillStyle(color(PALETTE.sepiaInk));
-    g.fillRect(9, 5, 14, 5);
-    g.fillStyle(color(PALETTE.creamPaper));
-    g.fillRect(11, 9, 10, 8);
-    g.fillStyle(color(PALETTE.stoneDark));
-    g.fillRect(8, 18, 16, 9);
-    g.fillStyle(color(PALETTE.buckramRed));
-    g.fillRect(12, 18, 8, 9);
-    g.fillStyle(color(PALETTE.white));
-    g.fillRect(5, 14, 7, 5);
-    g.fillStyle(color(PALETTE.goldStamp));
-    g.fillRect(13, 22, 6, 3);
-    g.fillRect(22, 19, 6, 8);
-    g.fillStyle(color(PALETTE.black));
-    g.fillRect(12, 11, 2, 1);
-    g.fillRect(18, 11, 2, 1);
-    g.fillRect(13, 15, 6, 1);
-    g.fillRect(14, 23, 1, 1);
-    g.fillRect(16, 23, 1, 1);
-    g.fillRect(18, 23, 1, 1);
-    g.generateTexture(key, 32, 32);
     g.destroy();
   }
 

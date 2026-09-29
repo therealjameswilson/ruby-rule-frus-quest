@@ -1,0 +1,95 @@
+{
+  "scope": "Direct-entry presentation and network-failure fixtures; not earned progression",
+  "startup": {
+    "bytes": 7487502,
+    "loaded": false
+  },
+  "rows": [
+    {
+      "target": "GuideScene",
+      "frames": 16,
+      "width": 128,
+      "height": 192,
+      "animations": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "requests": 1,
+      "scene": "GuideScene"
+    },
+    {
+      "target": "ArchiveScene",
+      "frames": 16,
+      "width": 128,
+      "height": 192,
+      "animations": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "requests": 1,
+      "scene": "ArchiveScene"
+    },
+    {
+      "target": "NetworkScene",
+      "frames": 16,
+      "width": 128,
+      "height": 192,
+      "animations": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "requests": 1,
+      "scene": "NetworkScene"
+    },
+    {
+      "target": "ReferralVaultScene",
+      "frames": 16,
+      "width": 128,
+      "height": 192,
+      "animations": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "requests": 1,
+      "scene": "ReferralVaultScene"
+    },
+    {
+      "target": "SilentReadScene",
+      "frames": 16,
+      "width": 128,
+      "height": 192,
+      "animations": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "requests": 1,
+      "scene": "SilentReadScene"
+    },
+    {
+      "target": "BlackVaultLairScene",
+      "frames": 16,
+      "width": 128,
+      "height": 192,
+      "animations": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "requests": 1,
+      "scene": "BlackVaultLairScene"
+    }
+  ],
+  "retryPassed": true,
+  "errors": []
+}

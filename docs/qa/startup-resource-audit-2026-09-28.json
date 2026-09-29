@@ -1,0 +1,729 @@
+{
+  "scope": "Cold local HTTP startup to WarningScene; no network throttling, not device or internet timing",
+  "scene": "WarningScene",
+  "elapsed": 609.3000000119209,
+  "bytes": 11519030,
+  "resources": [
+    {
+      "name": "/assets/index-vrB58ucH.js",
+      "bytes": 3211435,
+      "duration": 7
+    },
+    {
+      "name": "/assets/presentation/consistency/bees-v2.webp",
+      "bytes": 1001852,
+      "duration": 12
+    },
+    {
+      "name": "/assets/presentation/consistency/shutdown-v2.webp",
+      "bytes": 986358,
+      "duration": 10.199999988079071
+    },
+    {
+      "name": "/assets/art-pack/danne-pack/sprites/runtime/censorship-wraith-v2.png",
+      "bytes": 793753,
+      "duration": 9.099999994039536
+    },
+    {
+      "name": "/assets/presentation/consistency/mice-v2.webp",
+      "bytes": 756468,
+      "duration": 10.700000017881393
+    },
+    {
+      "name": "/assets/art-pack/danne-pack/sprites/runtime/danne-boss-forms-v2.png",
+      "bytes": 691882,
+      "duration": 8.699999988079071
+    },
+    {
+      "name": "/assets/presentation/consistency/hac-v2.webp",
+      "bytes": 592094,
+      "duration": 9.300000011920929
+    },
+    {
+      "name": "/assets/art-pack/danne-pack/sprites/runtime/redactor-drone-v2.png",
+      "bytes": 521742,
+      "duration": 7.5
+    },
+    {
+      "name": "/assets/art-pack/danne-pack/sprites/runtime/runtime_marine_guard.png",
+      "bytes": 498710,
+      "duration": 6.199999988079071
+    },
+    {
+      "name": "/assets/art-pack/danne-pack/sprites/runtime/runtime_junior_compiler.png",
+      "bytes": 299598,
+      "duration": 6.299999982118607
+    },
+    {
+      "name": "/assets/characters/compilers/hd/compiler_clara.png",
+      "bytes": 222425,
+      "duration": 5.699999988079071
+    },
+    {
+      "name": "/assets/characters/compilers/hd/compiler_robin.png",
+      "bytes": 218489,
+      "duration": 7.0999999940395355
+    },
+    {
+      "name": "/assets/characters/compilers/hd/compiler_maya.png",
+      "bytes": 199216,
+      "duration": 6.300000011920929
+    },
+    {
+      "name": "/assets/characters/compilers/hd/compiler_quinn.png",
+      "bytes": 199213,
+      "duration": 7
+    },
+    {
+      "name": "/assets/characters/compilers/hd/compiler.png",
+      "bytes": 192660,
+      "duration": 5
+    },
+    {
+      "name": "/assets/characters/compilers/hd/compiler_ada.png",
+      "bytes": 186410,
+      "duration": 5.5999999940395355
+    },
+    {
+      "name": "/assets/official-frus/frus-history.png",
+      "bytes": 114846,
+      "duration": 11.199999988079071
+    },
+    {
+      "name": "/assets/art-pack/rooms/office_compiler_room_208x192.png",
+      "bytes": 67333,
+      "duration": 1.699999988079071
+    },
+    {
+      "name": "/assets/index-Gn8XK_cY.css",
+      "bytes": 55124,
+      "duration": 1.600000023841858
+    },
+    {
+      "name": "/assets/art-pack/sprites/native/sprite_compiler.png",
+      "bytes": 50433,
+      "duration": 8.099999994039536
+    },
+    {
+      "name": "/assets/art-pack/tilesets/gameplay/tileset_interiors_16x16_native.png",
+      "bytes": 38655,
+      "duration": 8.300000011920929
+    },
+    {
+      "name": "/assets/official-frus/frus1989-92v31.jpg",
+      "bytes": 37133,
+      "duration": 11.100000023841858
+    },
+    {
+      "name": "/assets/characters/compilers/compiler_clara.png",
+      "bytes": 34115,
+      "duration": 6.200000017881393
+    },
+    {
+      "name": "/assets/characters/compilers/compiler_robin.png",
+      "bytes": 33085,
+      "duration": 7.5
+    },
+    {
+      "name": "/assets/art-pack/tilesets/gameplay/tileset_archive_dungeon_16x16_native.png",
+      "bytes": 32278,
+      "duration": 7.699999988079071
+    },
+    {
+      "name": "/assets/characters/compilers/compiler_quinn.png",
+      "bytes": 30996,
+      "duration": 7.0999999940395355
+    },
+    {
+      "name": "/assets/characters/compilers/compiler_maya.png",
+      "bytes": 30005,
+      "duration": 7.4000000059604645
+    },
+    {
+      "name": "/assets/characters/compilers/compiler_ada.png",
+      "bytes": 28285,
+      "duration": 6.5
+    },
+    {
+      "name": "/assets/art-pack/danne-pack/screens/01_warning_screen_frus_quest_256x171.png",
+      "bytes": 27006,
+      "duration": 2.300000011920929
+    },
+    {
+      "name": "/assets/art-pack/sprites/refreshed/sprite_archivist.png",
+      "bytes": 26807,
+      "duration": 9.099999994039536
+    },
+    {
+      "name": "/assets/art-pack/sprites/refreshed/sprite_compiler_veteran.png",
+      "bytes": 23541,
+      "duration": 10.200000017881393
+    },
+    {
+      "name": "/assets/art-pack/sprites/refreshed/sprite_reviewer.png",
+      "bytes": 23372,
+      "duration": 8.5
+    },
+    {
+      "name": "/assets/art-pack/sprites/refreshed/sprite_declassification_coordinator.png",
+      "bytes": 21253,
+      "duration": 8.099999994039536
+    },
+    {
+      "name": "/assets/art-pack/sprites/refreshed/sprite_general_editor.png",
+      "bytes": 20501,
+      "duration": 9.199999988079071
+    },
+    {
+      "name": "/assets/sprites/snes-player-editor-frames.svg",
+      "bytes": 12923,
+      "duration": 11.5
+    },
+    {
+      "name": "/assets/sprites/snes-production-colleague-frames.svg",
+      "bytes": 12355,
+      "duration": 10.700000017881393
+    },
+    {
+      "name": "/assets/sprites/snes-player-compiler-frames.svg",
+      "bytes": 11828,
+      "duration": 10.400000005960464
+    },
+    {
+      "name": "/assets/sprites/snes-player-declass-reviewer-frames.svg",
+      "bytes": 9527,
+      "duration": 12
+    },
+    {
+      "name": "/assets/sprites/snes-player-source-note-specialist-frames.svg",
+      "bytes": 9470,
+      "duration": 12.199999988079071
+    },
+    {
+      "name": "/assets/maps/frus-snes-atlas.svg",
+      "bytes": 9446,
+      "duration": 12.599999994039536
+    },
+    {
+      "name": "/assets/sprites/snes-player-proofreader-frames.svg",
+      "bytes": 9387,
+      "duration": 12.299999982118607
+    },
+    {
+      "name": "/assets/art-pack/sprites/runtime/sprite_dann_e.png",
+      "bytes": 7553,
+      "duration": 5.4000000059604645
+    },
+    {
+      "name": "/assets/sprites/snes-archive-props.svg",
+      "bytes": 6015,
+      "duration": 13.5
+    },
+    {
+      "name": "/assets/data/items.json",
+      "bytes": 4834,
+      "duration": 4.200000017881393
+    },
+    {
+      "name": "/assets/sprites/snes-referral-vault-tiles.svg",
+      "bytes": 4193,
+      "duration": 3.9000000059604645
+    },
+    {
+      "name": "/assets/sprites/frus-prize-cover.svg",
+      "bytes": 4095,
+      "duration": 8.199999988079071
+    },
+    {
+      "name": "/assets/sprites/snes-guide-cavern-tiles.svg",
+      "bytes": 3800,
+      "duration": 2.9000000059604645
+    },
+    {
+      "name": "/assets/sprites/snes-network-tiles.svg",
+      "bytes": 3627,
+      "duration": 3.300000011920929
+    },
+    {
+      "name": "/assets/maps/archive-cavern-map.svg",
+      "bytes": 3491,
+      "duration": 13.5
+    },
+    {
+      "name": "/assets/sprites/snes-office-tiles.svg",
+      "bytes": 3128,
+      "duration": 8.399999976158142
+    },
+    {
+      "name": "/assets/sprites/snes-archive-tiles.svg",
+      "bytes": 3122,
+      "duration": 13.699999988079071
+    },
+    {
+      "name": "/assets/sprites/snes-process-stamps.svg",
+      "bytes": 3111,
+      "duration": 6.5999999940395355
+    },
+    {
+      "name": "/assets/art-pack/ng-plus/native/sprite_editor_veteran.png",
+      "bytes": 2920,
+      "duration": 10.099999994039536
+    },
+    {
+      "name": "/assets/art-pack/sprites/native/sprite_editor.png",
+      "bytes": 2899,
+      "duration": 7.899999976158142
+    },
+    {
+      "name": "/assets/sprites/snes-archive-room-details.svg",
+      "bytes": 2853,
+      "duration": 3.600000023841858
+    },
+    {
+      "name": "/assets/art-pack/sprites/native/sprite_senior_reviewer.png",
+      "bytes": 2697,
+      "duration": 8.699999988079071
+    },
+    {
+      "name": "/assets/art-pack/ng-plus/native/sprite_source_note_specialist_veteran.png",
+      "bytes": 2649,
+      "duration": 10.900000005960464
+    },
+    {
+      "name": "/assets/art-pack/sprites/native/sprite_records_officer.png",
+      "bytes": 2625,
+      "duration": 9.400000005960464
+    },
+    {
+      "name": "/assets/art-pack/ng-plus/native/sprite_proofreader_veteran.png",
+      "bytes": 2614,
+      "duration": 10.600000023841858
+    },
+    {
+      "name": "/assets/art-pack/ng-plus/native/sprite_declass_reviewer_veteran.png",
+      "bytes": 2611,
+      "duration": 10.400000005960464
+    },
+    {
+      "name": "/assets/art-pack/sprites/native/sprite_security_officer.png",
+      "bytes": 2524,
+      "duration": 9.5
+    },
+    {
+      "name": "/assets/sprites/snes-dungeon-status-relics.svg",
+      "bytes": 2458,
+      "duration": 5
+    },
+    {
+      "name": "/assets/art-pack/volume-assembly/volume_binding_animation_6x128.png",
+      "bytes": 2455,
+      "duration": 19.19999998807907
+    },
+    {
+      "name": "/assets/sprites/snes-wall-danne-queue.svg",
+      "bytes": 2285,
+      "duration": 11.799999982118607
+    },
+    {
+      "name": "/assets/sprites/snes-route-arrows.svg",
+      "bytes": 2271,
+      "duration": 3.5999999940395355
+    },
+    {
+      "name": "/assets/sprites/snes-gate-glyphs.svg",
+      "bytes": 2265,
+      "duration": 4.699999988079071
+    },
+    {
+      "name": "/assets/art-pack/volume-assembly/completed_volume_hero.png",
+      "bytes": 2173,
+      "duration": 1.399999976158142
+    },
+    {
+      "name": "/assets/sprites/snes-wall-ambiguous.svg",
+      "bytes": 2164,
+      "duration": 11.699999988079071
+    },
+    {
+      "name": "/assets/sprites/snes-wall-wait.svg",
+      "bytes": 2164,
+      "duration": 11.5
+    },
+    {
+      "name": "/assets/sprites/snes-wall-hold.svg",
+      "bytes": 2164,
+      "duration": 11.5
+    },
+    {
+      "name": "/assets/sprites/snes-workflow-tools.svg",
+      "bytes": 2106,
+      "duration": 1.699999988079071
+    },
+    {
+      "name": "/assets/sprites/snes-wall-pending.svg",
+      "bytes": 2103,
+      "duration": 11.800000011920929
+    },
+    {
+      "name": "/assets/sprites/snes-wall-no-repo.svg",
+      "bytes": 2046,
+      "duration": 9
+    },
+    {
+      "name": "/assets/sprites/snes-wall-firewall.svg",
+      "bytes": 2045,
+      "duration": 9.700000017881393
+    },
+    {
+      "name": "/assets/sprites/snes-equity-crystals.svg",
+      "bytes": 1869,
+      "duration": 6.4000000059604645
+    },
+    {
+      "name": "/assets/sprites/snes-colleague-compiler.svg",
+      "bytes": 1708,
+      "duration": 8.400000005960464
+    },
+    {
+      "name": "/assets/sprites/snes-colleague-declass-coordinator.svg",
+      "bytes": 1707,
+      "duration": 9.099999994039536
+    },
+    {
+      "name": "/assets/sprites/snes-archive-wall-map-board.svg",
+      "bytes": 1665,
+      "duration": 12.800000011920929
+    },
+    {
+      "name": "/assets/sprites/snes-colleague-review-specialist.svg",
+      "bytes": 1649,
+      "duration": 9.400000005960464
+    },
+    {
+      "name": "/assets/sprites/snes-colleague-editor.svg",
+      "bytes": 1649,
+      "duration": 10.099999994039536
+    },
+    {
+      "name": "/assets/sprites/bureaucratic-wall.svg",
+      "bytes": 1636,
+      "duration": 5.200000017881393
+    },
+    {
+      "name": "/assets/sprites/snes-colleague-reviewer.svg",
+      "bytes": 1589,
+      "duration": 8.800000011920929
+    },
+    {
+      "name": "/assets/sprites/snes-npc-elena.svg",
+      "bytes": 1556,
+      "duration": 6.399999976158142
+    },
+    {
+      "name": "/assets/sprites/player-declass-reviewer.svg",
+      "bytes": 1551,
+      "duration": 10.5
+    },
+    {
+      "name": "/assets/sprites/snes-npc-priya.svg",
+      "bytes": 1496,
+      "duration": 7.5999999940395355
+    },
+    {
+      "name": "/assets/sprites/snes-npc-archive-colleague.svg",
+      "bytes": 1496,
+      "duration": 8.099999994039536
+    },
+    {
+      "name": "/assets/sprites/snes-player-declass-reviewer.svg",
+      "bytes": 1495,
+      "duration": 11.699999988079071
+    },
+    {
+      "name": "/assets/sprites/snes-player-source-note-specialist.svg",
+      "bytes": 1495,
+      "duration": 11.900000005960464
+    },
+    {
+      "name": "/assets/sprites/snes-npc-sam.svg",
+      "bytes": 1495,
+      "duration": 6.299999982118607
+    },
+    {
+      "name": "/assets/sprites/snes-room-map-markers.svg",
+      "bytes": 1494,
+      "duration": 5.899999976158142
+    },
+    {
+      "name": "/assets/sprites/player-compiler.svg",
+      "bytes": 1492,
+      "duration": 10
+    },
+    {
+      "name": "/assets/sprites/snes-cover-fragments.svg",
+      "bytes": 1488,
+      "duration": 6.199999988079071
+    },
+    {
+      "name": "/assets/maps/office-hub-map.svg",
+      "bytes": 1455,
+      "duration": 14.099999994039536
+    },
+    {
+      "name": "/assets/sprites/snes-npc-marcus.svg",
+      "bytes": 1437,
+      "duration": 7.199999988079071
+    },
+    {
+      "name": "/assets/sprites/snes-player-proofreader.svg",
+      "bytes": 1436,
+      "duration": 10.900000005960464
+    },
+    {
+      "name": "/assets/sprites/snes-player-compiler.svg",
+      "bytes": 1435,
+      "duration": 11.699999988079071
+    },
+    {
+      "name": "/assets/sprites/snes-player-editor.svg",
+      "bytes": 1435,
+      "duration": 11.5
+    },
+    {
+      "name": "/assets/sprites/snes-first-hour-training-relic.svg",
+      "bytes": 1365,
+      "duration": 12.400000005960464
+    },
+    {
+      "name": "/assets/sprites/snes-research-pendants.svg",
+      "bytes": 1338,
+      "duration": 5.9000000059604645
+    },
+    {
+      "name": "/assets/maps/referral-vault-map.svg",
+      "bytes": 1330,
+      "duration": 3.199999988079071
+    },
+    {
+      "name": "/assets/sprites/snes-world-atlas-relic.svg",
+      "bytes": 1308,
+      "duration": 3.4000000059604645
+    },
+    {
+      "name": "/assets/maps/editor-labyrinth-map.svg",
+      "bytes": 1269,
+      "duration": 3.5999999940395355
+    },
+    {
+      "name": "/assets/sprites/player-source-note-specialist.svg",
+      "bytes": 1260,
+      "duration": 10.699999988079071
+    },
+    {
+      "name": "/assets/sprites/player-editor.svg",
+      "bytes": 1257,
+      "duration": 10.100000023841858
+    },
+    {
+      "name": "/assets/sprites/marcus.svg",
+      "bytes": 1256,
+      "duration": 9.900000005960464
+    },
+    {
+      "name": "/assets/maps/two-networks-map.svg",
+      "bytes": 1208,
+      "duration": 2.5999999940395355
+    },
+    {
+      "name": "/assets/sprites/elena.svg",
+      "bytes": 1201,
+      "duration": 9.099999994039536
+    },
+    {
+      "name": "/assets/sprites/priya.svg",
+      "bytes": 1199,
+      "duration": 9.800000011920929
+    },
+    {
+      "name": "/assets/sprites/frus-volume.svg",
+      "bytes": 1162,
+      "duration": 6.600000023841858
+    },
+    {
+      "name": "/assets/sprites/sam.svg",
+      "bytes": 1140,
+      "duration": 8.5
+    },
+    {
+      "name": "/assets/sprites/player-proofreader.svg",
+      "bytes": 1138,
+      "duration": 9.5
+    },
+    {
+      "name": "/assets/sprites/snes-archive-compass-relic.svg",
+      "bytes": 1129,
+      "duration": 11.900000005960464
+    },
+    {
+      "name": "/assets/maps/buckram-gate-map.svg",
+      "bytes": 1091,
+      "duration": 2.5
+    },
+    {
+      "name": "/assets/maps/silent-read-tower-map.svg",
+      "bytes": 1087,
+      "duration": 3.7000000178813934
+    },
+    {
+      "name": "/assets/sprites/archive-colleague.svg",
+      "bytes": 1081,
+      "duration": 12.699999988079071
+    },
+    {
+      "name": "/assets/sprites/citation-stamp.svg",
+      "bytes": 917,
+      "duration": 12.699999988079071
+    },
+    {
+      "name": "/assets/sprites/cross-reference.svg",
+      "bytes": 861,
+      "duration": 14
+    },
+    {
+      "name": "/assets/sprites/referral-manifest.svg",
+      "bytes": 858,
+      "duration": 4.300000011920929
+    },
+    {
+      "name": "/assets/sprites/volume-fragment.svg",
+      "bytes": 857,
+      "duration": 13.099999994039536
+    },
+    {
+      "name": "/assets/art-pack/sprites/native/sprite_statechat_terminal.png",
+      "bytes": 818,
+      "duration": 9.700000017881393
+    },
+    {
+      "name": "/assets/sprites/manuscript.svg",
+      "bytes": 794,
+      "duration": 5.9000000059604645
+    },
+    {
+      "name": "/assets/sprites/agency-equity-seal.svg",
+      "bytes": 741,
+      "duration": 4.5999999940395355
+    },
+    {
+      "name": "/assets/sprites/concurrence-slip.svg",
+      "bytes": 740,
+      "duration": 4.300000011920929
+    },
+    {
+      "name": "/assets/sprites/classnet-terminal.svg",
+      "bytes": 738,
+      "duration": 13.400000005960464
+    },
+    {
+      "name": "/assets/sprites/proof-page.svg",
+      "bytes": 738,
+      "duration": 9.399999976158142
+    },
+    {
+      "name": "/assets/sprites/excision-bracket-marker.svg",
+      "bytes": 738,
+      "duration": 5.800000011920929
+    },
+    {
+      "name": "/assets/tiles/vault-tiles.svg",
+      "bytes": 737,
+      "duration": 4
+    },
+    {
+      "name": "/assets/sprites/opennet-terminal.svg",
+      "bytes": 679,
+      "duration": 14
+    },
+    {
+      "name": "/assets/sprites/source-note.svg",
+      "bytes": 678,
+      "duration": 13.700000017881393
+    },
+    {
+      "name": "/assets/sprites/buckram-key.svg",
+      "bytes": 678,
+      "duration": 3.5
+    },
+    {
+      "name": "/assets/sprites/red-pencil.svg",
+      "bytes": 677,
+      "duration": 9.5
+    },
+    {
+      "name": "/assets/ui/terminal-panel.svg",
+      "bytes": 624,
+      "duration": 3.699999988079071
+    },
+    {
+      "name": "/assets/sprites/review-folder.svg",
+      "bytes": 623,
+      "duration": 4.0999999940395355
+    },
+    {
+      "name": "/assets/sprites/clearance-token.svg",
+      "bytes": 620,
+      "duration": 2.5999999940395355
+    },
+    {
+      "name": "/assets/sprites/proof-lens.svg",
+      "bytes": 619,
+      "duration": 3.5
+    },
+    {
+      "name": "/assets/data/dialogue.json",
+      "bytes": 598,
+      "duration": 3.5999999940395355
+    },
+    {
+      "name": "/assets/data/scenes.json",
+      "bytes": 585,
+      "duration": 4.5999999940395355
+    },
+    {
+      "name": "/assets/ui/dialog-box.svg",
+      "bytes": 565,
+      "duration": 3.5999999940395355
+    },
+    {
+      "name": "/assets/ui/reliability-meter.svg",
+      "bytes": 562,
+      "duration": 4
+    },
+    {
+      "name": "/assets/sprites/telegram.svg",
+      "bytes": 561,
+      "duration": 12.5
+    },
+    {
+      "name": "/assets/tiles/network-tiles.svg",
+      "bytes": 560,
+      "duration": 2.5999999940395355
+    },
+    {
+      "name": "/assets/tiles/office-tiles.svg",
+      "bytes": 502,
+      "duration": 2.5999999940395355
+    },
+    {
+      "name": "/assets/tiles/archive-tiles.svg",
+      "bytes": 501,
+      "duration": 3.5
+    },
+    {
+      "name": "/assets/art-pack/volume-assembly/volume_assembly_hud_bar.png",
+      "bytes": 245,
+      "duration": 15.299999982118607
+    }
+  ],
+  "errors": []
+}

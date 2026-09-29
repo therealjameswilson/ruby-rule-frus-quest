@@ -117,11 +117,13 @@ try{
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).roomTraversal.currentRoomId==='R2');await page.waitForTimeout(700);await shot('reward-room');
  await move(100,132);await key();await shot('slip');assert((await state()).inventory.includes('Concurrence Slip'));
  await move(216,132);await move(216,120);await key('ArrowRight',1200);
- await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='SilentReadScene');await page.waitForTimeout(700);await shot('proof-arrival');
+ await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='SilentReadScene');await page.waitForTimeout(700);
+ assert.equal((await state()).roomTraversal.currentRoomId,'E1','Referral handoff enters editorial repair before the proof room');
+ await shot('editor-arrival');
 
  await context.storageState({path:`${out}/earned-storage.json`});
- await writeFile(`${out}/result.json`,JSON.stringify({mobile,manifestCorrected:true,treatmentDraftRestored:process.argv.includes('--reload-treatment'),withholdingTreatmentFiled:true,bracketPressVerified:true,noDuplicateReward:true,proofingReached:true,toastPlacements,errors},null,2));
- assert.deepEqual(errors,[]);console.log(`PASS ${mobile?'touch-only':'keyboard'} earned manifest correction, treatment, Concurrence Slip and proofing arrival`);
+ await writeFile(`${out}/result.json`,JSON.stringify({mobile,manifestCorrected:true,treatmentDraftRestored:process.argv.includes('--reload-treatment'),withholdingTreatmentFiled:true,bracketPressVerified:true,noDuplicateReward:true,editorialRoomReached:true,toastPlacements,errors},null,2));
+ assert.deepEqual(errors,[]);console.log(`PASS ${mobile?'touch-only':'keyboard'} earned manifest correction, treatment, Concurrence Slip and editorial arrival`);
 }finally{
  try{await shot('last');}catch(error){console.error('Final screenshot unavailable:',error.message);}
  await browser.close();

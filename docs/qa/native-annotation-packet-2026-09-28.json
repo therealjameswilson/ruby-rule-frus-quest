@@ -1,0 +1,41 @@
+{
+  "scope": "Bounded packet UI fixtures; not earned progression",
+  "results": [
+    {
+      "name": "desktop",
+      "notesReadable": true,
+      "leadsNotExamined": true,
+      "explicitFiling": true,
+      "noApprovalOnCancel": true,
+      "touchKeyboardController": true,
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "notesReadable": true,
+      "leadsNotExamined": true,
+      "explicitFiling": true,
+      "noApprovalOnCancel": true,
+      "touchKeyboardController": true,
+      "errors": []
+    },
+    {
+      "name": "small-phone",
+      "notesReadable": true,
+      "leadsNotExamined": true,
+      "explicitFiling": true,
+      "noApprovalOnCancel": true,
+      "touchKeyboardController": true,
+      "errors": []
+    },
+    {
+      "name": "landscape",
+      "notesReadable": true,
+      "leadsNotExamined": true,
+      "explicitFiling": true,
+      "noApprovalOnCancel": true,
+      "touchKeyboardController": true,
+      "errors": []
+    }
+  ]
+}

@@ -93,8 +93,10 @@ export class TrueEndingScene extends Phaser.Scene {
           ? [certificate.title, "Ruby Buckram Certified Volume", `Treaty Record ${Math.min(treatyFragments, 3)}/3`, "Certificate button", "Title button"]
           : page === "certificate"
             ? ["Certification record", ...certificate.checklist.map((line) => `${line.label}: ${line.value}${line.complete ? "" : " (open)"}`), "Record button", "Title button"]
-            : page === "process"
-              ? ["From archives to readers", "Plan and research", "Select and annotate", "Review and revise", "Clearance", "Edit and proof", "Publish", "Research access is not release", "Volume button", "Title button"]
+            : page === "readers"
+            ? ["What readers can see", "Published text is declassified", "Source files may remain restricted", "Withheld material is accounted for", "Volume button", "Title button"]
+          : page === "process"
+              ? ["From archives to readers", "Plan and research", "Select and annotate", "Review and revise", "Clearance", "Edit and proof", "Publish", "Research access is not release", "Readers button", "Title button"]
               : ["Publication record", "Completion stats", "Skills practiced", "Process button", "Title button"]);
         setVisibleThreats([]);
         setNearestInteractable(null);

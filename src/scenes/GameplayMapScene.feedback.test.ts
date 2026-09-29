@@ -1,3 +1,4 @@
+vi.mock("../systems/MapReadingDesk", () => ({ MapReadingDesk: class { close() {} updateInput() {} } }));
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GameplayMapScene } from "./GameplayMapScene";
 import { UIScene } from "./UIScene";

@@ -1,0 +1,34 @@
+{
+  "scope": "Four native selection fixtures with isolated draft; earned progression checked separately",
+  "rows": [
+    {
+      "layout": "phone",
+      "approvalRejected": true,
+      "duplicateRejected": true,
+      "draftRestored": true,
+      "correctedFiled": true
+    },
+    {
+      "layout": "small",
+      "approvalRejected": true,
+      "duplicateRejected": true,
+      "draftRestored": true,
+      "correctedFiled": true
+    },
+    {
+      "layout": "landscape",
+      "approvalRejected": true,
+      "duplicateRejected": true,
+      "draftRestored": true,
+      "correctedFiled": true
+    },
+    {
+      "layout": "desktop",
+      "approvalRejected": true,
+      "duplicateRejected": true,
+      "draftRestored": true,
+      "correctedFiled": true
+    }
+  ],
+  "errors": []
+}

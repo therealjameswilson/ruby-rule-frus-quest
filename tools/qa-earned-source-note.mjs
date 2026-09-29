@@ -46,10 +46,11 @@ try{
  await move(72,154);await move(184,154);await press();await shot('folder');
  assert.equal((await state()).sceneProgress.sourceNoteProvenanceMask,7);
  await move(128,154);await press();await shot('board');assert.equal((await state()).mode,'choice');
- await press('ArrowDown');await press();await shot('rejected');
+ const note=async key=>{const e=page.locator('.source-note-desk [data-focus-key='+key+']');await e.scrollIntoViewIfNeeded();if(mobile)await e.tap();else await e.click();await page.waitForTimeout(150);};
+ await note('file');await shot('rejected');
  assert(!(await state()).sceneProgress.aboutSeriesFirstFootnoteComplete);
- await press('ArrowUp');await press();await shot('corrected');
- await press();await shot('filed');assert.equal((await state()).sceneProgress.aboutSeriesFirstFootnoteComplete,1);
+ await note('repair');await shot('corrected');
+ await note('file');await shot('filed');assert.equal((await state()).sceneProgress.aboutSeriesFirstFootnoteComplete,1);
  assert.equal((await state()).objective,'REVIEW SOURCE NOTE','Filed source trail must cue the remaining review, not a tool swing');
  await press();await shot('standards-decision');
  assert.equal((await state()).choice.options[0].value,'retain');

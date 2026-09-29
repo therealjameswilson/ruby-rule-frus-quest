@@ -1,0 +1,11 @@
+.compiler-feedback-desk .manuscript-panel{max-width:860px}
+.compiler-feedback-desk .manuscript-body{display:block}
+.compiler-feedback-desk .manuscript-heading h1{font-size:34px;padding-right:80px}
+.compiler-feedback-reading{padding:28px 32px}
+.compiler-feedback-reading p{font-size:21px;line-height:1.65;margin:0;padding-left:22px;border-left:3px solid #dbc17f;color:#edf0e5}
+.compiler-feedback-desk[data-accepted=false] .compiler-feedback-reading p{border-color:#f0a98d}
+.compiler-feedback-desk .manuscript-close,.compiler-feedback-desk .manuscript-submit{min-height:48px}
+@media(max-width:760px){.compiler-feedback-desk .manuscript-eyebrow{min-height:32px;padding-right:80px}.compiler-feedback-desk .manuscript-heading h1{font-size:27px;padding-right:0}.compiler-feedback-reading{padding:22px}.compiler-feedback-reading p{font-size:18px;padding-left:16px}}
+@media(max-height:500px) and (min-width:700px){.compiler-feedback-desk .manuscript-heading h1{font-size:24px}.compiler-feedback-reading{padding:18px 20px}.compiler-feedback-reading p{font-size:18px}}
+.compiler-feedback-desk .manuscript-heading{position:relative}
+@media(max-width:480px){.compiler-feedback-desk .manuscript-close{top:18px;right:18px}}

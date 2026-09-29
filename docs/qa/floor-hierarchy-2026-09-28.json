@@ -1,0 +1,618 @@
+{
+  "scope": "18 presentation fixtures; not earned progression",
+  "rows": [
+    {
+      "layout": "phone",
+      "completed": 0,
+      "count": "0/5",
+      "next": "NEXT: VERIFY SOURCES",
+      "prompt": {
+        "x": 105,
+        "y": 58.5,
+        "width": 48,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 72,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "waiting",
+        "waiting",
+        "waiting",
+        "waiting",
+        "waiting"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "phone",
+      "completed": 1,
+      "count": "1/5",
+      "next": "NEXT: SELECT RECORDS",
+      "prompt": {
+        "x": 105,
+        "y": 58.5,
+        "width": 48,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 74,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "complete",
+        "waiting",
+        "waiting",
+        "waiting",
+        "waiting"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "phone",
+      "completed": 2,
+      "count": "2/5",
+      "next": "NEXT: REVIEW EQUITIES",
+      "prompt": {
+        "x": 105,
+        "y": 58.5,
+        "width": 48,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 73,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "complete",
+        "complete",
+        "waiting",
+        "waiting",
+        "waiting"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "phone",
+      "completed": 3,
+      "count": "3/5",
+      "next": "NEXT: CHECK ANNOTATION",
+      "prompt": {
+        "x": 110.5,
+        "y": 58.5,
+        "width": 37,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 80,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "complete",
+        "complete",
+        "complete",
+        "waiting",
+        "waiting"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "phone",
+      "completed": 4,
+      "count": "4/5",
+      "next": "NEXT: BIND THE VOLUME",
+      "prompt": {
+        "x": 105,
+        "y": 58.5,
+        "width": 48,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 74,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "complete",
+        "complete",
+        "complete",
+        "complete",
+        "waiting"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "phone",
+      "completed": 5,
+      "count": "5/5",
+      "next": "TO PUBLICATION GATE",
+      "prompt": {
+        "x": 105,
+        "y": 58.5,
+        "width": 48,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 68,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "complete",
+        "complete",
+        "complete",
+        "complete",
+        "complete"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "landscape",
+      "completed": 0,
+      "count": "0/5",
+      "next": "NEXT: VERIFY SOURCES",
+      "prompt": {
+        "x": 105,
+        "y": 58.5,
+        "width": 48,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 72,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "waiting",
+        "waiting",
+        "waiting",
+        "waiting",
+        "waiting"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "landscape",
+      "completed": 1,
+      "count": "1/5",
+      "next": "NEXT: SELECT RECORDS",
+      "prompt": {
+        "x": 105,
+        "y": 58.5,
+        "width": 48,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 74,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "complete",
+        "waiting",
+        "waiting",
+        "waiting",
+        "waiting"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "landscape",
+      "completed": 2,
+      "count": "2/5",
+      "next": "NEXT: REVIEW EQUITIES",
+      "prompt": {
+        "x": 105,
+        "y": 58.5,
+        "width": 48,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 73,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "complete",
+        "complete",
+        "waiting",
+        "waiting",
+        "waiting"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "landscape",
+      "completed": 3,
+      "count": "3/5",
+      "next": "NEXT: CHECK ANNOTATION",
+      "prompt": {
+        "x": 110.5,
+        "y": 58.5,
+        "width": 37,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 80,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "complete",
+        "complete",
+        "complete",
+        "waiting",
+        "waiting"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "landscape",
+      "completed": 4,
+      "count": "4/5",
+      "next": "NEXT: BIND THE VOLUME",
+      "prompt": {
+        "x": 105,
+        "y": 58.5,
+        "width": 48,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 74,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "complete",
+        "complete",
+        "complete",
+        "complete",
+        "waiting"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "landscape",
+      "completed": 5,
+      "count": "5/5",
+      "next": "TO PUBLICATION GATE",
+      "prompt": {
+        "x": 105,
+        "y": 58.5,
+        "width": 48,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 68,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "complete",
+        "complete",
+        "complete",
+        "complete",
+        "complete"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "desktop",
+      "completed": 0,
+      "count": "0/5",
+      "next": "NEXT: VERIFY SOURCES",
+      "prompt": {
+        "x": 105,
+        "y": 58.5,
+        "width": 48,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 72,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "waiting",
+        "waiting",
+        "waiting",
+        "waiting",
+        "waiting"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "desktop",
+      "completed": 1,
+      "count": "1/5",
+      "next": "NEXT: SELECT RECORDS",
+      "prompt": {
+        "x": 105,
+        "y": 58.5,
+        "width": 48,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 74,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "complete",
+        "waiting",
+        "waiting",
+        "waiting",
+        "waiting"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "desktop",
+      "completed": 2,
+      "count": "2/5",
+      "next": "NEXT: REVIEW EQUITIES",
+      "prompt": {
+        "x": 105,
+        "y": 58.5,
+        "width": 48,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 73,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "complete",
+        "complete",
+        "waiting",
+        "waiting",
+        "waiting"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "desktop",
+      "completed": 3,
+      "count": "3/5",
+      "next": "NEXT: CHECK ANNOTATION",
+      "prompt": {
+        "x": 110.5,
+        "y": 58.5,
+        "width": 37,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 80,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "complete",
+        "complete",
+        "complete",
+        "waiting",
+        "waiting"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "desktop",
+      "completed": 4,
+      "count": "4/5",
+      "next": "NEXT: BIND THE VOLUME",
+      "prompt": {
+        "x": 105,
+        "y": 58.5,
+        "width": 48,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 74,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "complete",
+        "complete",
+        "complete",
+        "complete",
+        "waiting"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    },
+    {
+      "layout": "desktop",
+      "completed": 5,
+      "count": "5/5",
+      "next": "TO PUBLICATION GATE",
+      "prompt": {
+        "x": 105,
+        "y": 58.5,
+        "width": 48,
+        "height": 15
+      },
+      "obsoleteTitle": false,
+      "card": {
+        "x": 29,
+        "y": 76.5,
+        "width": 198,
+        "height": 17
+      },
+      "label": {
+        "x": 64,
+        "y": 81,
+        "width": 68,
+        "height": 6.498046875
+      },
+      "statuses": [
+        "complete",
+        "complete",
+        "complete",
+        "complete",
+        "complete"
+      ],
+      "clutter": 0,
+      "flowVisible": false
+    }
+  ],
+  "errors": []
+}

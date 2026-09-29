@@ -1,13 +1,14 @@
+import { ResearchJournalDesk } from "../systems/ResearchJournalDesk";
 import { addSaladBowlArt } from '../systems/saladBowlArt';
 import { OutdoorAtmosphere } from "../systems/outdoorAtmosphere";
-import { nscDungeon, nscStage } from '../game/nscResearch';
+import { nscDungeon } from '../game/nscResearch';
 import { presentationPanel, PANEL_COLORS } from "../systems/presentationPanel";
-import { LIBRARY_ASSIGNMENTS, libraryAssignment, libraryStage } from "../game/libraryResearch";
+import { LIBRARY_ASSIGNMENTS, libraryAssignment } from "../game/libraryResearch";
 import Phaser from 'phaser';
 import { DANNE_DISGUISES, disguiseIndex } from '../game/danneDisguises';
 import { Player } from '../entities/Player';
 import { DANNE_OUTDOOR_LINES, discoveryCount, RESEARCH_LANDMARKS, RESEARCH_ZONES, researchZone, researchHolding, researchCollections, collectionPages, type ResearchLandmark } from '../game/researchWorld';
-import { gameState, setLatestMessage, setNearestInteractable, setObjective, setSceneState, setVisibleEntities, setVisibleThreats } from '../game/state';
+import { gameState, clearChoiceState, setLatestMessage, setNearestInteractable, setObjective, setSceneState, setVisibleEntities, setVisibleThreats } from '../game/state';
 import { bindPointerDown, getInput, swallowNextInputFrame, tickInput } from '../input/InputState';
 import { DialogBox } from '../systems/dialog';
 import { InventoryOverlay } from '../systems/inventory';
@@ -21,6 +22,7 @@ type Stop = {label:string; x:number; y:number; radius:number; act:()=>void};
 export class ResearchWorldScene extends Phaser.Scene {
   private player!: Player;
   private dialog!: DialogBox;
+  private journalDesk?:ResearchJournalDesk;
   private choice!: ChoicePrompt;
   private inventory!: InventoryOverlay;
   private zone = 1;
@@ -64,6 +66,7 @@ export class ResearchWorldScene extends Phaser.Scene {
     }
   }
   create() {
+    this.events.once("shutdown",()=>this.closeJournal());
     if (gameState.sceneProgress.libraryReturnX) {
       this.arrival = {x:gameState.sceneProgress.libraryReturnX,y:gameState.sceneProgress.libraryReturnY};
       delete gameState.sceneProgress.libraryReturnX; delete gameState.sceneProgress.libraryReturnY;
@@ -154,6 +157,10 @@ export class ResearchWorldScene extends Phaser.Scene {
   update(_:number,delta:number) {
     tickInput(); const input=getInput();
     if(this.leaving)return;
+    if(this.journalDesk){
+      if(input.fullscreenJustPressed)this.scale.toggleFullscreen();
+      this.journalDesk.updateInput(input);this.player.update(delta,false);return;
+    }
     this.travelClose.setVisible(this.choice.active);
     if(this.dialog.active) {
       if(input.aJustPressed||input.confirmJustPressed||input.bJustPressed||input.cancelJustPressed)this.dialog.advance();
@@ -339,13 +346,12 @@ export class ResearchWorldScene extends Phaser.Scene {
       {key:'C',label:'Reagan Library / California'}, {key:'D',label:'Bush 41 and Bush 43 / Texas'}
     ],option=>this.travel(({A:3,B:4,C:5,D:6} as Record<string,number>)[option.key], option.key==='C'?{x:192,y:142}:{x:128,y:188}),6,()=>{});
   }
+  private closeJournal(){
+    if(!this.journalDesk)return;
+    this.journalDesk.close();this.journalDesk=undefined;clearChoiceState();
+  }
   private journal() {
-    const found=RESEARCH_LANDMARKS.filter(l=>gameState.sceneProgress[`researchVisited_${l.id}`]);
-    this.dialog.show('FIELD JOURNAL',[
-      `${found.length}/${RESEARCH_LANDMARKS.length} landmarks discovered. Walk to a building and press A. No required order.`,
-      'DC: Potomac Green west, Capital Commons east, Maryland Grove north. Rail links four distant library regions.',
-      ...found.flatMap(l=>[`${l.name}\n${l.location}`, ...(libraryAssignment(l.id)?[`Dungeon research packet: ${libraryStage(gameState.sceneProgress,l.id)}/4`]:[]),...(nscDungeon(l.id)?[`NSC wing: ${nscStage(gameState.sceneProgress,l.id)}/3 checks filed`]:[]),researchHolding(l.id).text,...collectionPages(l.id)]),
-      'Research lessons are practice prompts. Catalogs and repository staff establish holdings and access. The map compresses real distances.'
-    ]);
+    this.closeJournal();
+    this.journalDesk=new ResearchJournalDesk({...gameState.sceneProgress},()=>this.closeJournal());
   }
 }
