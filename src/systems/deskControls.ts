@@ -73,8 +73,10 @@ export class DeskControls {
       const clipped=step>0?card.bottom-viewport.bottom:viewport.top-top;
       if(clipped>4){const before=body.scrollTop;body.scrollTop+=step*Math.min(clipped+8,body.clientHeight*.75);if(Math.abs(body.scrollTop-before)>1)return;}
     }
+    const previousIndex=this.focusIndex;
     this.focusIndex=(this.focusIndex+step+this.buttons.length)%this.buttons.length;
     this.buttons[this.focusIndex].focus({preventScroll:true});this.buttons[this.focusIndex].scrollIntoView({block:'nearest',behavior:'instant'});
+    if(this.focusIndex!==previousIndex)retroAudio.deskNavigate();
   }
   updateInput(input:InputState){
     if(!this.active)return;

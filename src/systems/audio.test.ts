@@ -71,3 +71,20 @@ describe('effect sequences on the audio clock', () => {
     expect(context).not.toHaveBeenCalled();expect(timeout).not.toHaveBeenCalled();
   });
 });
+
+describe('desk focus feedback',()=>{
+ it('uses one short sine cue and limits rapid navigation without deferring sounds',()=>{
+  const runtime=audio as unknown as {enabled:boolean;unlocked:boolean;tone:(f:number,d:number,g:number,w:string)=>void};
+  runtime.enabled=true;runtime.unlocked=true;const tone=vi.spyOn(runtime,'tone').mockImplementation(()=>{});
+  const time=vi.spyOn(performance,'now').mockReturnValue(1000);
+  audio.deskNavigate();time.mockReturnValue(1030);audio.deskNavigate();time.mockReturnValue(1080);audio.deskNavigate();
+  expect(tone).toHaveBeenCalledTimes(2);expect(tone).toHaveBeenLastCalledWith(520,.035,.018,'sine');time.mockRestore();
+ });
+ it('stays silent while locked, hidden, or either volume channel is muted',()=>{
+  const runtime=audio as unknown as {enabled:boolean;unlocked:boolean;mix:{effects:number;master:number};tone:()=>void};
+  const tone=vi.spyOn(runtime,'tone').mockImplementation(()=>{});audio.deskNavigate();
+  runtime.enabled=true;runtime.unlocked=false;audio.deskNavigate();runtime.unlocked=true;
+  runtime.mix.effects=0;audio.deskNavigate();runtime.mix.effects=1;runtime.mix.master=0;audio.deskNavigate();runtime.mix.master=1;
+  vi.stubGlobal('document',{hidden:true});audio.deskNavigate();expect(tone).not.toHaveBeenCalled();
+ });
+});

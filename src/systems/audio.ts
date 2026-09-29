@@ -67,6 +67,7 @@ class RetroAudio {
   private readingMixHolds = new Set<symbol>();
   private effectsGain: GainNode | null = null;
   private effects = new Map<OscillatorNode, GainNode>();
+  private lastDeskNavigationMs = -Infinity;
   private mix = readAudioMix();
   private enabled = true;
   private prepared = false;
@@ -192,6 +193,16 @@ class RetroAudio {
 
   blip() {
     this.tone(660, 0.035, 0.025, "square");
+  }
+
+  /** Quiet focus feedback, never a success signal or a deferred unlock sound. */
+  deskNavigate() {
+    if (!this.enabled || !this.unlocked || pageHidden() || this.mix.effects === 0 || this.mix.master === 0) return;
+    const now = nowMs();
+    if (now - this.lastDeskNavigationMs < 75) return;
+    this.lastDeskNavigationMs = now;
+    this.tone(520, 0.035, 0.018, "sine");
+    setAudioStatus("desk focus tick");
   }
 
   confirm() {
