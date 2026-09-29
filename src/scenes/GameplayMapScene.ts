@@ -1,3 +1,4 @@
+import { MapReadingDesk } from "../systems/MapReadingDesk";
 import { MAP_OBJECTIVES } from "../game/mapPresentation";
 import { SUPPORTING_SPRITES, supportingSprite, MARINE_GUARD_ART } from "../art/supportingSprites";
 import Phaser from "phaser";
@@ -233,6 +234,7 @@ export class GameplayMapScene extends Phaser.Scene {
   private hintText!: Phaser.GameObjects.Text;
   private dialogSpeakerText!: Phaser.GameObjects.Text;
   private dialogBodyText!: Phaser.GameObjects.Text;
+  private mapReadingDesk?: MapReadingDesk;
   private dialogPages: string[] = [];
   private dialogSpeaker = "";
   private dialogIndex = 0;
@@ -302,6 +304,9 @@ export class GameplayMapScene extends Phaser.Scene {
   }
 
   create() {
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.mapReadingDesk?.close(); this.mapReadingDesk = undefined; this.dialogPages = [];
+    });
     this.combatClock = new CombatClock();
     this.danneWaveTransition.reset();
     this.hitstop.reset();
@@ -386,8 +391,7 @@ export class GameplayMapScene extends Phaser.Scene {
     if (this.dialogPages.length > 0) {
       this.attackBuffer.clear();
       this.setCombatPaused(true);
-      if (input.aJustPressed) this.advanceMapDialog();
-      if (input.bJustPressed || input.pauseJustPressed) this.clearMapDialog();
+      this.mapReadingDesk?.updateInput(input);
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       return;
@@ -3849,8 +3853,13 @@ export class GameplayMapScene extends Phaser.Scene {
   private renderMapDialog() {
     const text = this.dialogPages[this.dialogIndex] ?? "";
     this.hintText.setText(`${getPrimaryActionBadge()} NEXT  ${getSecondaryActionBadge()} CLOSE`);
-    this.dialogSpeakerText.setText(`${this.dialogSpeaker}:`);
-    this.dialogBodyText.setText(text);
+    this.dialogSpeakerText.setText("");
+    this.dialogBodyText.setText("");
+    this.mapReadingDesk?.close();
+    this.mapReadingDesk = new MapReadingDesk(this.dialogSpeaker, text, this.dialogIndex, this.dialogPages.length,
+      () => this.advanceMapDialog(),
+      () => { this.dialogIndex = Math.max(0, this.dialogIndex - 1); this.renderMapDialog(); },
+      () => this.clearMapDialog());
     setDialogState(this.dialogSpeaker, text);
     setLatestMessage(text);
     retroAudio.blip();
@@ -3866,6 +3875,7 @@ export class GameplayMapScene extends Phaser.Scene {
   }
 
   private clearMapDialog() {
+    this.mapReadingDesk?.close(); this.mapReadingDesk = undefined;
     this.dialogPages = [];
     this.dialogIndex = 0;
     this.dialogSpeakerText.setText("");
