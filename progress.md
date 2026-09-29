@@ -8920,3 +8920,7 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 
 ## 2026-09-29 — identity dialogue naming correction
 - Changed the hero question and stranger denials from Danny Rubin to DANN-E, per user correction. No other dialogue behavior changed. Local only, not published.
+
+## 2026-09-29 — publish DANN-E identity exchange
+- Userrequestedpublish. PR138merged/attached, main2557df62479aadf0e0e6945c346b70ecefc3388d; Pages36575981922success. Full2145tests,typecheck,Pagesbuildpass. PublicJSindex-CCGFG1Tl.js/CSSindex-HbXF-ZWO.cssmatchlocalbyteforbyte.
+- Live390x844browserwalkedherotostranger,verifiedYOU:AreyouDANN-E? andSTRANGER:DANN-E?Neverheardofhim.;nopageerrors,compositorinspected. /tmp/frus-danne-live and /tmp/frus-danne-release-public.json. Public?v=2557df6.
