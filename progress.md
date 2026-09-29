@@ -8924,3 +8924,12 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 ## 2026-09-29 — publish DANN-E identity exchange
 - Userrequestedpublish. PR138merged/attached, main2557df62479aadf0e0e6945c346b70ecefc3388d; Pages36575981922success. Full2145tests,typecheck,Pagesbuildpass. PublicJSindex-CCGFG1Tl.js/CSSindex-HbXF-ZWO.cssmatchlocalbyteforbyte.
 - Live390x844browserwalkedherotostranger,verifiedYOU:AreyouDANN-E? andSTRANGER:DANN-E?Neverheardofhim.;nopageerrors,compositorinspected. /tmp/frus-danne-live and /tmp/frus-danne-release-public.json. Public?v=2557df6.
+
+## 2026-09-29 — Repository record scope: 1989–2008
+
+- Limited active library dossiers, NSC wings and field-guide leads to historical records within 1989–2008. Shared date-scope validation distinguishes record coverage from original collection titles, FOIA identifiers and later release dates.
+- Kept all twelve landmark/save slots stable. Earlier presidential-library stops remain visitable but supply no active research packet; retired library/NSC save entries return to the overworld and cannot grant research receipts.
+- Retired earlier Haig/Kissinger/Leahy/Hull and Senate collection exercises. LoC and Archives I now explicitly require an in-period inventory inquiry, without inventing folder holdings. Archives II has a cited Timbie lot 01 D 127 lead limited to its 1989–1990 records.
+- Active optional leads remain Rice subject files (1989–1990), Clinton–Yeltsin release (1996–1999), and EP-3 release (2001); no named volume is assigned. Corrected the fictional training memorandum to 1989. Runtime research readouts exclude retired packets. Legacy internal desk fixtures remain for compatibility, inaccessible from active research routes.
+- Validation: 288 test files / 2,147 tests pass; TypeScript and fresh Vite build pass (existing bundle-size warning). Standard gameplay client movement check and phone-size compositor review performed. Targeted browser checks exercise active libraries/NSC wings and retired-save redirects. Evidence: /tmp/frus-scope-qa; /tmp/frus-scope-final-tests.log; /tmp/frus-scope-final-build.
+- Local changes only; no publication requested for this date-scope change.

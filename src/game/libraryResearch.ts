@@ -1,10 +1,12 @@
+import { inResearchScope } from "./researchScope";
 import { libraryProgressKey } from "./activeCompilation";
 import manifest from '../../public/assets/research-world/library-assignments.json';
 export const LIBRARY_ASSIGNMENTS = manifest.assignments;
 export const LIBRARY_STATUS_SOURCE = manifest.statusSource;
 export const LIBRARY_STATUS_CHECKED = manifest.checked;
-export function libraryAssignment(id: string) { return LIBRARY_ASSIGNMENTS.find(a => a.library === id); }
+export function libraryAssignment(id: string) { return LIBRARY_ASSIGNMENTS.find(a => a.library === id && inResearchScope(a.researchYears)); }
 export function libraryStage(progress: Record<string, number>, id: string) {
+  if (!libraryAssignment(id)) return 0;
   const value = progress[libraryProgressKey(id)];
   return Number.isFinite(value) ? Math.max(0, Math.min(4, Math.floor(value))) : 0;
 }
@@ -15,5 +17,5 @@ export function fileLibraryStage(progress: Record<string, number>, id: string, s
   return true;
 }
 export function libraryResearchReadout(progress: Record<string, number>) {
-  return LIBRARY_ASSIGNMENTS.map(a => ({ library:a.library, topic:a.topic, optional:true, completed:libraryStage(progress,a.library), total:4 }));
+  return LIBRARY_ASSIGNMENTS.filter(a => libraryAssignment(a.library)).map(a => ({ library:a.library, topic:a.topic, optional:true, completed:libraryStage(progress,a.library), total:4 }));
 }

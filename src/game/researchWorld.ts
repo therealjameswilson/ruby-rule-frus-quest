@@ -1,3 +1,4 @@
+import { inResearchScope } from "./researchScope";
 import { nscDungeon } from './nscResearch';
 import frusCollections from '../../public/assets/research-world/frus-collections.json';
 export interface ResearchLandmark {
@@ -50,22 +51,19 @@ export const DANNE_OUTDOOR_LINES = [
 ];
 
 export const RESEARCH_HOLDINGS: Record<string, {text:string;source:string}> = {
-  nara: {text:'FRUS sources include Senate Foreign Relations Committee records (RG 46), with Carl Marcy files within the Records of the Chairman.',source:'https://www.archives.gov/dc'},
-  loc: {text:'FRUS uses the Haig, Kissinger, Leahy and Hull papers in the Manuscript Division.',source:'https://www.loc.gov/research-centers/manuscript/'},
-  'college-park': {text:'Department of State records, including RG 59. Follow the series and file-system guides to the right records.',source:'https://www.archives.gov/research/foreign-policy/state-dept/agency-records'},
-  georgetown: {text:'Manuscript collections with finding aids, folder registers and indexes. Consult the Betz Reading Room staff.',source:'https://library.georgetown.edu/special-collections/manuscripts'},
-  eisenhower: {text:'Eisenhower presidential papers include the Ann Whitman File and White House Central Files.',source:'https://www.eisenhowerlibrary.gov/sites/default/files/research/subject-guides/pdf/natural-resources-and-environment.pdf'},
-  jfk: {text:'National Security Files include Kennedy-Khrushchev correspondence from the Cuban missile crisis.',source:'https://www.jfklibrary.org/learn/about-jfk/life-of-john-f-kennedy/fast-facts-john-f-kennedy/kennedy-khrushchev-correspondence-during-cuban-missile-crisis'},
-  reagan: {text:'National Security Decision Directives: digitized copies include both fully and partially declassified records.',source:'https://www.reaganlibrary.gov/archives/topic-guide/national-security-decision-directives'}
+  nara: {text:'Research window: 1989–2008. Ask the Center for Legislative Archives for dated Senate Foreign Relations Committee file lists and access rules. No verified in-period folder is supplied here.',source:'https://www.archives.gov/legislative/research'},
+  loc: {text:'Research window: 1989–2008. Ask Manuscript Division staff for in-period personal papers and dated folder lists. No verified in-period packet is supplied here.',source:'https://www.loc.gov/research-centers/manuscript/'},
+  'college-park': {text:'Research window: 1989–2008. Department of State RG 59: request only dated records within this window. Collection spans and later release dates do not change the item date.',source:'https://www.archives.gov/research/foreign-policy/state-dept/agency-records'},
+  georgetown: {text:'Research window: 1989–2008. Consult manuscript finding aids with reading-room staff; verify record dates before requesting a packet.',source:'https://library.georgetown.edu/special-collections/manuscripts'}
 };
 export function researchHolding(id:string) {
   const nsc=nscDungeon(id);
-  if(nsc)return {text:`${nsc.collection}. ${nsc.handle}. Enter the library's north-center NSC wing to investigate.`,source:nsc.source};
-  return RESEARCH_HOLDINGS[id]??{text:'Presidential archival materials and related historical collections. Start with the library research guides and finding aids.',source:'https://www.archives.gov/presidential-libraries/about'};
+  if(nsc)return {text:`1989–2008 records only. ${nsc.collection}. ${nsc.handle}. Enter the library's north-center NSC wing to investigate.`,source:nsc.source};
+  return RESEARCH_HOLDINGS[id]??{text:'Visitor stop. Research is limited to 1989–2008; no verified in-period packet is available here.',source:'https://www.archives.gov/presidential-libraries/about'};
 }
 
 export function researchCollections(id: string) {
-  return frusCollections.filter(collection => collection.landmark === id);
+  return frusCollections.filter(collection => collection.landmark === id && inResearchScope(collection.researchYears));
 }
 export function collectionPages(id: string) {
   return researchCollections(id).flatMap(c => [

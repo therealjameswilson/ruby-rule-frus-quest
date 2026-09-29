@@ -1,52 +1,8 @@
 {
   "checked": "2026-09-26",
   "statusSource": "https://history.state.gov/historicaldocuments/status-of-the-series",
-  "note": "Optional archival research examples. These holdings do not assign the compiler a specific FRUS volume, topic, or date range. Source metadata is retained for provenance; no retrieved document contents are invented.",
+  "note": "Optional research leads for records dated 1989–2008. The compiler checks email for their unspecified volume. Collection titles, release dates and FOIA identifiers retain their original wording; only in-period records may enter the research packet.",
   "dossiers": [
-    {
-      "library": "reagan",
-      "short": "Reagan: Western Europe",
-      "volumeId": "frus1981-88v08",
-      "title": "1981–1988, Volume VIII, Western Europe, 1985–1988",
-      "topic": "Thatcher visit and allied consultation",
-      "collection": "Executive Secretariat, NSC: VIP Visits: Records, 1981–1985",
-      "handle": "RAC Box 6; United Kingdom: Prime Minister Thatcher Official Visit, 02/20/1985 (1)(2)",
-      "source": "https://www.reaganlibrary.gov/sites/default/files/finding_aids_pdfs/219646.pdf",
-      "sourceLabel": "Reagan Library finding aid, pages 13–14",
-      "access": "OPEN; the inventory does not mark this folder DIGITIZED. Withdrawals may remain.",
-      "task": "Follow the February 1985 Thatcher visit into the wider Western Europe decision record.",
-      "comparison": "Separate a visit folder from a verified account of what the leaders decided.",
-      "selection": "visit lead plus a request for decision records and State reporting",
-      "questions": [
-        {
-          "question": "Find the February 1985 Thatcher visit. Which folder fits?",
-          "correct": "RAC Box 6: Thatcher visit, 02/20/1985 (1)(2).",
-          "wrong": "Use the December 1984 folder as an in-period document.",
-          "receipt": "Request slip: RAC Box 6, February 20, 1985 visit; 1984 material stays background."
-        },
-        {
-          "question": "The finding aid says OPEN, without DIGITIZED. Prepare the research visit.",
-          "correct": "Verify retrieval with the archivist; log any withdrawals.",
-          "wrong": "Report that every page has been read online.",
-          "receipt": "Access log: open folder lead; scans and document contents still to be checked."
-        },
-        {
-          "question": "A visit folder is not a decision. Build the source trail.",
-          "correct": "Keep its exact locator; seek a memcon and State follow-up.",
-          "wrong": "Write that Thatcher approved the proposal; the folder proves it.",
-          "receipt": "Source sheet: exact folder locator; document date, authorship and decision evidence pending retrieval."
-        },
-        {
-          "question": "Send this archival research packet to your supervisor.",
-          "correct": "File the lead, scope note and outstanding document requests.",
-          "wrong": "Declare the entire chapter complete from one folder.",
-          "receipt": "Research packet: Thatcher visit lead; State/NSC comparison and later-period coverage remain open."
-        }
-      ],
-      "status": "Being Researched",
-      "checked": "2026-09-26",
-      "volumeSource": "https://history.state.gov/historicaldocuments/frus1981-88v08"
-    },
     {
       "library": "bush41",
       "short": "Bush 41: Soviet policy",
@@ -89,7 +45,11 @@
       ],
       "status": "Being Researched",
       "checked": "2026-09-26",
-      "volumeSource": "https://history.state.gov/historicaldocuments/frus1989-92v04"
+      "volumeSource": "https://history.state.gov/historicaldocuments/frus1989-92v04",
+      "researchYears": [
+        1989,
+        1990
+      ]
     },
     {
       "library": "clinton",
@@ -133,7 +93,11 @@
       ],
       "status": "Being Researched",
       "checked": "2026-09-26",
-      "volumeSource": "https://history.state.gov/historicaldocuments/frus1993-00v18"
+      "volumeSource": "https://history.state.gov/historicaldocuments/frus1993-00v18",
+      "researchYears": [
+        1996,
+        1999
+      ]
     },
     {
       "library": "bush43",
@@ -177,7 +141,15 @@
       ],
       "status": "Being Researched",
       "checked": "2026-09-26",
-      "volumeSource": "https://history.state.gov/historicaldocuments/frus2001-08v43"
+      "volumeSource": "https://history.state.gov/historicaldocuments/frus2001-08v43",
+      "researchYears": [
+        2001,
+        2001
+      ]
     }
-  ]
+  ],
+  "researchScope": {
+    "startYear": 1989,
+    "endYear": 2008
+  }
 }

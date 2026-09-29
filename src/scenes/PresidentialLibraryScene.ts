@@ -49,12 +49,14 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   private clearing: { sprite: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle; x: number; y: number; elapsed: number }[] = [];
   private solids: Phaser.Geom.Rectangle[] = [];
   private leaving = false;
-  private assignment = LIBRARY_ASSIGNMENTS[8];
+  private assignment = LIBRARY_ASSIGNMENTS[9];
   constructor() { super('PresidentialLibraryScene'); }
   preload() { preloadLibraryStationArt(this); }
   create() {
     const index = gameState.sceneProgress.libraryResearchActive;
-    this.assignment = LIBRARY_ASSIGNMENTS[Number.isInteger(index) ? index : -1] ?? libraryAssignment('reagan')!;
+    const selected = libraryAssignment(LIBRARY_ASSIGNMENTS[Number.isInteger(index) ? index : -1]?.library ?? '');
+    if (!selected) { this.scene.start('ResearchWorldScene'); return; }
+    this.assignment = selected;
     const id = this.assignment.library;
     const library = RESEARCH_LANDMARKS.find(l=>l.id===id)!;
     this.leaving=false;this.marks=[];this.receipts=[];this.barriers=[];this.clearing=[];this.solids=[];

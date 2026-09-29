@@ -30,14 +30,16 @@ export class NscLibraryScene extends Phaser.Scene {
   private doorLights!:Phaser.GameObjects.Graphics;
   private northDoor?: Phaser.GameObjects.Image | null;
   private gate!:Phaser.GameObjects.Text;
-  private dossier=nscDungeon('reagan')!;
+  private dossier=nscDungeon('bush41')!;
   private room=0;
   private leaving=false;
   private solids:Phaser.Geom.Rectangle[]=[];
   constructor(){super('NscLibraryScene');}
   preload(){if(!this.textures.exists(RESEARCH_PROPS.key))this.load.image(RESEARCH_PROPS.key,RESEARCH_PROPS.path);}
   create(){
-    this.dossier=nscDungeon(LIBRARY_ASSIGNMENTS[gameState.sceneProgress.libraryResearchActive]?.library??'')??nscDungeon('reagan')!;
+    const selected=nscDungeon(LIBRARY_ASSIGNMENTS[gameState.sceneProgress.libraryResearchActive]?.library??'');
+    if(!selected){this.scene.start('ResearchWorldScene');return;}
+    this.dossier=selected;
     const id=this.dossier.library,stage=nscStage(gameState.sceneProgress,id);
     this.room=Math.max(0,Math.min(2,stage,Math.floor(gameState.sceneProgress[`nscRoom_${id}`]||0)));
     this.leaving=false;this.solids=[];

@@ -1,115 +1,124 @@
 {
   "checked": "2026-09-26",
   "statusSource": "https://history.state.gov/historicaldocuments/status-of-the-series",
-  "note": "Optional archival research examples. These holdings do not assign the compiler a specific FRUS volume, topic, or date range. Source metadata is retained for provenance; no retrieved document contents are invented.",
+  "note": "Optional research leads for records dated 1989–2008. The compiler checks email for their unspecified volume. Collection titles, release dates and FOIA identifiers retain their original wording; only in-period records may enter the research packet.",
   "assignments": [
     {
       "library": "fdr",
-      "volumeId": "frus1917-72PubDipv03",
-      "title": "1917–1972, Volume III, Public Diplomacy, World War II",
-      "status": "Being Researched",
-      "topic": "Wartime public diplomacy",
-      "task": "Map wartime information-policy decisions and intended foreign audiences.",
-      "comparison": "Separate the policy directive from the broadcast or leaflet used to carry it out.",
-      "selection": "policy directive and implementation record",
+      "volumeId": "",
+      "title": "Visitor stop",
+      "status": "No verified in-period packet",
+      "topic": "Research scope: 1989–2008",
+      "task": "Visit the grounds. No verified 1989–2008 research packet is available at this stop.",
+      "comparison": "A repository visit does not establish an in-period source.",
+      "selection": "No research packet",
       "backgroundOnly": true,
-      "source": "https://history.state.gov/historicaldocuments/frus1917-72PubDipv03"
+      "source": "https://history.state.gov/historicaldocuments/status-of-the-series",
+      "researchYears": null
     },
     {
       "library": "truman",
-      "volumeId": "frus1917-72PubDipv04",
-      "title": "1917–1972, Volume IV, Public Diplomacy, 1945–1952",
-      "status": "Planned",
-      "topic": "Postwar public diplomacy",
-      "task": "Prepare a source survey for the transition from wartime information work to postwar public diplomacy.",
-      "comparison": "Keep a planning inventory distinct from a selected manuscript.",
-      "selection": "source survey with access gaps",
+      "volumeId": "",
+      "title": "Visitor stop",
+      "status": "No verified in-period packet",
+      "topic": "Research scope: 1989–2008",
+      "task": "Visit the grounds. No verified 1989–2008 research packet is available at this stop.",
+      "comparison": "A repository visit does not establish an in-period source.",
+      "selection": "No research packet",
       "backgroundOnly": true,
-      "source": "https://history.state.gov/historicaldocuments/frus1917-72PubDipv04"
+      "source": "https://history.state.gov/historicaldocuments/status-of-the-series",
+      "researchYears": null
     },
     {
       "library": "eisenhower",
-      "volumeId": "frus1956-60IntelCom",
-      "title": "1956–1960, The Intelligence Community",
-      "status": "Being Researched",
-      "topic": "Intelligence organization",
-      "task": "Trace the division between intelligence assessment, coordination, and presidential authorization.",
-      "comparison": "An assessment is evidence of analysis, not proof that a policy was approved.",
-      "selection": "assessment and authorization trail",
+      "volumeId": "",
+      "title": "Visitor stop",
+      "status": "No verified in-period packet",
+      "topic": "Research scope: 1989–2008",
+      "task": "Visit the grounds. No verified 1989–2008 research packet is available at this stop.",
+      "comparison": "A repository visit does not establish an in-period source.",
+      "selection": "No research packet",
       "backgroundOnly": true,
-      "source": "https://history.state.gov/historicaldocuments/frus1956-60IntelCom"
+      "source": "https://history.state.gov/historicaldocuments/status-of-the-series",
+      "researchYears": null
     },
     {
       "library": "jfk",
-      "volumeId": "frus1981-88v42",
-      "title": "1981–1988, Volume XLII, Refugees and Immigration, 1975–1984",
-      "status": "Being Researched",
-      "topic": "Refugee policy precedents",
-      "task": "Survey Kennedy-era refugee-policy records and preserve their original dates.",
-      "comparison": "Explain how an earlier precedent relates to a later decision without confusing their dates.",
-      "selection": "dated lead with its research relevance explained",
+      "volumeId": "",
+      "title": "Visitor stop",
+      "status": "No verified in-period packet",
+      "topic": "Research scope: 1989–2008",
+      "task": "Visit the grounds. No verified 1989–2008 research packet is available at this stop.",
+      "comparison": "A repository visit does not establish an in-period source.",
+      "selection": "No research packet",
       "backgroundOnly": true,
-      "source": "https://history.state.gov/historicaldocuments/frus1981-88v42"
+      "source": "https://history.state.gov/historicaldocuments/status-of-the-series",
+      "researchYears": null
     },
     {
       "library": "lbj",
-      "volumeId": "frus1981-88v42",
-      "title": "1981–1988, Volume XLII, Refugees and Immigration, 1975–1984",
-      "status": "Being Researched",
-      "topic": "Immigration policy precedents",
-      "task": "Survey Johnson-era immigration-policy records and trace their policy context.",
-      "comparison": "Distinguish earlier statutory context from later implementation decisions.",
-      "selection": "background context with an explicit date limit",
+      "volumeId": "",
+      "title": "Visitor stop",
+      "status": "No verified in-period packet",
+      "topic": "Research scope: 1989–2008",
+      "task": "Visit the grounds. No verified 1989–2008 research packet is available at this stop.",
+      "comparison": "A repository visit does not establish an in-period source.",
+      "selection": "No research packet",
       "backgroundOnly": true,
-      "source": "https://history.state.gov/historicaldocuments/frus1981-88v42"
+      "source": "https://history.state.gov/historicaldocuments/status-of-the-series",
+      "researchYears": null
     },
     {
       "library": "nixon",
-      "volumeId": "frus1969-76ve10",
-      "title": "1969–1976, Volume E–10, Documents on American Republics, 1969–1972",
-      "status": "Being Cleared — Uruguay chapter",
-      "topic": "Uruguay source trail",
-      "task": "Trace the Uruguay records and distinguish access from clearance.",
-      "comparison": "A related published record does not establish that another record has been released.",
-      "selection": "Uruguay source trail and unresolved clearance",
+      "volumeId": "",
+      "title": "Visitor stop",
+      "status": "No verified in-period packet",
+      "topic": "Research scope: 1989–2008",
+      "task": "Visit the grounds. No verified 1989–2008 research packet is available at this stop.",
+      "comparison": "A repository visit does not establish an in-period source.",
+      "selection": "No research packet",
       "backgroundOnly": true,
-      "source": "https://history.state.gov/historicaldocuments/frus1969-76ve10"
+      "source": "https://history.state.gov/historicaldocuments/status-of-the-series",
+      "researchYears": null
     },
     {
       "library": "ford",
-      "volumeId": "frus1981-88v42",
-      "title": "1981–1988, Volume XLII, Refugees and Immigration, 1975–1984",
-      "status": "Being Researched",
-      "topic": "1975 refugee response",
-      "task": "Investigate the 1975 refugee response across administrations.",
-      "comparison": "Follow decisions across evacuation, admission, and resettlement; retain agency disagreements.",
-      "selection": "decision sequence across agencies",
+      "volumeId": "",
+      "title": "Visitor stop",
+      "status": "No verified in-period packet",
+      "topic": "Research scope: 1989–2008",
+      "task": "Visit the grounds. No verified 1989–2008 research packet is available at this stop.",
+      "comparison": "A repository visit does not establish an in-period source.",
+      "selection": "No research packet",
       "backgroundOnly": true,
-      "source": "https://history.state.gov/historicaldocuments/frus1981-88v42"
+      "source": "https://history.state.gov/historicaldocuments/status-of-the-series",
+      "researchYears": null
     },
     {
       "library": "carter",
-      "volumeId": "frus1977-80v10",
-      "title": "1977–1980, Volume X, Iran: Revolution, January 1977–November 1979",
-      "status": "Being Cleared",
-      "topic": "Iran revolution follow-up",
-      "task": "Verify the source trail and chronology for policy toward revolutionary Iran.",
-      "comparison": "Preserve the records’ dates; distinguish unresolved clearance from research availability.",
-      "selection": "dated source note and clearance flag",
+      "volumeId": "",
+      "title": "Visitor stop",
+      "status": "No verified in-period packet",
+      "topic": "Research scope: 1989–2008",
+      "task": "Visit the grounds. No verified 1989–2008 research packet is available at this stop.",
+      "comparison": "A repository visit does not establish an in-period source.",
+      "selection": "No research packet",
       "backgroundOnly": true,
-      "source": "https://history.state.gov/historicaldocuments/frus1977-80v10"
+      "source": "https://history.state.gov/historicaldocuments/status-of-the-series",
+      "researchYears": null
     },
     {
       "library": "reagan",
-      "volumeId": "frus1981-88v08",
-      "title": "1981–1988, Volume VIII, Western Europe, 1985–1988",
-      "status": "Being Researched",
-      "topic": "Thatcher visit and allied consultation",
-      "task": "Follow the February 1985 Thatcher visit into the wider Western Europe decision record.",
-      "comparison": "Separate a visit folder from a verified account of what the leaders decided.",
-      "selection": "visit lead plus a request for decision records and State reporting",
-      "backgroundOnly": false,
-      "source": "https://history.state.gov/historicaldocuments/frus1981-88v08"
+      "volumeId": "",
+      "title": "Visitor stop",
+      "status": "No verified in-period packet",
+      "topic": "Research scope: 1989–2008",
+      "task": "Visit the grounds. No verified 1989–2008 research packet is available at this stop.",
+      "comparison": "A repository visit does not establish an in-period source.",
+      "selection": "No research packet",
+      "backgroundOnly": true,
+      "source": "https://history.state.gov/historicaldocuments/status-of-the-series",
+      "researchYears": null
     },
     {
       "library": "bush41",
@@ -121,7 +130,11 @@
       "comparison": "Keep staff advice distinct from a presidential decision and from high-level meeting records.",
       "selection": "staff-file lead with separate decision and agency follow-up requests",
       "backgroundOnly": false,
-      "source": "https://history.state.gov/historicaldocuments/frus1989-92v04"
+      "source": "https://history.state.gov/historicaldocuments/frus1989-92v04",
+      "researchYears": [
+        1989,
+        1990
+      ]
     },
     {
       "library": "clinton",
@@ -133,7 +146,11 @@
       "comparison": "Keep conversation dates distinct from preparation dates and preserve each record’s form.",
       "selection": "dated memcon/telcon leads with a gap register for the rest of 1993–2000",
       "backgroundOnly": false,
-      "source": "https://history.state.gov/historicaldocuments/frus1993-00v18"
+      "source": "https://history.state.gov/historicaldocuments/frus1993-00v18",
+      "researchYears": [
+        1996,
+        1999
+      ]
     },
     {
       "library": "bush43",
@@ -145,7 +162,15 @@
       "comparison": "Distinguish press guidance, draft statements, bulletins and email from final policy instructions.",
       "selection": "NSC electronic-record leads, a document-type register and explicit access gaps",
       "backgroundOnly": false,
-      "source": "https://history.state.gov/historicaldocuments/frus2001-08v43"
+      "source": "https://history.state.gov/historicaldocuments/frus2001-08v43",
+      "researchYears": [
+        2001,
+        2001
+      ]
     }
-  ]
+  ],
+  "researchScope": {
+    "startYear": 1989,
+    "endYear": 2008
+  }
 }

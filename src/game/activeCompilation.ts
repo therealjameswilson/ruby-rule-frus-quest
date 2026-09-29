@@ -1,6 +1,7 @@
+import { inResearchScope } from "./researchScope";
 import manifest from '../../public/assets/research-world/active-compilation.json';
 
-export const ACTIVE_COMPILATION = manifest.dossiers;
+export const ACTIVE_COMPILATION = manifest.dossiers.filter(d => inResearchScope(d.researchYears));
 export const activeDossier = (library: string) => ACTIVE_COMPILATION.find(d => d.library === library);
 // New content has independent receipts; an old Iran-Contra packet must not
 // silently become evidence for a Western Europe assignment.
