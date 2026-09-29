@@ -1,0 +1,158 @@
+[
+  {
+    "scene": "ArchiveScene",
+    "rate": 1,
+    "stats": {
+      "frames": 300,
+      "median": 16.699999999999818,
+      "p95": 16.700000000000728,
+      "over33": 0,
+      "over50": 0
+    },
+    "errors": [],
+    "traceDurations": {
+      "GLES2::ReadPixels": {
+        "count": 304,
+        "totalMs": 4068.359,
+        "maxMs": 19.002
+      },
+      "PageAnimator::serviceScriptedAnimations": {
+        "count": 303,
+        "totalMs": 204.489,
+        "maxMs": 1.582
+      },
+      "FunctionCall": {
+        "count": 1107,
+        "totalMs": 202.434,
+        "maxMs": 1.471
+      },
+      "Layout": {
+        "count": 0,
+        "totalMs": 0,
+        "maxMs": 0
+      },
+      "Paint": {
+        "count": 0,
+        "totalMs": 0,
+        "maxMs": 0
+      }
+    }
+  },
+  {
+    "scene": "NetworkScene",
+    "rate": 1,
+    "stats": {
+      "frames": 300,
+      "median": 16.699999999999818,
+      "p95": 16.799999999999727,
+      "over33": 0,
+      "over50": 0
+    },
+    "errors": [],
+    "traceDurations": {
+      "GLES2::ReadPixels": {
+        "count": 303,
+        "totalMs": 3997.973,
+        "maxMs": 16.78
+      },
+      "PageAnimator::serviceScriptedAnimations": {
+        "count": 303,
+        "totalMs": 181.762,
+        "maxMs": 1.538
+      },
+      "FunctionCall": {
+        "count": 1113,
+        "totalMs": 179.659,
+        "maxMs": 1.43
+      },
+      "Layout": {
+        "count": 0,
+        "totalMs": 0,
+        "maxMs": 0
+      },
+      "Paint": {
+        "count": 0,
+        "totalMs": 0,
+        "maxMs": 0
+      }
+    }
+  },
+  {
+    "scene": "ArchiveScene",
+    "rate": 4,
+    "stats": {
+      "frames": 268,
+      "median": 16.699999999999818,
+      "p95": 33.30000000000018,
+      "over33": 0,
+      "over50": 0
+    },
+    "errors": [],
+    "traceDurations": {
+      "GLES2::ReadPixels": {
+        "count": 272,
+        "totalMs": 4072.059,
+        "maxMs": 21.173
+      },
+      "PageAnimator::serviceScriptedAnimations": {
+        "count": 271,
+        "totalMs": 637.974,
+        "maxMs": 7.043
+      },
+      "FunctionCall": {
+        "count": 933,
+        "totalMs": 626.59,
+        "maxMs": 6.939
+      },
+      "Layout": {
+        "count": 0,
+        "totalMs": 0,
+        "maxMs": 0
+      },
+      "Paint": {
+        "count": 0,
+        "totalMs": 0,
+        "maxMs": 0
+      }
+    }
+  },
+  {
+    "scene": "NetworkScene",
+    "rate": 4,
+    "stats": {
+      "frames": 238,
+      "median": 16.699999999999818,
+      "p95": 33.40000000000009,
+      "over33": 0,
+      "over50": 0
+    },
+    "errors": [],
+    "traceDurations": {
+      "GLES2::ReadPixels": {
+        "count": 242,
+        "totalMs": 4119.264,
+        "maxMs": 28.063
+      },
+      "PageAnimator::serviceScriptedAnimations": {
+        "count": 241,
+        "totalMs": 616.099,
+        "maxMs": 6.696
+      },
+      "FunctionCall": {
+        "count": 837,
+        "totalMs": 609.847,
+        "maxMs": 6.523
+      },
+      "Layout": {
+        "count": 0,
+        "totalMs": 0,
+        "maxMs": 0
+      },
+      "Paint": {
+        "count": 0,
+        "totalMs": 0,
+        "maxMs": 0
+      }
+    }
+  }
+]
