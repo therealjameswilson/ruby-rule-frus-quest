@@ -8933,3 +8933,11 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 - Active optional leads remain Rice subject files (1989–1990), Clinton–Yeltsin release (1996–1999), and EP-3 release (2001); no named volume is assigned. Corrected the fictional training memorandum to 1989. Runtime research readouts exclude retired packets. Legacy internal desk fixtures remain for compatibility, inaccessible from active research routes.
 - Validation: 288 test files / 2,147 tests pass; TypeScript and fresh Vite build pass (existing bundle-size warning). Standard gameplay client movement check and phone-size compositor review performed. Targeted browser checks exercise active libraries/NSC wings and retired-save redirects. Evidence: /tmp/frus-scope-qa; /tmp/frus-scope-final-tests.log; /tmp/frus-scope-final-build.
 - Local changes only; no publication requested for this date-scope change.
+
+## 2026-09-29 — NARA Scout visit integration
+
+- Archives I and Archives II now open their journal research desk through A (visit) or B (NARA Scout), recording/saving the discovery before the external handoff. Discovered NARA pages retain Scout access in the journal; the public field guide includes it too.
+- Inspected the live Scout HTML and app.js hash permalink contract. Links preset from=1989, to=2001, scope=bush41,clinton and leave the query empty. Scout's current UI supports 1989–2001, a subset of the game's 1989–2008 window; no unsupported Bush 43 scope or endpoint was invented.
+- Added source-trail, holding-location, withdrawal/release and unprocessed-series guidance. Topic packs may reset filters; individual document dates still require checking. External use grants no research receipts or clearance. Existing NARA Scout repository remains unchanged.
+- Validation: 289 files / 2,150 tests pass; TypeScript and fresh Vite build pass (existing chunk-size warning). Standard gameplay client movement check passed. At 390×844, both NARA stops opened their desk; actual touch clicks opened live Scout with date/scope/query values verified, then returned to the game without changing research progress. No game page errors. Compositor screenshot visually reviewed: /tmp/frus-scout-qa/nara.png. Physical iPhone Safari not tested.
+- Local implementation only, not published.

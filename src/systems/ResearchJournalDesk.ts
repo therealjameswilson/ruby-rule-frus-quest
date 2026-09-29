@@ -1,3 +1,4 @@
+import { isNaraVisit, naraScoutUrl, NARA_SCOUT_STEPS } from '../game/naraScout';
 import '../styles/manuscript-desk.css';
 import '../styles/research-journal.css';
 import { RESEARCH_LANDMARKS, researchHolding, collectionPages, type ResearchLandmark } from '../game/researchWorld';
@@ -16,7 +17,7 @@ export class ResearchJournalDesk {
  private leave:HTMLButtonElement;
  private found:ResearchLandmark[];
  private items:HTMLButtonElement[]=[];
- constructor(private progress:Readonly<Record<string,number>>,close:()=>void){
+ constructor(private progress:Readonly<Record<string,number>>,close:()=>void, initialLandmark?:string){
   this.found=RESEARCH_LANDMARKS.filter(l=>progress[`researchVisited_${l.id}`]===1);
   this.root.className='manuscript-desk research-journal';this.root.setAttribute('aria-labelledby','journal-title');
   this.root.innerHTML=`<section class="manuscript-panel">
@@ -28,7 +29,7 @@ export class ResearchJournalDesk {
   this.back=this.root.querySelector('[data-focus-key=places]')!;this.leave=this.root.querySelector('[data-focus-key=leave]')!;
   this.back.addEventListener('click',()=>this.render());this.leave.addEventListener('click',close);
   this.root.querySelector('[data-count]')!.textContent=`${this.found.length} / ${RESEARCH_LANDMARKS.length} landmarks discovered`;
-  this.render();this.controls=new DeskControls(this.root,()=>[...this.items,this.back,...this.content.querySelectorAll<HTMLAnchorElement>('a'),this.leave],close);
+  this.render(this.found.find(l=>l.id===initialLandmark));this.controls=new DeskControls(this.root,()=>[...this.items,this.back,...this.content.querySelectorAll<HTMLAnchorElement>('a'),this.leave],close);
  }
  private text(tag:string,text:string){const e=document.createElement(tag);e.textContent=text;this.content.append(e);return e;}
  private render(landmark?:ResearchLandmark){
@@ -37,6 +38,16 @@ export class ResearchJournalDesk {
   this.root.querySelector('h1')!.textContent=landmark?.name??'Discovered places';
   if(landmark){
    this.text('p',landmark.location).className='journal-location';
+   if(isNaraVisit(landmark.id)){
+    this.text('h2','NARA Scout research desk');
+    this.text('p','Scout NARA catalog leads while visiting Archives I or Archives II. Results can belong to other NARA repositories; check the holding location.');
+    const a=this.text('a','Open NARA Scout · 1989–2001') as HTMLAnchorElement;
+    a.href=naraScoutUrl();a.target='_blank';a.rel='noopener noreferrer';a.dataset.focusKey='nara-scout';
+    this.text('p','Opens in a new tab; your game stays here. Scout currently supports Bush 41 and Clinton collections through 2001. Your game research window remains 1989–2008. Use library guides for later records.');
+    this.text('p','The link presets dates and scope; you choose the query. Recheck dates after selecting a Scout topic pack. Include only individual records dated 1989–2008.');
+    for(const step of NARA_SCOUT_STEPS)this.text('p',step);
+    this.text('p','Returning from Scout does not automatically file a source, complete research, or grant publication clearance.');
+   }
    if(libraryAssignment(landmark.id))this.text('p',`Library research packet: ${libraryStage(this.progress,landmark.id)} / 4`);
    if(nscDungeon(landmark.id))this.text('p',`NSC wing: ${nscStage(this.progress,landmark.id)} / 3 checks filed`);
    const holding=researchHolding(landmark.id);

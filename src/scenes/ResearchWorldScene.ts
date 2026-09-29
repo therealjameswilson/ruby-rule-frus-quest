@@ -1,3 +1,4 @@
+import { isNaraVisit } from '../game/naraScout';
 import { ResearchJournalDesk } from "../systems/ResearchJournalDesk";
 import { addSaladBowlArt } from '../systems/saladBowlArt';
 import { OutdoorAtmosphere } from "../systems/outdoorAtmosphere";
@@ -185,6 +186,8 @@ export class ResearchWorldScene extends Phaser.Scene {
     const collectionStop = RESEARCH_LANDMARKS.find(l=>l.label===nearest?.label && researchCollections(l.id).length);
     setNearestInteractable(nearest?.label??null);
     if(nearest?.label==='Talk to DANN-E'&&input.bJustPressed){this.changeDisguise();return;}
+    const naraStop=RESEARCH_LANDMARKS.find(l=>l.label===nearest?.label && isNaraVisit(l.id));
+    if(naraStop && input.bJustPressed){this.discover(naraStop);return;}
     if(collectionStop && input.bJustPressed){window.open(`assets/research-world/frus-collections.html#${collectionStop.id}`, '_blank', 'noopener,noreferrer');return;}
     const libraryStop=RESEARCH_LANDMARKS.find(l=>l.label===nearest?.label&&libraryAssignment(l.id));
     if(libraryStop&&input.bJustPressed){this.discover(libraryStop);return;}
@@ -287,6 +290,7 @@ export class ResearchWorldScene extends Phaser.Scene {
     const nearest = gameState.nearestInteractable;
     if (nearest === 'Talk to DANN-E') return `TALK / ${secondaryBadge}: NEXT DISGUISE`;
     const landmark = RESEARCH_LANDMARKS.find(l => l.label === nearest);
+    if (landmark && isNaraVisit(landmark.id)) return `VISIT / ${secondaryBadge}: NARA SCOUT`;
     if (landmark && researchCollections(landmark.id).length) return `COLLECTIONS / ${secondaryBadge}: SOURCES`;
     if (landmark && libraryAssignment(landmark.id)) return `ENTER LIBRARY / ${secondaryBadge}: ABOUT`;
     return nearest ? nearest.toUpperCase() : 'WALK / DISCOVER / TALK';
@@ -335,6 +339,7 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.refreshTally();
     saveGameNow();
     setLatestMessage(`${first?'Discovered':'Revisited'}: ${l.name}. ${l.location}. ${l.lesson}`);
+    if(isNaraVisit(l.id)){this.journal(l.id);return;}
     this.dialog.show(l.label,[`${l.name}\n${l.location}`,`HOLDINGS: ${researchHolding(l.id).text}`,...collectionPages(l.id),l.lesson,first?'Discovery recorded in your journal. This visit is a research lead, not a cleared document.':'Already in your journal. Explore in any order.']);
   }
   private refreshTally(){this.tally.setText(`DISCOVERIES ${discoveryCount(gameState.sceneProgress)}/${RESEARCH_LANDMARKS.length}`);setObjective('EXPLORE THE OUTDOORS');}
@@ -354,8 +359,8 @@ export class ResearchWorldScene extends Phaser.Scene {
     if(!this.journalDesk)return;
     this.journalDesk.close();this.journalDesk=undefined;clearChoiceState();
   }
-  private journal() {
+  private journal(initialLandmark?:string) {
     this.closeJournal();
-    this.journalDesk=new ResearchJournalDesk({...gameState.sceneProgress},()=>this.closeJournal());
+    this.journalDesk=new ResearchJournalDesk({...gameState.sceneProgress},()=>this.closeJournal(),initialLandmark);
   }
 }
