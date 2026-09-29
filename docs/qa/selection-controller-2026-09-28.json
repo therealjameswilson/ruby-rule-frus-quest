@@ -1,0 +1,42 @@
+{
+  "scope": "Simulated Gamepad API integration; isolated draft, not physical hardware",
+  "rows": [
+    {
+      "layout": "phone",
+      "scrollPresses": 5,
+      "heldInputSafe": true,
+      "threePacketsNavigable": true,
+      "rejectedThenCorrected": true,
+      "cancelPreservesDraft": true,
+      "noHeroMovement": true
+    },
+    {
+      "layout": "small",
+      "scrollPresses": 4,
+      "heldInputSafe": true,
+      "threePacketsNavigable": true,
+      "rejectedThenCorrected": true,
+      "cancelPreservesDraft": true,
+      "noHeroMovement": true
+    },
+    {
+      "layout": "landscape",
+      "scrollPresses": 5,
+      "heldInputSafe": true,
+      "threePacketsNavigable": true,
+      "rejectedThenCorrected": true,
+      "cancelPreservesDraft": true,
+      "noHeroMovement": true
+    },
+    {
+      "layout": "desktop",
+      "scrollPresses": 1,
+      "heldInputSafe": true,
+      "threePacketsNavigable": true,
+      "rejectedThenCorrected": true,
+      "cancelPreservesDraft": true,
+      "noHeroMovement": true
+    }
+  ],
+  "errors": []
+}
