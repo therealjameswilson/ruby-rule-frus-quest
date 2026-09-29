@@ -1,0 +1,39 @@
+{
+  "routing": {
+    "mobile": true,
+    "packetsRouted": true,
+    "editorialAndRoutingNotRelease": true,
+    "wrongRouteRejected": true,
+    "crossingOpened": true,
+    "vaultEntered": true,
+    "reloaded": true,
+    "errors": []
+  },
+  "clearance": {
+    "mobile": true,
+    "reviewFiled": true,
+    "missingEntryRejected": true,
+    "chronologyRepaired": true,
+    "tokenEarned": true,
+    "reviewNotPublication": true,
+    "referralEntered": true,
+    "reloadedWithoutDuplicateReward": true,
+    "errors": []
+  },
+  "dispatch": {
+    "scene": "ReferralVaultScene",
+    "room": "R1",
+    "progress": {
+      "referralEquityRouteComplete": 1,
+      "referralDispatchCopyFound": 1,
+      "referralDispatchAisleOpen": 1
+    },
+    "processExit": 0
+  },
+  "build": "46f0e0e",
+  "checkpointHashes": {
+    "routing": "d2f5d52a0bb3aeee5a2335552330f77d64230cd7a9d2609a57473a332dfc4df1",
+    "clearance": "a94739bba2621ddcb4789e4e16b270493a2fe7cf46dae38bdd9de34cae77b271",
+    "dispatch": "7ef63dfcc045e6b59d9fd5f7ef0309ab430b4322cc33df3c92d4e59f33d83c43"
+  }
+}
