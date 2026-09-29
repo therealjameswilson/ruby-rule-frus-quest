@@ -57,8 +57,18 @@ try {
  const proof=async(selector)=>{const e=page.locator('.proof-comparison-desk '+selector);await e.scrollIntoViewIfNeeded();if(mobile)await e.tap();else await e.click();await page.waitForTimeout(150);};
  await proof('[data-focus-key=file]');await shot('altered-proof-rejected');
  assert(!(await state()).inventory.includes('Buckram Key'));
- await proof('[data-fragment="0"]');await proof('[data-fragment="2"]');await proof('[data-focus-key=file]');await shot('proof-filed');
- assert.equal((await state()).audioStatus,'paper filing and stamp');
+ await proof('[data-fragment="0"]');await proof('[data-fragment="2"]');
+ // Capture the filing event synchronously: combat resumes after the desk closes,
+ // and a later bolt sound legitimately replaces the single latest-audio status.
+ await page.evaluate(()=>{
+  const scene=window.game.scene.getScene('SilentReadScene'),verify=scene.verifyFlag;
+  scene.verifyFlag=function(...args){
+   try{const result=verify.apply(this,args);window.qaProofFilingAudio=JSON.parse(window.render_game_to_text()).audioStatus;return result;}
+   finally{scene.verifyFlag=verify;}
+  };
+ });
+ await proof('[data-focus-key=file]');await shot('proof-filed');
+ assert.equal(await page.evaluate(()=>window.qaProofFilingAudio),'paper filing and stamp');
  assert(!(await state()).inventory.includes('Buckram Key'));
  await key();await page.waitForTimeout(500);await shot('key-earned');
  assert((await state()).inventory.includes('Buckram Key'));
