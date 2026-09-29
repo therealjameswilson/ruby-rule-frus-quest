@@ -1,0 +1,15 @@
+.annotation-packet-desk .manuscript-panel{max-width:1040px}
+.annotation-packet-desk .manuscript-body{display:block}
+.annotation-packet-content{padding:24px 32px}
+.annotation-packet-content h2{font-size:21px;margin:0 0 18px;color:#ead095}
+.annotation-note-summary{margin-bottom:28px}
+.annotation-note-summary article{border-left:3px solid #b4cac3;padding:0 16px;margin:18px 0}
+.annotation-packet-content h3{font-size:16px;margin:0 0 7px;color:#f4e8ce}
+.annotation-packet-content p{font-size:15px;line-height:1.6;color:#c8d8d7;margin:8px 0}
+.annotation-map button{display:block;width:100%;text-align:left;border:1px solid #657d7b;border-radius:12px;background:#213a3e;color:#f8eed7;padding:18px;margin:14px 0;cursor:pointer}
+.annotation-map button strong{display:block;font:600 18px/1.4 system-ui}
+.annotation-map button span{display:block;font:15px/1.5 system-ui;color:#c9d9d6;margin-top:8px}
+.annotation-map button[aria-pressed=true]{border-color:#e5c57f;background:#345249}
+.annotation-packet-desk .manuscript-close,.annotation-packet-desk .manuscript-submit{min-height:48px}
+@media(max-width:760px){.annotation-packet-content{padding:20px 22px}.annotation-packet-desk .manuscript-heading h1{font-size:25px}.annotation-packet-desk .manuscript-eyebrow{padding-right:80px}}
+@media(max-height:500px) and (min-width:700px){.annotation-packet-content{padding:16px 20px}}
