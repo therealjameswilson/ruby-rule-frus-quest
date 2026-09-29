@@ -1496,8 +1496,8 @@ export class OfficeScene extends Phaser.Scene {
     this.closeProductionOverview();
     const board = getProductionBoardReadout();
     retroAudio.confirm();
-    setLatestMessage(board.nextStep ? `Production board next: ${board.nextStep.label}.` : "Production board complete.");
-    this.productionOverview = new ProductionOverviewDesk(board, getCompilerMissionReadout(gameState.sceneProgress), () => this.closeProductionOverview());
+    setLatestMessage(gameState.sceneProgress.finalGatePublished ? "Your volume is published." : this.currentOfficeObjective());
+    this.productionOverview = new ProductionOverviewDesk(board, getCompilerMissionReadout(gameState.sceneProgress), { objective: this.currentOfficeObjective(), published: Boolean(gameState.sceneProgress.finalGatePublished) }, () => this.closeProductionOverview());
   }
 
   private consumeOfficeReturnSpawn() {

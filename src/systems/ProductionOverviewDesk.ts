@@ -13,7 +13,7 @@ export class ProductionOverviewDesk {
  private controls:DeskControls;
  private body:HTMLElement;
  private tabs:HTMLButtonElement[]=[];
- constructor(private board:FrusProductionBoardReadout,private compiler:ReturnType<typeof getCompilerMissionReadout>,leave:()=>void){
+ constructor(private board:FrusProductionBoardReadout,private compiler:ReturnType<typeof getCompilerMissionReadout>,private guidance:{objective:string;published:boolean},leave:()=>void){
   this.root.className='manuscript-desk production-overview';
   this.root.setAttribute('aria-labelledby','production-overview-title');
   this.root.innerHTML=`<section class="manuscript-panel">
@@ -29,7 +29,7 @@ export class ProductionOverviewDesk {
    button.addEventListener('click',()=>this.render(index));nav.append(button);this.tabs.push(button);
   });
   const close=this.root.querySelector<HTMLButtonElement>('[data-focus-key=leave]')!;close.addEventListener('click',leave);
-  this.root.querySelector('[data-total]')!.textContent=`${board.completed} / ${board.total} production checks`;
+  this.root.querySelector('[data-total]')!.textContent=compiler.enabled?`${compiler.completed} / ${compiler.total} compiler tasks`:'Production process reference';
   this.render(0);this.controls=new DeskControls(this.root,()=>[...this.tabs,...this.body.querySelectorAll<HTMLAnchorElement>("a"),close],leave);
  }
  private text(tag:string,text:string,parent:HTMLElement=this.body){const e=document.createElement(tag);e.textContent=text;parent.append(e);return e;}
@@ -40,20 +40,24 @@ export class ProductionOverviewDesk {
   this.tabs.forEach((button,i)=>button.setAttribute('aria-pressed',String(i===index)));
   this.body.replaceChildren();this.root.querySelector('.manuscript-body')!.scrollTop=0;
   if(index===0){
-   const next=this.board.nextStep;
-   this.text('h2',next?.label??'Production checks complete');
-   this.text('p',next?.gameplayTask??'Certify the Buckram Gate. Publication still requires a complete record and the final human standards seal.');
-   if(next){this.text('h3','Why it matters');this.text('p',next.sourceBasis);this.source(next.sourceUrl);}
-   this.text('h3','Compiler mission');this.text('p',`${this.compiler.completed} / ${this.compiler.total} SOP tasks. ${this.compiler.nextTask}.`);
-   this.text('h3','Where to work');
-   this.text('p','Plan at the inbox. Investigate and annotate in the Archive. Use the east manuscript desk for selection, both reviews, revision, and DPD submission.');
+   this.text('h2',this.guidance.published?'Volume published':this.guidance.objective);
+   this.text('p',this.guidance.published
+    ?'Your completed volume is published. Explore the world or review your record; there is no new assignment here.'
+    :"Follow the office’s gold arrow to continue your assignment.");
+   if(!this.guidance.published){
+    this.text('h3','Compiler milestone');
+    this.text('p',this.compiler.enabled?`${this.compiler.completed} / ${this.compiler.total} SOP tasks. ${this.compiler.nextTask}.`:'Get the assignment from Kathy, then check your email at the inbox.');
+   }
+   this.text('h3',this.guidance.published?'Workflow reference':'Where to work');
+   this.text('p','Plan at the inbox. Investigate and annotate in the Archive. Use the Archive’s east manuscript desk for selection, both reviews, revision, and DPD submission.');
    this.text('p','First review: supervisor, chapter level. Second review: GE/AGE, volume level. Revise after both; DPD handoff is not publication approval.');
   }else if(index===1){
-   this.text('h2','Production checks');
+   this.text('h2','Production process reference');
+   this.text('p',`${this.board.completed} / ${this.board.total} checks recorded. These cover the wider process; use Next task for your current office action.`);
    for(const step of this.board.steps){
     const card=this.text('article','');card.dataset.status=step.complete?'complete':step.status;
-    this.text('small',step.complete?'Complete':step.status==='active'?'Next':'Pending',card);
-    this.text('h3',step.label,card);this.text('p',step.gameplayTask,card);
+    this.text('small',step.complete?'Complete':step.status==='active'?'In progress':'Not recorded',card);
+    this.text('h3',step.label,card);this.text('p',step.gameplayTask,card);this.text('p',step.sourceBasis,card);this.source(step.sourceUrl,card);
    }
   }else{
    const coverage=this.board.researchCoverage;
