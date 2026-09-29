@@ -38,8 +38,8 @@ export const RESEARCH_ZONES = [
 export function researchZone(value: number | undefined) { return Number.isInteger(value) && value! >= 0 && value! < RESEARCH_ZONES.length ? value! : 1; }
 export function discoveryCount(progress: Record<string, number>) { return RESEARCH_LANDMARKS.filter(l=>progress[`researchVisited_${l.id}`]===1).length; }
 export const DANNE_IDENTITY_DENIALS = [
-  "STRANGER: Danny Rubin? Never heard of him.",
-  "STRANGER: Danny who? Sorry, wrong fellow.",
+  "STRANGER: DANN-E? Never heard of him.",
+  "STRANGER: DANN-E who? Sorry, wrong fellow.",
   "STRANGER: Never heard of him. Sounds harmless, though."
 ];
 

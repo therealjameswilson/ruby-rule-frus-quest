@@ -111,7 +111,7 @@ export class ResearchWorldScene extends Phaser.Scene {
       const visit=gameState.sceneProgress.researchDanneTalks??0;
       gameState.sceneProgress.researchDanneTalks=visit+1;
       this.dialog.show('A FAMILIAR FACE', [
-        'YOU: Are you Danny Rubin?',
+        'YOU: Are you DANN-E?',
         DANNE_IDENTITY_DENIALS[visit % DANNE_IDENTITY_DENIALS.length],
         ...DANNE_OUTDOOR_LINES[visit % DANNE_OUTDOOR_LINES.length]
       ]);

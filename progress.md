@@ -8917,3 +8917,6 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 ## 2026-09-29 — Danny Rubin identity exchange
 - UserrequestedtheheroasktheAffleckresemblingoutdoorcharacterwhetherheisDannyRubin. EveryoutdoorconversationnowbeginsYOU:AreyouDannyRubin?, followedbyoneofthreebriefSTRANGERdenials beforeexistingmildmanneredobstruction. HeaderAfamiliarface;removedexpositorymoviecostumeannouncementfromconversation,disguisesunchanged.
 - Typecheck/finalbuild pass. Browserwalkedherotostrangerandtriggeredconversation,verifiedquestion/reply,nopageerrors;390x844compositorinspected. Shorteneddenialafterfirstshotshowedawkwardpagination. Standardclientstatepassed. Localonly,notpublished. /tmp/frus-danny-denials and /tmp/frus-danny-denials-final-build.
+
+## 2026-09-29 — identity dialogue naming correction
+- Changed the hero question and stranger denials from Danny Rubin to DANN-E, per user correction. No other dialogue behavior changed. Local only, not published.
