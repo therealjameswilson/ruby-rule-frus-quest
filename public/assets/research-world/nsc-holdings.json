@@ -1,122 +1,10 @@
 {
   "checked": "2026-09-26",
-  "note": "Collection names and research leads are based on official online holdings guides or published FRUS source notes. Rooms and puzzles are fictional training exercises. A finding-aid lead is not a retrieved document, an online listing is not full release, and these side quests do not change the scope or status of a FRUS volume.",
+  "note": "Optional research leads for records dated 1989–2008. The compiler checks email for their unspecified volume. Collection titles, release dates and FOIA identifiers retain their original wording; only in-period records may enter the research packet.",
   "excluded": {
     "fdr": "No NSC wing: the NSC was established in 1947, after Roosevelt’s presidency."
   },
   "dungeons": [
-    {
-      "library": "truman",
-      "title": "Truman NSC Registry",
-      "collection": "National Security Council Files, 1947–1953",
-      "handle": "NSC staff files and President’s Secretary’s Files",
-      "source": "https://www.trumanlibrary.gov/library/truman-papers",
-      "sourceLabel": "Library holdings guide",
-      "accent": "#b99154",
-      "challenge": {
-        "question": "The Truman guide notes overlapping documents in these two file groups. How do you log them?",
-        "correct": "Keep both archival locations and compare the copies.",
-        "wrong": "Merge them into one invented collection."
-      }
-    },
-    {
-      "library": "eisenhower",
-      "title": "Ann Whitman Vault",
-      "collection": "Papers as President, 1953–61 (Ann Whitman File), NSC Series",
-      "handle": "NSC meeting records in the Ann Whitman File",
-      "source": "https://www.eisenhowerlibrary.gov/research/finding-aids/eisenhower-dwight-d-3",
-      "sourceLabel": "Library finding aid",
-      "accent": "#6c9d9b",
-      "challenge": {
-        "question": "You need the presidential NSC series. Which request preserves the hierarchy?",
-        "correct": "Ann Whitman File → NSC Series; verify the meeting and folder.",
-        "wrong": "Any Eisenhower file with national security in its title."
-      }
-    },
-    {
-      "library": "jfk",
-      "title": "Crisis Correspondence Vault",
-      "collection": "National Security Files: USSR, Khrushchev Correspondence, Cuba",
-      "handle": "Boxes 184–190; folder dates 11/22/62–12/14/62",
-      "source": "https://www.jfklibrary.org/learn/about-jfk/life-of-john-f-kennedy/fast-facts-john-f-kennedy/kennedy-khrushchev-correspondence-during-cuban-missile-crisis",
-      "sourceLabel": "Library document guide",
-      "accent": "#8a87b8",
-      "challenge": {
-        "question": "For late-1962 correspondence, the library gives this box range and folder date span. What belongs in your lead?",
-        "correct": "The published box range and exact folder dates; verify the specific container.",
-        "wrong": "A guessed single box number within the range."
-      }
-    },
-    {
-      "library": "lbj",
-      "title": "Berlin Country Files",
-      "collection": "National Security File, Europe and USSR Country Files",
-      "handle": "National Archives Identifier 580807; Germany and Berlin folders",
-      "source": "https://www.archives.gov/research/foreign-policy/cold-war/berlin-wall-1962-1987/finding-aid.html",
-      "sourceLabel": "NARA research guide",
-      "accent": "#b99154",
-      "challenge": {
-        "question": "NARA lists Germany and Berlin folders within this series. How do you request them?",
-        "correct": "Keep series NAID 580807 and verify each folder and date.",
-        "wrong": "Call every Germany folder a Berlin decision memorandum."
-      }
-    },
-    {
-      "library": "nixon",
-      "title": "Heads of State Vault",
-      "collection": "National Security Council Files: Presidential Correspondence",
-      "handle": "Box 765: URUGUAY Pres Pacheco Corres. [September 1970]",
-      "source": "https://www.nixonlibrary.gov/finding-aids/national-security-council-files",
-      "sourceLabel": "Library folder inventory",
-      "accent": "#6c9d9b",
-      "challenge": {
-        "question": "DANN-E has moved the Uruguay correspondence lead into a general country pile. Restore its citation.",
-        "correct": "NSC Files, Presidential Correspondence, Box 765, Pacheco correspondence, September 1970.",
-        "wrong": "NSC Files, unknown box; all Uruguay papers have the same provenance."
-      }
-    },
-    {
-      "library": "ford",
-      "title": "West Wing Vault",
-      "collection": "National Security Adviser, Kissinger-Scowcroft West Wing Office Files, 1969–1977",
-      "handle": "High-level diplomacy spanning Nixon and Ford",
-      "source": "https://www.fordlibrarymuseum.gov/digital-research-room/finding-aids/national-security-adviser-kissinger-scowcroft-west-wing-office",
-      "sourceLabel": "Library finding aid",
-      "accent": "#8a87b8",
-      "challenge": {
-        "question": "Why can this Ford Library collection include Nixon-era records?",
-        "correct": "These working files remained available and became part of the Ford papers.",
-        "wrong": "Every document held at Ford must have been created after August 1974."
-      }
-    },
-    {
-      "library": "carter",
-      "title": "Brzezinski Country Vault",
-      "collection": "National Security Affairs, Brzezinski Material, Country File",
-      "handle": "Box 14, Cuba, 7–8/79; FRUS 1977–1980 XXIII, document 53",
-      "source": "https://history.state.gov/historicaldocuments/frus1977-80v23/d53",
-      "sourceLabel": "Published FRUS source note",
-      "accent": "#b99154",
-      "challenge": {
-        "question": "The published source note calls this an uninitialed copy. What should your notes preserve?",
-        "correct": "Box 14, folder Cuba 7–8/79, and the uninitialed-copy qualification.",
-        "wrong": "Describe it as a signed original because it appears in FRUS."
-      }
-    },
-    {
-      "library": "reagan",
-      "title": "Thatcher Visit Vault",
-      "collection": "Executive Secretariat, NSC: VIP Visits: Records, 1981–1985",
-      "handle": "RAC Box 6; United Kingdom: Prime Minister Thatcher Official Visit, 02/20/1985 (1)(2)",
-      "source": "https://www.reaganlibrary.gov/sites/default/files/finding_aids_pdfs/219646.pdf",
-      "sourceLabel": "Reagan Library finding aid, pages 13–14",
-      "accent": "#6c9d9b",
-      "challenge": {
-        "question": "The finding aid says OPEN, without DIGITIZED. Prepare the research visit.",
-        "correct": "Verify retrieval with the archivist; log any withdrawals.",
-        "wrong": "Report that every page has been read online."
-      }
-    },
     {
       "library": "bush41",
       "title": "Rice Policy Vault",
@@ -129,7 +17,11 @@
         "question": "The folder concerns arms control. Where does it fit?",
         "correct": "Coordinate overlapping coverage before selecting records.",
         "wrong": "Put every arms-control record in this volume."
-      }
+      },
+      "researchYears": [
+        1989,
+        1990
+      ]
     },
     {
       "library": "clinton",
@@ -143,7 +35,11 @@
         "question": "Sort these conversation records into a chronology.",
         "correct": "Use conversation date; retain memcon/telcon identity.",
         "wrong": "Sort by upload date and merge both record types."
-      }
+      },
+      "researchYears": [
+        1996,
+        1999
+      ]
     },
     {
       "library": "bush43",
@@ -157,7 +53,15 @@
         "question": "The set includes drafts and press guidance. Select responsibly.",
         "correct": "Trace revisions and seek the underlying policy instruction.",
         "wrong": "Treat every draft statement as a final presidential decision."
-      }
+      },
+      "researchYears": [
+        2001,
+        2001
+      ]
     }
-  ]
+  ],
+  "researchScope": {
+    "startYear": 1989,
+    "endYear": 2008
+  }
 }

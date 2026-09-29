@@ -8920,3 +8920,33 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 
 ## 2026-09-29 — identity dialogue naming correction
 - Changed the hero question and stranger denials from Danny Rubin to DANN-E, per user correction. No other dialogue behavior changed. Local only, not published.
+
+## 2026-09-29 — publish DANN-E identity exchange
+- Userrequestedpublish. PR138merged/attached, main2557df62479aadf0e0e6945c346b70ecefc3388d; Pages36575981922success. Full2145tests,typecheck,Pagesbuildpass. PublicJSindex-CCGFG1Tl.js/CSSindex-HbXF-ZWO.cssmatchlocalbyteforbyte.
+- Live390x844browserwalkedherotostranger,verifiedYOU:AreyouDANN-E? andSTRANGER:DANN-E?Neverheardofhim.;nopageerrors,compositorinspected. /tmp/frus-danne-live and /tmp/frus-danne-release-public.json. Public?v=2557df6.
+
+## 2026-09-29 — Repository record scope: 1989–2008
+
+- Limited active library dossiers, NSC wings and field-guide leads to historical records within 1989–2008. Shared date-scope validation distinguishes record coverage from original collection titles, FOIA identifiers and later release dates.
+- Kept all twelve landmark/save slots stable. Earlier presidential-library stops remain visitable but supply no active research packet; retired library/NSC save entries return to the overworld and cannot grant research receipts.
+- Retired earlier Haig/Kissinger/Leahy/Hull and Senate collection exercises. LoC and Archives I now explicitly require an in-period inventory inquiry, without inventing folder holdings. Archives II has a cited Timbie lot 01 D 127 lead limited to its 1989–1990 records.
+- Active optional leads remain Rice subject files (1989–1990), Clinton–Yeltsin release (1996–1999), and EP-3 release (2001); no named volume is assigned. Corrected the fictional training memorandum to 1989. Runtime research readouts exclude retired packets. Legacy internal desk fixtures remain for compatibility, inaccessible from active research routes.
+- Validation: 288 test files / 2,147 tests pass; TypeScript and fresh Vite build pass (existing bundle-size warning). Standard gameplay client movement check and phone-size compositor review performed. Targeted browser checks exercise active libraries/NSC wings and retired-save redirects. Evidence: /tmp/frus-scope-qa; /tmp/frus-scope-final-tests.log; /tmp/frus-scope-final-build.
+- Local changes only; no publication requested for this date-scope change.
+
+## 2026-09-29 — NARA Scout visit integration
+
+- Archives I and Archives II now open their journal research desk through A (visit) or B (NARA Scout), recording/saving the discovery before the external handoff. Discovered NARA pages retain Scout access in the journal; the public field guide includes it too.
+- Inspected the live Scout HTML and app.js hash permalink contract. Links preset from=1989, to=2001, scope=bush41,clinton and leave the query empty. Scout's current UI supports 1989–2001, a subset of the game's 1989–2008 window; no unsupported Bush 43 scope or endpoint was invented.
+- Added source-trail, holding-location, withdrawal/release and unprocessed-series guidance. Topic packs may reset filters; individual document dates still require checking. External use grants no research receipts or clearance. Existing NARA Scout repository remains unchanged.
+- Validation: 289 files / 2,150 tests pass; TypeScript and fresh Vite build pass (existing chunk-size warning). Standard gameplay client movement check passed. At 390×844, both NARA stops opened their desk; actual touch clicks opened live Scout with date/scope/query values verified, then returned to the game without changing research progress. No game page errors. Compositor screenshot visually reviewed: /tmp/frus-scout-qa/nara.png. Physical iPhone Safari not tested.
+- Local implementation only, not published.
+
+## 2026-09-29 — All supplied FRUS Assist and compiler workspaces
+
+- Added a 60-entry resource manifest preserving every supplied URL and title: 37 Assist pages and 23 bespoke workspaces (the user's heading says 27 but lists 23; no missing URLs invented).
+- Added a responsive searchable directory with period, resource-type and scope filters, accessible from every field-journal view and the repository field guide. Bush 41, Clinton and Reagan journal details preset their respective period. Links open separately, preserving the game.
+- All nine earlier-period resources are explicitly background references. The 51 remaining resources lie within the game's 1989–2008 period. Browsing does not assign a volume or grant research/clearance progress. No 2001–2008 workspace was supplied.
+- Rechecked all 60 actual URLs: HTTP 200 and HTML titles retrieved, evidence /tmp/frus-resources-link-check.json. No remote sites modified.
+- Validation: TypeScript, fresh Vite compilation, and all 289 test files / 2,150 tests pass. Standard gameplay client movement check passed. Phone-size browser checks verified journal touch handoff, 60/37/23 resource counts, 51 active and 9 background links, search, empty state, period deep link, no horizontal overflow, and return to game. No page errors; compositor screenshots inspected in /tmp/frus-resources-qa. Physical iPhone Safari untested.
+- Local implementation only; not published.

@@ -2,20 +2,22 @@
 <html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FRUS collections · Ruby Rule field guide</title>
 <style>body{margin:0;background:#f6f0db;color:#203d35;font:18px/1.6 system-ui}main{max-width:850px;margin:auto;padding:24px}h1{line-height:1.15}h2{margin-top:48px}article{background:#fffdf5;border:1px solid #bdc9ae;border-radius:12px;padding:20px;margin:18px 0}h3{margin:0}a{color:#165d64;text-underline-offset:3px;overflow-wrap:anywhere}nav{display:flex;gap:20px;flex-wrap:wrap}article a{display:inline-block;padding:10px 0;margin-right:20px}small{display:block;color:#54654f}section{scroll-margin-top:20px}</style>
-<main><nav><a href="../../..">Return to game</a><a href="../art-pack/frus_volumes/ruby-buckram/index.html">Ruby buckram gallery</a><a href="#loc">Library of Congress</a><a href="#nara">Archives I</a></nav>
+<main><nav><a href="../../..">Return to game</a><a href="../art-pack/frus_volumes/ruby-buckram/index.html">Ruby buckram gallery</a><a href="compiler-resources.html">Compiler research directory</a><a href="#loc">Library of Congress</a><a href="#nara">Archives I</a></nav>
 <h1>Collections behind the diplomatic record</h1>
-<p>Explore real collections cited in <em>Foreign Relations of the United States</em>. These entries identify published source trails; the research tasks are game exercises.</p>
-<p>The Library of Congress entries belong to its Manuscript Division. Archives I entries belong to the <a href="https://www.archives.gov/legislative/research">Center for Legislative Archives in Washington, DC</a>. State Department RG 59 records belong at Archives II in this game.</p>
-<p>A FRUS citation does not establish current access or complete release. Use the repository links to check restrictions and request arrangements. The Carl Marcy entry is part of the committee records, not a separate record group.</p>
-<div id="collections" aria-live="polite">Loading collections…</div><small>Source trails checked September 22, 2026.</small></main>
+<p>Research records dated <strong>1989–2008</strong>. Check your email for your volume assignment. Repository visits and collection leads do not establish a retrieved or cleared document.</p>
+<p>Use only in-period records from collections that span a longer period. Keep original collection titles, FOIA identifiers and release dates intact. A later release date is not the historical record date.</p>
+<p>Library of Congress and Archives I remain research inquiry stops; no verified in-period folder packet is supplied here. Ask staff for dated inventories and access arrangements. Department of State RG 59 records belong at Archives II.</p>
+<p><a href="https://therealjameswilson.github.io/nara-scout/#from=1989&amp;to=2001&amp;scope=bush41%2Cclinton" target="_blank" rel="noopener noreferrer">Open NARA Scout · 1989–2001</a> to scout declassified records, withdrawal sheets and unprocessed series. Scout currently focuses on Bush 41 and Clinton collections; check the holding repository and individual document dates. Its supported period is narrower than this game’s 1989–2008 window. Topic packs can change filters. Catalog leads do not establish reviewed or cleared documents.</p>
+<div id="collections" aria-live="polite">Loading collections…</div><small>Source trails checked September 29, 2026.</small></main>
 <script type="module">
 const host=document.querySelector('#collections');
 try{
  const response=await fetch('./frus-collections.json');if(!response.ok)throw Error('Collection data unavailable');
  const data=await response.json();host.replaceChildren();
  const add=(parent,tag,text)=>{const el=document.createElement(tag);el.textContent=text;parent.append(el);return el;};
- for(const [id,title] of [['loc','Library of Congress'],['nara','Archives I']]){
+ for(const [id,title] of [['loc','Library of Congress'],['nara','Archives I'],['college-park','Archives II']]){
   const section=add(host,'section','');section.id=id;add(section,'h2',title);
+  if(!data.some(c=>c.landmark===id))add(section,'p','Request a dated inventory for 1989–2008. No verified in-period packet is available at this stop.');
   for(const c of data.filter(c=>c.landmark===id)){
    const article=add(section,'article','');add(article,'h3',c.name);add(article,'small',c.level);
    add(article,'p',c.description);add(article,'p',c.citation);add(article,'p','Research task: '+c.exercise);

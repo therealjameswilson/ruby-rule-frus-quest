@@ -39,7 +39,7 @@ describe('optional library research and general compiler route', () => {
     const p:Record<string,number>={libraryResearch_reagan:4,nscResearch_reagan:3};
     expect(libraryStage(p,'reagan')).toBe(0);expect(nscStage(p,'reagan')).toBe(0);
 
-    for(let i=0;i<3;i++)expect(fileNscStage(p,'reagan',i,true)).toBe(true);
+    for(let i=0;i<3;i++)expect(fileNscStage(p,'reagan',i,true)).toBe(false);
     expect(activeCompilationReadout(p).assigned).toBeNull();
     expect(p.libraryResearch_reagan).toBe(4);
 

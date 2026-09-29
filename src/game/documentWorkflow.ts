@@ -80,11 +80,11 @@ export const INITIAL_DOCUMENT_CANDIDATES: readonly DocumentCandidate[] = [
   {
     id: "doc-001",
     title: "Memorandum of Conversation",
-    date: "1969-02-14",
+    date: "1989-02-14",
     type: "memorandum_of_conversation",
     repository: "Fictional National Archives Collection",
     collection: "Office Files of the Policy Planning Staff",
-    folder: "Alliance Consultation, February 1969",
+    folder: "Alliance Consultation, February 1989",
     policyTheme: "Alliance consultation",
     significance: 5,
     uniqueness: 4,

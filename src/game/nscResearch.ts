@@ -1,8 +1,10 @@
+import { inResearchScope } from "./researchScope";
 import { activeDossier, nscProgressKey } from "./activeCompilation";
 import manifest from '../../public/assets/research-world/nsc-holdings.json';
-export const NSC_DUNGEONS = manifest.dungeons;
+export const NSC_DUNGEONS = manifest.dungeons.filter(d => inResearchScope(d.researchYears));
 export const nscDungeon = (id: string) => NSC_DUNGEONS.find(d => d.library === id);
 export function nscStage(progress: Record<string, number>, id: string) {
+  if (!nscDungeon(id)) return 0;
   const value = progress[nscProgressKey(id)];
   return Number.isFinite(value) ? Math.max(0, Math.min(3, Math.floor(value))) : 0;
 }
