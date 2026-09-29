@@ -82,7 +82,7 @@ describe("publication reward and record pages", () => {
   it("shows the native hero without stats covering it", () => {
     const { content } = fixture();
     expect(content.children.find((node) => node.name === "published-frus-volume-hero")?.scale).toBe(1);
-    expect(content.children.map((node) => node.text)).toContain("PUBLISHED CLEAN");
+    expect(content.children.map((node) => node.text)).toContain("REVIEWED VOLUME PUBLISHED");
     expect(content.children.map((node) => node.text)).not.toContain("RELIABILITY");
   });
 
@@ -104,11 +104,14 @@ describe("publication reward and record pages", () => {
     press("process");
     expect(content.data.page).toBe("process");
     expect(content.children.map(node => node.text)).toContain("RESEARCH ACCESS IS NOT RELEASE.");
+    press("readers");
+    expect(content.data.page).toBe("readers");
+    expect(content.children.map(node => node.text)).toContain("PUBLICATION DOES NOT OPEN EVERY FILE");
     press("volume");
     expect(content.data.page).toBe("volume");
     press("title");
     expect(onTitle).toHaveBeenCalledOnce();
-    expect(onPageChange.mock.calls).toEqual([["volume"], ["record"], ["process"], ["volume"]]);
+    expect(onPageChange.mock.calls).toEqual([["volume"], ["record"], ["process"], ["readers"], ["volume"]]);
   });
 
   it("supports cancel from the record and direction selection of title", () => {
@@ -165,14 +168,14 @@ describe("secret publication reward", () => {
     expect(content.children.map((node) => node.text)).not.toContain("PRODUCTION BOARD");
   });
 
-  it("cycles volume, certificate, stats, and volume without leaving the reward", () => {
+  it("cycles certificate, record, process, readers, and volume without leaving the reward", () => {
     const { summary, content, onTitle } = fixture(false, true, certificate());
-    for (const page of ["certificate", "record", "process", "volume"]) {
+    for (const page of ["certificate", "record", "process", "readers", "volume"]) {
       summary.update(input({ aJustPressed: true }));
       expect(content.data.page).toBe(page);
     }
     expect(onTitle).not.toHaveBeenCalled();
-    expect(swallowNextInputFrame).toHaveBeenCalledTimes(4);
+    expect(swallowNextInputFrame).toHaveBeenCalledTimes(5);
   });
 
   it("keeps both navigation targets and all checks available after repeated paging", () => {
@@ -203,7 +206,7 @@ describe("secret publication reward", () => {
   it("retains honest open checks for incomplete or older saved records", () => {
     const { content, press } = fixture(false, false, certificate(false));
     expect(content.children.map((node) => node.text)).toContain("CERTIFICATION STILL OPEN");
-    expect(content.children.map((node) => node.text)).not.toContain("PUBLISHED CLEAN");
+    expect(content.children.map((node) => node.text)).not.toContain("REVIEWED VOLUME PUBLISHED");
     press("certificate");
     expect(content.children.filter((node) => node.text === "!")).toHaveLength(9);
     expect(content.children.filter((node) => node.text === "OPEN")).toHaveLength(9);

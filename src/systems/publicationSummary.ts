@@ -6,7 +6,7 @@ import type { TrueEndingCertificate } from "../game/trueEndingCertificate";
 import type { StatutoryClockReadout } from "../game/statutoryClock";
 import { bindPointerDown, swallowNextInputFrame, type InputState } from "../input/InputState";
 
-export type PublicationSummaryPage = "volume" | "certificate" | "record" | "process";
+export type PublicationSummaryPage = "volume" | "certificate" | "record" | "process" | "readers";
 
 interface PublicationSummaryOptions {
   compiler: string;
@@ -61,7 +61,8 @@ export class PublicationSummary {
   private nextPage(): PublicationSummaryPage {
     if (this.page === "volume") return this.options.certificate ? "certificate" : "record";
     if (this.page === "certificate") return "record";
-    return this.page === "record" ? "process" : "volume";
+    if (this.page === "record") return "process";
+    return this.page === "process" ? "readers" : "volume";
   }
 
   private showPage(page: PublicationSummaryPage) {
@@ -89,7 +90,8 @@ export class PublicationSummary {
     if (this.page === "volume") this.drawVolume();
     else if (this.page === "certificate") this.drawCertificate();
     else if (this.page === "record") this.drawRecord();
-    else this.drawProcess();
+    else if (this.page === "process") this.drawProcess();
+    else this.drawReaders();
 
     [this.nextPage().toUpperCase(), "TITLE"].forEach((label, index) => {
       const x = index === 0 ? 67 : 189;
@@ -129,12 +131,12 @@ export class PublicationSummary {
     }
     this.text(128, 171, certificate
       ? certificate.complete ? "COMPLETE TREATY RECORD" : "CERTIFICATION STILL OPEN"
-      : appealed ? "PUBLISHED UNDER APPEAL" : "PUBLISHED CLEAN", 8, PALETTE.goldStamp);
+      : appealed ? "PUBLISHED UNDER APPEAL" : "REVIEWED VOLUME PUBLISHED", 8, PALETTE.goldStamp);
     this.text(128, 184, certificate
       ? certificate.complete ? "DANN-E COULD NOT ERASE YOUR WORK." : "OPEN CHECKS REMAIN ON THE RECORD."
       : appealed
       ? `${stats.unresolvedEquities} UNRESOLVED EQUITIES ON RECORD`
-      : "THE RECORD IS NOW PUBLIC.", 6);
+      : "YOUR VOLUME IS READY FOR READERS.", 6);
   }
 
   private drawCertificate() {
@@ -168,6 +170,23 @@ export class PublicationSummary {
       this.text(16, y + 10, detail, 8, PALETTE.creamPaper, 0);
     });
     this.text(128, 188, "RESEARCH ACCESS IS NOT RELEASE.", 7, PALETTE.goldStamp);
+  }
+
+  private drawReaders() {
+    this.text(128, 16, "WHAT READERS CAN SEE", 8, PALETTE.goldStamp);
+    this.text(128, 31, "PUBLICATION DOES NOT OPEN EVERY FILE", 7);
+    const notes = [
+      ["PRINTED TEXT", "Published text has been declassified.", "Its source may still contain closed material."],
+      ["VISIBLE OMISSIONS", "Mark unreleased passages and their extent.", "Account for wholly withheld documents", "in chronology with headings, source notes", "and the number of pages not released."],
+      ["TRACEABLE SOURCES", "Notes identify the records behind the text.", "Repository access may still be restricted."]
+    ];
+    let y = 49;
+    for (const [heading, ...lines] of notes) {
+      this.text(16, y, heading, 8, PALETTE.terminalCyan, 0);
+      lines.forEach((line, index) => this.text(16, y + 12 + index * 11, line, 8, PALETTE.creamPaper, 0));
+      y += 19 + lines.length * 11;
+    }
+    this.text(128, 188, "METHOD: HISTORY.STATE.GOV / ABOUT THE SERIES", 6, PALETTE.goldStamp);
   }
 
   private drawRecord() {

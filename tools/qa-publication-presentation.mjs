@@ -18,7 +18,11 @@ await tap(67,216);assert.equal(await p.evaluate(()=>window.game.scene.getScene('
 const processLayout=await p.evaluate(()=>window.game.scene.getScene('EndingScene').children.getByName('publication-summary').list.filter(o=>typeof o.text==='string').map(o=>({text:o.text,bounds:o.getBounds()})));
 for(const {text,bounds:b} of processLayout)assert(b.x>=8&&b.x+b.width<=248&&b.y>=8&&b.y+b.height<=238,'Process page overflow: '+text);
 assert(processLayout.some(o=>o.text==='RESEARCH ACCESS IS NOT RELEASE.'));await p.screenshot({path:`${out}/${name}-process.png`});
+await tap(67,216);assert.equal(await p.evaluate(()=>window.game.scene.getScene('EndingScene').children.getByName('publication-summary').getData('page')),'readers');
+const readerLayout=await p.evaluate(()=>window.game.scene.getScene('EndingScene').children.getByName('publication-summary').list.filter(o=>typeof o.text==='string').map(o=>({text:o.text,bounds:o.getBounds()})));
+for(const {text,bounds:b} of readerLayout)assert(b.x>=8&&b.x+b.width<=248&&b.y>=8&&b.y+b.height<=238,'Reader page overflow: '+text);
+assert(readerLayout.some(o=>o.text==='PUBLICATION DOES NOT OPEN EVERY FILE'));await p.screenshot({path:`${out}/${name}-readers.png`});
 await tap(67,216);assert.equal(await p.evaluate(()=>window.game.scene.getScene('EndingScene').children.getByName('publication-summary').getData('page')),'volume');
 await tap(189,216);await p.waitForFunction(()=>window.game?.scene.isActive('TitleScene'));await enter();await writeFile(`${out}/${name}-continued.json`,await p.evaluate(()=>window.render_game_to_text()));assert.equal(await p.evaluate(()=>JSON.parse(window.render_game_to_text()).finalGateCertification.status),'published');
-assert.deepEqual(errors,[]);results.push({name,layout,recordNavigation:true,processNavigation:true,processLayout,title:true,continue:true,errors});await p.close();}
+assert.deepEqual(errors,[]);results.push({name,layout,recordNavigation:true,processNavigation:true,readerNavigation:true,readerLayout,processLayout,title:true,continue:true,errors});await p.close();}
 await writeFile(`${out}/results.json`,JSON.stringify(results,null,2));console.log(JSON.stringify(results));}finally{await browser.close();}
