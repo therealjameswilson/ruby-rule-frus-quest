@@ -37,6 +37,12 @@ export const RESEARCH_ZONES = [
 ] as const;
 export function researchZone(value: number | undefined) { return Number.isInteger(value) && value! >= 0 && value! < RESEARCH_ZONES.length ? value! : 1; }
 export function discoveryCount(progress: Record<string, number>) { return RESEARCH_LANDMARKS.filter(l=>progress[`researchVisited_${l.id}`]===1).length; }
+export const DANNE_IDENTITY_DENIALS = [
+  "STRANGER: DANN-E? Never heard of him.",
+  "STRANGER: DANN-E who? Sorry, wrong fellow.",
+  "STRANGER: Never heard of him. Sounds harmless, though."
+];
+
 export const DANNE_OUTDOOR_LINES = [
   ['Lovely day for research!', 'I took the liberty of turning the sign toward the scenic route. You are in no hurry, surely?', 'The posted directory still shows the correct route. DANN-E smiles a little too long.'],
   ['Please, take your time.', 'Finding aids are so tiresome. Would a charming walk not be a better use of your afternoon?', 'The archivist reminds you: a pleasant suggestion is no substitute for a source trail.'],

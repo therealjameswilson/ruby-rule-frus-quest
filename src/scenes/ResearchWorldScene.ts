@@ -7,7 +7,7 @@ import { LIBRARY_ASSIGNMENTS, libraryAssignment } from "../game/libraryResearch"
 import Phaser from 'phaser';
 import { DANNE_DISGUISES, disguiseIndex } from '../game/danneDisguises';
 import { Player } from '../entities/Player';
-import { DANNE_OUTDOOR_LINES, discoveryCount, RESEARCH_LANDMARKS, RESEARCH_ZONES, researchZone, researchHolding, researchCollections, collectionPages, type ResearchLandmark } from '../game/researchWorld';
+import { DANNE_IDENTITY_DENIALS, DANNE_OUTDOOR_LINES, discoveryCount, RESEARCH_LANDMARKS, RESEARCH_ZONES, researchZone, researchHolding, researchCollections, collectionPages, type ResearchLandmark } from '../game/researchWorld';
 import { gameState, clearChoiceState, setLatestMessage, setNearestInteractable, setObjective, setSceneState, setVisibleEntities, setVisibleThreats } from '../game/state';
 import { bindPointerDown, getInput, swallowNextInputFrame, tickInput } from '../input/InputState';
 import { DialogBox } from '../systems/dialog';
@@ -110,7 +110,11 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.stop('Talk to DANN-E',130,153,18,()=>{
       const visit=gameState.sceneProgress.researchDanneTalks??0;
       gameState.sceneProgress.researchDanneTalks=visit+1;
-      this.dialog.show('DANN-E', [`${DANNE_DISGUISES[this.disguise].movie} disguise. ${DANNE_DISGUISES[this.disguise].title}.`, ...DANNE_OUTDOOR_LINES[visit%DANNE_OUTDOOR_LINES.length]]);
+      this.dialog.show('A FAMILIAR FACE', [
+        'YOU: Are you DANN-E?',
+        DANNE_IDENTITY_DENIALS[visit % DANNE_IDENTITY_DENIALS.length],
+        ...DANNE_OUTDOOR_LINES[visit % DANNE_OUTDOOR_LINES.length]
+      ]);
     });
     this.prop(90,213,12,17,15);
     this.stop('Inspect field satchel',90,218,15,()=>this.dialog.show('FIELD NOTES',[

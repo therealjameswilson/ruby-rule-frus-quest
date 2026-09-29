@@ -8903,3 +8903,20 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 - Previous goal turn progressed with22f5b5c five-scene baseline. Extendedbenchmark withCPUrate/CDPtrace; comparedArchive/Network1xvs4x. Both1x~60fps;4xP95~33ms. Trace dominatedbygraphicsreadbackwaits,notlayout; freshSystemInfo confirmsSwiftShadersoftwaregraphics. Cannotattributehardwareperformancefromthisrun.
 - Recorded docs/qa/frame-trace-comparison-2026-09-28.{md,json}; raw/tmp/frus-frames-{unthrottled,throttled}. Benchmark nowrecordsGPUenvironmentforfutureinterpretation. InspectedNetworkcompositor,syntax/diffcheckpass. Noruntimechange/needlessbroadtest/build/deployment.
 - Next leaveunchangedsyntheticperformancechecks andresumevisual/interactionqualityreview. Hardwareperformance remainsunverified; noartdowngradejustified. Fullgoalactive; listening/novicecomprehension stillunverified.
+
+## 2026-09-29 — publish accumulated research and presentation changes
+- User explicitlyrequestedpublication; paused unimplementedNetworkexitlabelinvestigation. Previousgoalturn progressed with8cfb726 renderercontext/traceevidence; noNetworklabelchange wasmade.
+- Mergedorigin/main;287files/2145tests,TypeScript andPagesbasebuildpass. Pushed70ef46b;PR137merged/attached at e58db68c6ed110455c16bd8f973f5180f1390e2a. Pagesrun36565619801success.
+- PublicJSassets/index-BeEHaxPP.js andCSSassets/index-HbXF-ZWO.css matchlocal/tmp/frus-release-0929byteforbyte. FieldguideandactualOpenGraphPNGaccessible. FreshpublicstandardclientreachesWarningScene. Three-layoutliveearnedpublication replaypassesReaders/Process/navigation/Title/Continue withnoerrors;phoneReaderscompositorinspected. /tmp/frus-release-0929-public.json and /tmp/frus-release-0929-browser/results.json.
+- Public https://therealjameswilson.github.io/ruby-rule-frus-quest/?v=e58db68 . Fullgoalnotcomplete; nextNetworkexitlabelocclusion remainsunimplemented; hardware/listening/novicecomprehension unverified.
+
+## 2026-09-29 — new comprehensive gameplay trailer
+- Userrequestednewtrailerafterpublication. Completed120second1080p30H264/AAC montage frompublice58db68:26segments,all7worldregions/16landmarks,4modernlibraryinteriors/4NSCwings,Kathy,sourceevidence/selection/annotation/routing/referral/proof/boss/publication. Originalnewscore,no narration/nativeaudio.
+- Stagedisolatedbrowsercaptures;earnedpublicationending. Capturepageserrorfree,3600frames/120.000sec,~24.5MB. Inspectedallfinalsegmentmidpoints/contact sheets anddetailcaptures;audio belowclipping,decodepass. artifacts/compilers-journey-trailer/Ruby-Rule-A-Compilers-Journey.mp4 withREADME,scriptssources,verification.json. No gamesourcechange/deployment. Fullqualitygoalremainsactive.
+
+## 2026-09-29 — Danny Rubin identity exchange
+- UserrequestedtheheroasktheAffleckresemblingoutdoorcharacterwhetherheisDannyRubin. EveryoutdoorconversationnowbeginsYOU:AreyouDannyRubin?, followedbyoneofthreebriefSTRANGERdenials beforeexistingmildmanneredobstruction. HeaderAfamiliarface;removedexpositorymoviecostumeannouncementfromconversation,disguisesunchanged.
+- Typecheck/finalbuild pass. Browserwalkedherotostrangerandtriggeredconversation,verifiedquestion/reply,nopageerrors;390x844compositorinspected. Shorteneddenialafterfirstshotshowedawkwardpagination. Standardclientstatepassed. Localonly,notpublished. /tmp/frus-danny-denials and /tmp/frus-danny-denials-final-build.
+
+## 2026-09-29 — identity dialogue naming correction
+- Changed the hero question and stranger denials from Danny Rubin to DANN-E, per user correction. No other dialogue behavior changed. Local only, not published.
