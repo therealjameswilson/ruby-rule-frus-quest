@@ -1,3 +1,4 @@
+import { CompilerFeedbackDesk } from './compilerFeedbackDesk';
 import { CompilerDecisionDesk } from './compilerDecisionDesk';
 import type { CompilerTask } from '../game/compilerMission';
 import { LibraryPacketDesk } from './libraryPacketDesk';
@@ -25,7 +26,7 @@ function color(hex: string) {
 
 export class ChoicePrompt {
   private readonly scene: Phaser.Scene;
-  private manuscriptDesk?: CompilerDecisionDesk | ManuscriptDesk | ChapterAssemblyDesk | ManuscriptRevisionDesk | LibraryRequestDesk | LibraryComparisonDesk | LibrarySourceNoteDesk | LibraryPacketDesk;
+  private manuscriptDesk?: CompilerFeedbackDesk | CompilerDecisionDesk | ManuscriptDesk | ChapterAssemblyDesk | ManuscriptRevisionDesk | LibraryRequestDesk | LibraryComparisonDesk | LibrarySourceNoteDesk | LibraryPacketDesk;
   private readonly container: Phaser.GameObjects.Container;
   private readonly titleText: Phaser.GameObjects.Text;
   private readonly sourceText: Phaser.GameObjects.Text;
@@ -112,6 +113,14 @@ export class ChoicePrompt {
     this.refreshSelection();
     this.container.setVisible(true);
     setChoiceState(title, options);
+  }
+
+  showCompilerFeedback(phase: string, message: string, accepted: boolean, onContinue: () => void, onCancel: () => void) {
+    this.hide();
+    this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
+    this.manuscriptDesk = new CompilerFeedbackDesk(phase, message, accepted,
+      () => { this.hide(); onContinue(); },
+      () => { this.hide(); onCancel(); });
   }
 
   showCompilerDecision(task: CompilerTask, onChoose: ChoiceCallback, onCancel: () => void) {

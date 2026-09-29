@@ -4,7 +4,7 @@ import type { ChoicePrompt } from "./verification";
 import type { DialogBox } from "./dialog";
 import { saveGameNow } from "./save";
 
-export function runCompilerCheckpoint(choice: ChoicePrompt, dialog: DialogBox, checkpoint: CompilerCheckpoint, onComplete: () => void) {
+export function runCompilerCheckpoint(choice: ChoicePrompt, _dialog: DialogBox, checkpoint: CompilerCheckpoint, onComplete: () => void) {
   const showNext = () => {
     if (compilerCheckpointComplete(gameState.sceneProgress, checkpoint)) {
       onComplete();
@@ -19,7 +19,7 @@ export function runCompilerCheckpoint(choice: ChoicePrompt, dialog: DialogBox, c
       // An incorrect training decision is feedback, not an actual alteration
       // to a historical document, and therefore does not invent a violation.
       if (result.ok) saveGameNow();
-      dialog.show(result.ok ? task.phase.toUpperCase() : "RECHECK THE PACKET", result.message, showNext);
+      choice.showCompilerFeedback(task.phase.toUpperCase(), result.message, result.ok, showNext, cancel);
     };
     const cancel = () => {
       setLatestMessage("Compiler checkpoint paused. Completed decisions are saved; return here to continue.");

@@ -1,0 +1,9 @@
+# Readable explanations after compiler decisions
+
+The compiler workflow no longer drops from native decision screens into small canvas dialogue for its explanations. Existing success and failure messages appear in a native feedback panel, with a distinct saved-decision receipt or no-progress notice, readable scrolling, and Continue/Try Again. Return preserves accepted progress and does not advance a rejected answer. This replaces existing feedback rather than adding a new approval gate. The existing DialogBox argument remains in the checkpoint API for callers, but compiler feedback uses ChoicePrompt's shared native lifecycle.
+
+Validation: 286 files / 2,128 tests, final typecheck and production build passed. Tests cover accepted feedback cancellation/resume and rejected cancellation without saving. Ten explanations across desktop, 375 portrait, 320 portrait and 844 landscape (40 fixtures) pass exact content, explicit continuation, rejection, touch/keyboard/simulated controller, reading scroll, cancel and shutdown. Screenshots inspected; a Return button positioned outside a shorter panel was anchored to its header and the final fixture checks containment. Standard client OfficeScene state inspected; compositor screenshots supply visual evidence because native canvas capture remains black.
+
+Fixed-production earned touch replay from the filed-annotation checkpoint passes supporting documents, selection correction/reopen, chapter assembly, both reviews, revision and submission through the new feedback to NetworkScene, with no browser errors. Saved-state audit confirms review/submission flags and no publication grant. The final post-replay change only anchored the Return button; all 40 final layout cases and final build include that fix. Next earned checkpoint: /tmp/frus-native-feedback-earned/earned-storage.json, origin5227.
+
+Physical hardware, human listening and novice comprehension remain unverified. No deployment in this turn.

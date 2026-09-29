@@ -18,6 +18,7 @@ export async function completeCompilerCheckpoint(page,touch=false,observe=async(
   current=await state();
   await observe(current);
   if(current.mode==='dialog'){await advance();await page.waitForTimeout(160);continue;}
+  if(await page.locator('.compiler-feedback-desk').count()){await click('.compiler-feedback-desk [data-focus-key=continue]');await page.waitForTimeout(180);continue;}
   if(await page.locator('.library-packet').count()){await completeLibraryPacket(page);continue;}
   if(await page.locator('.library-source-note').count()){await completeLibrarySourceNote(page);continue;}
   if(await page.locator('.library-comparison').count()){await completeLibraryComparison(page);continue;}
