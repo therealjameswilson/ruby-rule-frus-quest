@@ -248,6 +248,8 @@
     "mapLegend": "@ VOUS  ! REVUE  X FERME",
     "discoveries": "DECOUVERTES",
     "task": "TACHE DE COMPILATION",
+    "reference": "REPÈRES DU PROCESSUS",
+    "referenceNote": "Contexte sur la préparation de FRUS. Votre action actuelle figure sur la première page.",
     "pendants": { "objectivity": "OBJECTIVITE", "provenance": "SOURCES", "review": "REVISION" },
     "progress": "VOTRE VOLUME",
     "done": "TERMINE",

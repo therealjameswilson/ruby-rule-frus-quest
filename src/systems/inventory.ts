@@ -498,8 +498,9 @@ export class InventoryOverlay {
     records.push({ title: getString("pause.progress"), art: "progress" });
     const next = subscreen.productionBoard.nextStep;
     if (next) {
-      add(getString("pause.task"), `${next.label}\n\n${next.gameplayTask}`);
-      add(getString("pause.source"), `${next.sourceBasis}\n\n${next.sourceUrl}`);
+      add(getString("pause.reference"), getString("pause.referenceNote"));
+      add(getString("pause.reference"), `${next.label}\n\n${next.sourceBasis}`);
+      add(getString("pause.source"), next.sourceUrl);
     }
     for (const phase of subscreen.productionBoard.phases) {
       add(phase.label, `${phase.status.toUpperCase()}\n${phase.completed} / ${phase.total}\n\n${phase.nextStep?.label ?? getString("pause.done")}`);

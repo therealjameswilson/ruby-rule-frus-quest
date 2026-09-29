@@ -223,6 +223,23 @@ describe("pause inventory interaction", () => {
     expect(callbacks.handlePauseTouch({ x: 48, y: 80 })).toBe(false);
   });
 
+  it("keeps the active objective ahead of reference material without a competing task", () => {
+    gameState.objective = "Check your email for your assignment.";
+    const board = getAdventureSubscreenReadout().productionBoard;
+    const { overlay, tap, texts } = harness();
+    overlay.toggle(); tap("record");
+    expect(texts.join(" ")).toContain("Check your email");
+    const start = texts.length;
+    const pages = getPauseMenuReadout()!.recordPages;
+    for (let index = 1; index < pages; index++) tap("next");
+    const reference = texts.slice(start).join(" ");
+    expect(reference).toContain("PROCESS REFERENCE");
+    expect(reference).not.toContain("TASK");
+    expect(reference).not.toContain(board.nextStep!.gameplayTask);
+    expect(reference).toContain("Background on how FRUS");
+    overlay.hide();
+  });
+
   it("preserves keys, inventory and reliability while paging through chapters and records", () => {
     getAdventureSubscreenReadout();
     const before = JSON.stringify({ inventory: gameState.inventory, dungeons: gameState.dungeons, reliability: gameState.reliability });

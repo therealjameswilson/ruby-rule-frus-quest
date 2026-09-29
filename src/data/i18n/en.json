@@ -99,6 +99,8 @@
     "mapLegend": "@ YOU  ! REVIEW  X LOCKED",
     "discoveries": "DISCOVERIES",
     "task": "COMPILATION TASK",
+    "reference": "PROCESS REFERENCE",
+    "referenceNote": "Background on how FRUS is made. Your current action is on the first page.",
     "pendants": { "objectivity": "OBJECTIVITY", "provenance": "SOURCES", "review": "REVIEW" },
     "progress": "YOUR VOLUME",
     "done": "COMPLETE",

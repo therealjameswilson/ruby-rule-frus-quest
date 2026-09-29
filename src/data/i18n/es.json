@@ -248,6 +248,8 @@
     "mapLegend": "@ TU  ! REVISION  X CERRADO",
     "discoveries": "HALLAZGOS",
     "task": "TAREA DE COMPILACION",
+    "reference": "REFERENCIA DEL PROCESO",
+    "referenceNote": "Contexto sobre la elaboración de FRUS. Tu acción actual está en la primera página.",
     "pendants": { "objectivity": "OBJETIVIDAD", "provenance": "FUENTES", "review": "REVISION" },
     "progress": "TU VOLUMEN",
     "done": "COMPLETO",
