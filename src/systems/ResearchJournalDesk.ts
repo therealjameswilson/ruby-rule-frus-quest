@@ -64,6 +64,11 @@ export class ResearchJournalDesk {
    this.text('h2','Finding your way');this.text('p','DC: Potomac Green west, Capital Commons east, Maryland Grove north. Rail links four distant library regions.');
    this.text('p','Research lessons are practice prompts. The map compresses real distances.');
   }
+  this.text('h2','Compiler research tools');
+  const resources=this.text('a','Browse all 60 Assist pages and compiler workspaces') as HTMLAnchorElement;
+  const period=landmark?.id==='bush41'?'1989–1992':landmark?.id==='clinton'?'1993–2000':landmark?.id==='reagan'?'1981–1988':'';
+  resources.href='assets/research-world/compiler-resources.html'+(period?'?period='+encodeURIComponent(period):'');resources.target='_blank';resources.rel='noopener noreferrer';resources.dataset.focusKey='compiler-resources';
+  this.text('p','Optional source-finding and compilation aids. Earlier-period sites are background references; your assignment remains in your email.');
   // Detail starts with its reading control, before links farther down the page.
   this.controls?.refresh(landmark?'places':this.found[0]?.id??'leave');
   setChoiceState(landmark?`FIELD JOURNAL · ${landmark.name}`:'FIELD JOURNAL',[{key:'A',label:landmark?'Back to places':'Browse discovered places',value:'journal'},{key:'B',label:'Return outdoors',value:'leave'}]);

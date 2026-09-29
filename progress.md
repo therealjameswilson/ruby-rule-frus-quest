@@ -8941,3 +8941,12 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 - Added source-trail, holding-location, withdrawal/release and unprocessed-series guidance. Topic packs may reset filters; individual document dates still require checking. External use grants no research receipts or clearance. Existing NARA Scout repository remains unchanged.
 - Validation: 289 files / 2,150 tests pass; TypeScript and fresh Vite build pass (existing chunk-size warning). Standard gameplay client movement check passed. At 390×844, both NARA stops opened their desk; actual touch clicks opened live Scout with date/scope/query values verified, then returned to the game without changing research progress. No game page errors. Compositor screenshot visually reviewed: /tmp/frus-scout-qa/nara.png. Physical iPhone Safari not tested.
 - Local implementation only, not published.
+
+## 2026-09-29 — All supplied FRUS Assist and compiler workspaces
+
+- Added a 60-entry resource manifest preserving every supplied URL and title: 37 Assist pages and 23 bespoke workspaces (the user's heading says 27 but lists 23; no missing URLs invented).
+- Added a responsive searchable directory with period, resource-type and scope filters, accessible from every field-journal view and the repository field guide. Bush 41, Clinton and Reagan journal details preset their respective period. Links open separately, preserving the game.
+- All nine earlier-period resources are explicitly background references. The 51 remaining resources lie within the game's 1989–2008 period. Browsing does not assign a volume or grant research/clearance progress. No 2001–2008 workspace was supplied.
+- Rechecked all 60 actual URLs: HTTP 200 and HTML titles retrieved, evidence /tmp/frus-resources-link-check.json. No remote sites modified.
+- Validation: TypeScript, fresh Vite compilation, and all 289 test files / 2,150 tests pass. Standard gameplay client movement check passed. Phone-size browser checks verified journal touch handoff, 60/37/23 resource counts, 51 active and 9 background links, search, empty state, period deep link, no horizontal overflow, and return to game. No page errors; compositor screenshots inspected in /tmp/frus-resources-qa. Physical iPhone Safari untested.
+- Local implementation only; not published.

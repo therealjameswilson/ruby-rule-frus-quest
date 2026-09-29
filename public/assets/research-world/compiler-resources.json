@@ -1,0 +1,482 @@
+[
+  {
+    "id": "frus-1917-72pubdipv02-assist",
+    "period": "1917–1972",
+    "kind": "Assist",
+    "title": "II — Public Diplomacy, Interwar Period",
+    "url": "https://therealjameswilson.github.io/frus-1917-72pubdipv02-assist/",
+    "background": true
+  },
+  {
+    "id": "frus-1917-72pubdipv03-assist",
+    "period": "1917–1972",
+    "kind": "Assist",
+    "title": "III — Public Diplomacy, World War II",
+    "url": "https://therealjameswilson.github.io/frus-1917-72pubdipv03-assist/",
+    "background": true
+  },
+  {
+    "id": "frus-1956-60intelcom-assist",
+    "period": "1956–1960",
+    "kind": "Assist",
+    "title": "The Intelligence Community",
+    "url": "https://therealjameswilson.github.io/frus-1956-60intelcom-assist/",
+    "background": true
+  },
+  {
+    "id": "frus-1981-88v08-assist",
+    "period": "1981–1988",
+    "kind": "Assist",
+    "title": "VIII — Western Europe",
+    "url": "https://therealjameswilson.github.io/frus-1981-88v08-assist/",
+    "background": true
+  },
+  {
+    "id": "frus-1981-88v23-assist",
+    "period": "1981–1988",
+    "kind": "Assist",
+    "title": "XXIII — Iran-Contra",
+    "url": "https://therealjameswilson.github.io/frus-1981-88v23-assist/",
+    "background": true
+  },
+  {
+    "id": "frus-1981-88v37-assist",
+    "period": "1981–1988",
+    "kind": "Assist",
+    "title": "XXXVII — Trade and Monetary Policy",
+    "url": "https://therealjameswilson.github.io/frus-1981-88v37-assist/",
+    "background": true
+  },
+  {
+    "id": "frus-1981-88v42-assist",
+    "period": "1981–1988",
+    "kind": "Assist",
+    "title": "XLII — Refugees and Immigration",
+    "url": "https://therealjameswilson.github.io/frus-1981-88v42-assist/",
+    "background": true
+  },
+  {
+    "id": "frus-1981-88v45-assist",
+    "period": "1981–1988",
+    "kind": "Assist",
+    "title": "XLV — Eastern Mediterranean",
+    "url": "https://therealjameswilson.github.io/frus-1981-88v45-assist/",
+    "background": true
+  },
+  {
+    "id": "frus-1989-92v01-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "I — Foundations/Public Diplomacy",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v01-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v02-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "II — Organization and Management",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v02-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v04-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "IV — Soviet Union, Russia, Post-Soviet States",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v04-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v05-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "V — Eastern Europe",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v05-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v06-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "VI — Eastern Mediterranean",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v06-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v08-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "VIII — Western Europe",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v08-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v09-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "IX — Germany",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v09-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v14-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "XIV — Arab-Israeli Dispute",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v14-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v15-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "XV — South Asia",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v15-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v16-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "XVI — Southeast Asia and Pacific",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v16-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v18-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "XVIII — Japan and Korea",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v18-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v20-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "XX — Africa",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v20-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v22-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "XXII — Cuba, Haiti, Caribbean",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v22-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v23-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "XXIII — Central America",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v23-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v24-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "XXIV — Panama",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v24-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v25-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "XXV — South America",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v25-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v27-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "XXVII — Arms Control",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v27-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v30-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "XXX — Foreign Economic Policy",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v30-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1989-92v32-assist",
+    "period": "1989–1992",
+    "kind": "Assist",
+    "title": "XXXII — Iran",
+    "url": "https://therealjameswilson.github.io/frus-1989-92v32-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1993-00v01-assist",
+    "period": "1993–2000",
+    "kind": "Assist",
+    "title": "I — Foundations",
+    "url": "https://therealjameswilson.github.io/frus-1993-00v01-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1993-00v04-assist",
+    "period": "1993–2000",
+    "kind": "Assist",
+    "title": "IV — Foreign Economic Policy",
+    "url": "https://therealjameswilson.github.io/frus-1993-00v04-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1993-00v15-assist",
+    "period": "1993–2000",
+    "kind": "Assist",
+    "title": "XV — Balkans",
+    "url": "https://therealjameswilson.github.io/frus-1993-00v15-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1993-00v20-assist",
+    "period": "1993–2000",
+    "kind": "Assist",
+    "title": "XX — Arms Control in the Former Soviet Union",
+    "url": "https://therealjameswilson.github.io/frus-1993-00v20-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1993-00v22-assist",
+    "period": "1993–2000",
+    "kind": "Assist",
+    "title": "XXII — Europe, High-Level Contacts",
+    "url": "https://therealjameswilson.github.io/frus-1993-00v22-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1993-00v24-assist",
+    "period": "1993–2000",
+    "kind": "Assist",
+    "title": "XXIV — Europe Policy",
+    "url": "https://therealjameswilson.github.io/frus-1993-00v24-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1993-00v25-assist",
+    "period": "1993–2000",
+    "kind": "Assist",
+    "title": "XXV — Northern Ireland",
+    "url": "https://therealjameswilson.github.io/frus-1993-00v25-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1993-00v27-assist",
+    "period": "1993–2000",
+    "kind": "Assist",
+    "title": "XXVII — Southern Africa",
+    "url": "https://therealjameswilson.github.io/frus-1993-00v27-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1993-00v28-assist",
+    "period": "1993–2000",
+    "kind": "Assist",
+    "title": "XXVIII — Rwanda/Central Africa",
+    "url": "https://therealjameswilson.github.io/frus-1993-00v28-assist/",
+    "background": false
+  },
+  {
+    "id": "frus-1993-00v32-assist",
+    "period": "1993–2000",
+    "kind": "Assist",
+    "title": "XXXII — Central America",
+    "url": "https://therealjameswilson.github.io/frus-1993-00v32-assist/",
+    "background": false
+  },
+  {
+    "id": "FEP-85-88",
+    "period": "1981–1988",
+    "kind": "Workspace",
+    "title": "XXXVII — Foreign Economic Policy",
+    "url": "https://therealjameswilson.github.io/FEP-85-88/",
+    "background": true
+  },
+  {
+    "id": "org-man-89-92",
+    "period": "1989–1992",
+    "kind": "Workspace",
+    "title": "II — Organization and Management",
+    "url": "https://therealjameswilson.github.io/org-man-89-92/",
+    "background": false
+  },
+  {
+    "id": "89-92-RussiaFSU-Policy",
+    "period": "1989–1992",
+    "kind": "Workspace",
+    "title": "IV — Russia/FSU Policy",
+    "url": "https://therealjameswilson.github.io/89-92-RussiaFSU-Policy/",
+    "background": false
+  },
+  {
+    "id": "EE-89-92",
+    "period": "1989–1992",
+    "kind": "Workspace",
+    "title": "V — Eastern Europe",
+    "url": "https://therealjameswilson.github.io/EE-89-92/",
+    "background": false
+  },
+  {
+    "id": "GCT-89-92",
+    "period": "1989–1992",
+    "kind": "Workspace",
+    "title": "VI — Eastern Mediterranean",
+    "url": "https://therealjameswilson.github.io/GCT-89-92/",
+    "background": false
+  },
+  {
+    "id": "Bush41-Western-Europe",
+    "period": "1989–1992",
+    "kind": "Workspace",
+    "title": "VIII — Western Europe",
+    "url": "https://therealjameswilson.github.io/Bush41-Western-Europe/",
+    "background": false
+  },
+  {
+    "id": "Bush41-MEPP",
+    "period": "1989–1992",
+    "kind": "Workspace",
+    "title": "XIV — Middle East Peace Process",
+    "url": "https://therealjameswilson.github.io/Bush41-MEPP/",
+    "background": false
+  },
+  {
+    "id": "Bush41-SouthAsia",
+    "period": "1989–1992",
+    "kind": "Workspace",
+    "title": "XV — South Asia",
+    "url": "https://therealjameswilson.github.io/Bush41-SouthAsia/",
+    "background": false
+  },
+  {
+    "id": "NorthAfrica-89-92",
+    "period": "1989–1992",
+    "kind": "Workspace",
+    "title": "XX — Africa",
+    "url": "https://therealjameswilson.github.io/NorthAfrica-89-92/",
+    "background": false
+  },
+  {
+    "id": "Bush41-LatAm",
+    "period": "1989–1992",
+    "kind": "Workspace",
+    "title": "XXV — South America",
+    "url": "https://therealjameswilson.github.io/Bush41-LatAm/",
+    "background": false
+  },
+  {
+    "id": "Bush41-drugs-thugs",
+    "period": "1989–1992",
+    "kind": "Workspace",
+    "title": "XXVIII — Drugs and Terrorism",
+    "url": "https://therealjameswilson.github.io/Bush41-drugs-thugs/",
+    "background": false
+  },
+  {
+    "id": "global-issues-89-92",
+    "period": "1989–1992",
+    "kind": "Workspace",
+    "title": "XXIX — Global Issues",
+    "url": "https://therealjameswilson.github.io/global-issues-89-92/",
+    "background": false
+  },
+  {
+    "id": "Clinton-Foundations",
+    "period": "1993–2000",
+    "kind": "Workspace",
+    "title": "I — Foundations",
+    "url": "https://therealjameswilson.github.io/Clinton-Foundations/",
+    "background": false
+  },
+  {
+    "id": "Clinton-NSP",
+    "period": "1993–2000",
+    "kind": "Workspace",
+    "title": "VI — National Security Policy",
+    "url": "https://therealjameswilson.github.io/Clinton-NSP/",
+    "background": false
+  },
+  {
+    "id": "Clinton-armscontrol-93-96",
+    "period": "1993–2000",
+    "kind": "Workspace",
+    "title": "VII — Arms Control",
+    "url": "https://therealjameswilson.github.io/Clinton-armscontrol-93-96/",
+    "background": false
+  },
+  {
+    "id": "armscontrol-97-2000",
+    "period": "1993–2000",
+    "kind": "Workspace",
+    "title": "VIII — Arms Control",
+    "url": "https://therealjameswilson.github.io/armscontrol-97-2000/",
+    "background": false
+  },
+  {
+    "id": "Clinton-PublicDiplomacy-93-00",
+    "period": "1993–2000",
+    "kind": "Workspace",
+    "title": "XIV — Public Diplomacy",
+    "url": "https://therealjameswilson.github.io/Clinton-PublicDiplomacy-93-00/",
+    "background": false
+  },
+  {
+    "id": "Balkans-93-95",
+    "period": "1993–2000",
+    "kind": "Workspace",
+    "title": "XV — Balkans",
+    "url": "https://therealjameswilson.github.io/Balkans-93-95/",
+    "background": false
+  },
+  {
+    "id": "Clinton-NATO-European-Security",
+    "period": "1993–2000",
+    "kind": "Workspace",
+    "title": "XVII — NATO and European Security",
+    "url": "https://therealjameswilson.github.io/Clinton-NATO-European-Security/",
+    "background": false
+  },
+  {
+    "id": "Clinton-Russia-High-Level",
+    "period": "1993–2000",
+    "kind": "Workspace",
+    "title": "XVIII — Russia",
+    "url": "https://therealjameswilson.github.io/Clinton-Russia-High-Level/",
+    "background": false
+  },
+  {
+    "id": "Clinton-Europe",
+    "period": "1993–2000",
+    "kind": "Workspace",
+    "title": "XXII–XXIV — Europe",
+    "url": "https://therealjameswilson.github.io/Clinton-Europe/",
+    "background": false
+  },
+  {
+    "id": "Clinton-South-and-Southern-Africa",
+    "period": "1993–2000",
+    "kind": "Workspace",
+    "title": "XXVII — Southern Africa",
+    "url": "https://therealjameswilson.github.io/Clinton-South-and-Southern-Africa/",
+    "background": false
+  },
+  {
+    "id": "Clinton-CentralAmerica",
+    "period": "1993–2000",
+    "kind": "Workspace",
+    "title": "XXXII — Central America",
+    "url": "https://therealjameswilson.github.io/Clinton-CentralAmerica/",
+    "background": false
+  }
+]
