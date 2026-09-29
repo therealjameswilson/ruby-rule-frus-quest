@@ -1,7 +1,7 @@
 import { playPaperFoley, type PaperAction } from "./paperFoley";
 import { footstepSurface, playFootstep } from "./footsteps";
 import { RoomAmbience, ambienceForScene } from "./roomAmbience";
-import { ORIGINAL_SCORE, scoreEventsAtStep, type ScoreTheme } from "./originalScore";
+import { ORIGINAL_SCORE, scoreEventsAtStep, readingScoreEvents, type ScoreTheme } from "./originalScore";
 import { readAudioMix, saveAudioMix, type AudioChannel } from "./audioMix";
 import { setAudioStatus } from "../game/state";
 import type { ProcessItemId } from "../game/constants";
@@ -534,10 +534,12 @@ class RetroAudio {
   }
 
   private playMusicStep(theme: MidiTheme, at: number) {
-    for (const event of scoreEventsAtStep(theme, this.musicStep)) {
+    const reading = this.readingMixHolds.size > 0;
+    const events = scoreEventsAtStep(theme, this.musicStep);
+    for (const event of reading ? readingScoreEvents(events) : events) {
       this.scoreVoice?.play(midiToFrequency(event.note), at + event.offset, event.duration, event.volume, event.part);
     }
-    if (theme.pulse) this.scoreVoice?.pulse(this.musicStep % 8, at, theme.stepMs / 1000);
+    if (theme.pulse && !reading) this.scoreVoice?.pulse(this.musicStep % 8, at, theme.stepMs / 1000);
     this.musicStep += 1;
   }
 

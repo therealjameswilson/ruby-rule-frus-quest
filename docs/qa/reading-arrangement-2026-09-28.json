@@ -1,0 +1,58 @@
+{
+  "report": [
+    {
+      "reading": false,
+      "duringParts": [
+        "bell",
+        "bass",
+        "pad"
+      ],
+      "duringPulses": 31,
+      "partsAfterResume": [
+        "bell",
+        "bass",
+        "pad",
+        "counter"
+      ],
+      "pulsesAfterResume": 2,
+      "step": 32,
+      "continuedStep": 34,
+      "readingReleased": true,
+      "peak": 0.31646043062210083,
+      "rms": 0.05493604670229718
+    },
+    {
+      "reading": true,
+      "duringParts": [
+        "bass",
+        "pad"
+      ],
+      "duringPulses": 0,
+      "partsAfterResume": [
+        "bass",
+        "pad",
+        "bell",
+        "counter"
+      ],
+      "pulsesAfterResume": 2,
+      "step": 32,
+      "continuedStep": 34,
+      "readingReleased": true,
+      "peak": 0.09881831705570221,
+      "rms": 0.02384159383631507
+    }
+  ],
+  "suppression": {
+    "parts": [
+      "bass",
+      "bass",
+      "pad",
+      "pad"
+    ],
+    "beats": 0,
+    "step": 9
+  },
+  "nativeDeskAcquiresAndReleases": true,
+  "errors": [],
+  "limitations": "Live instrument and waveform checks; not human listening or physical-device verification."
+}
