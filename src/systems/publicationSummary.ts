@@ -1,3 +1,4 @@
+import { retroAudio } from "./audio";
 import { publicationBackdrop } from "./publicationBackdrop";
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
@@ -28,11 +29,13 @@ export class PublicationSummary {
   private readonly content: Phaser.GameObjects.Container;
   private page: PublicationSummaryPage = "volume";
   private selected = 0;
+  private releaseReadingMix?: () => void;
   private buttons: Phaser.GameObjects.Rectangle[] = [];
 
   constructor(private readonly scene: Phaser.Scene, private readonly options: PublicationSummaryOptions) {
     this.content = scene.add.container(0, 0).setDepth(4000).setScrollFactor(0);
     this.draw();
+    scene.events.once("shutdown", () => this.clearReadingMix());
   }
 
   update(input: Readonly<InputState>) {
@@ -40,10 +43,11 @@ export class PublicationSummary {
     if (input.navLeftJustPressed || input.navRightJustPressed) {
       this.selected = 1 - this.selected;
       this.highlightButtons();
+      retroAudio.deskNavigate();
     }
     if (input.cancelJustPressed || input.bJustPressed) {
       if (this.page !== "volume") this.showPage("volume");
-    } else if (input.aJustPressed || input.startJustPressed) {
+    } else if (input.aJustPressed || input.confirmJustPressed || input.startJustPressed) {
       this.activate(this.selected);
     }
   }
@@ -52,6 +56,7 @@ export class PublicationSummary {
     if (!this.options.canAct()) return;
     if (index === 1) {
       swallowNextInputFrame();
+      this.clearReadingMix();
       this.options.onTitle();
       return;
     }
@@ -67,9 +72,17 @@ export class PublicationSummary {
 
   private showPage(page: PublicationSummaryPage) {
     swallowNextInputFrame();
+    if (page === "volume") this.clearReadingMix();
+    else this.releaseReadingMix ??= retroAudio.holdReadingMix();
+    retroAudio.deskNavigate();
     this.page = page;
     this.selected = 0;
     this.draw();
+  }
+
+  private clearReadingMix() {
+    this.releaseReadingMix?.();
+    this.releaseReadingMix = undefined;
   }
 
   private text(x: number, y: number, value: string, size = 8, tint: string = PALETTE.creamPaper, origin = 0.5) {

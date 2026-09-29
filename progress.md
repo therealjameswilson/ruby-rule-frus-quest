@@ -8885,3 +8885,11 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 - AddedReaderspage afterProcess explaining declassifiedprintedtext, stillrestrictedsourcefiles, visibleexcisions and wholewithhelddocuments withchronology/headings/sourcenotes/pagecount. Sharednormal/certificate routes; noassignedspecificvolume.
 -28tests acrosssummary/ending/trueending,typecheck/build pass. Three-layout earnedpublication-save replay validatesnewpage textbounds, navigation,Title/Continue andpersistedcertification, nobrowsererrors. Inspectedphonecompositor. StandardclientOffice statepass. Evidence docs/qa/publication-readers-2026-09-28.{md,json}; raw/tmp/frus-publication-readers-final; build/tmp/frus-publication-readers-final-build. Localonly,notpublished.
 - Fullgoalactive. Nextbroader audiovisual/teachingreview; physicaldevices,humanlistening andnovicecomprehension remainunverified.
+
+## 2026-09-28 — ending reading mix and accurate page state
+- Previous goal turn progressed with493d920 reader-facing publication explanation. Reviewedcontrols/pacing and found newReaderspage fellthrough torecord textstate; correctedbothendingcallbacks andProcessnextbutton.
+- PublicationSummary nowacceptsconfirm,usesquietnavigationfeedback andacquiresonereadingmixlease acrossdetailpages; releasesonvolume,Title,shutdown. Testsprotectlease reuse/idempotentcleanup.30focusedtests/typecheck/buildpass.
+- FreshVite5240 session66649 avoidsHMRaudioinstances. Three-layout earnedpublication replay withFRUS_QA_AUDIO=1 verifiesmixholds/release andcorrectreaderstate,Title/Continue,nopageerrors. Standardclient andphonecompositor inspected. docs/qa/publication-reading-mix-2026-09-28.{md,json}; build/tmp/frus-publication-reading-build. No deployment.
+- Next broaderaudiovisual/teachingreview. Fullgoalactive; physicaldevices,humanlistening andnovicecomprehension unverified.
+
+- Final full source suite passed: 287 files / 2145 tests; /tmp/frus-publication-reading-tests.log.
