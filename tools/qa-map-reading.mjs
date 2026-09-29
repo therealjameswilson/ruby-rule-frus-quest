@@ -17,6 +17,13 @@ try{
  await page.evaluate(t=>window.game.scene.getScene('GameplayMapScene').showMapDialog(t.label,t.text),t);
  await page.waitForTimeout(260);
  assert.equal(await page.locator('.map-reading-desk [data-explanation]').textContent(),Array.isArray(t.text)?t.text[0]:t.text);
+ // Read to the end before continuing; long explanations must be reachable.
+ for(let step=0;step<8;step++){
+  const unread=await page.evaluate(()=>{const r=document.querySelector('.map-reading-desk');return r.querySelector('[data-explanation]').getBoundingClientRect().bottom-r.querySelector('.manuscript-body').getBoundingClientRect().bottom;});
+  if(unread<=4)break;
+  await page.keyboard.press('ArrowDown');
+ }
+ assert(await page.evaluate(()=>{const r=document.querySelector('.map-reading-desk');return r.querySelector('[data-explanation]').getBoundingClientRect().bottom<=r.querySelector('.manuscript-body').getBoundingClientRect().bottom+4;}),'The end of the explanation must be reachable');
  const snapshot=await page.evaluate(()=>{
  const root=document.querySelector('.map-reading-desk'),title=root.querySelector('h1'),leave=root.querySelector('[data-focus-key=leave]');
  const box=e=>{const r=e.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height};};

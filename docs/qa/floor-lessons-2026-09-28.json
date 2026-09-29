@@ -1,0 +1,86 @@
+{
+  "scope": "20 real map-text presentation cases plus trigger/input/lifecycle fixtures; no earned progression",
+  "rows": [
+    {
+      "layout": "phone",
+      "label": "Research"
+    },
+    {
+      "layout": "phone",
+      "label": "Compilation"
+    },
+    {
+      "layout": "phone",
+      "label": "Declassification Review"
+    },
+    {
+      "layout": "phone",
+      "label": "Annotation"
+    },
+    {
+      "layout": "phone",
+      "label": "Publication"
+    },
+    {
+      "layout": "small",
+      "label": "Research"
+    },
+    {
+      "layout": "small",
+      "label": "Compilation"
+    },
+    {
+      "layout": "small",
+      "label": "Declassification Review"
+    },
+    {
+      "layout": "small",
+      "label": "Annotation"
+    },
+    {
+      "layout": "small",
+      "label": "Publication"
+    },
+    {
+      "layout": "landscape",
+      "label": "Research"
+    },
+    {
+      "layout": "landscape",
+      "label": "Compilation"
+    },
+    {
+      "layout": "landscape",
+      "label": "Declassification Review"
+    },
+    {
+      "layout": "landscape",
+      "label": "Annotation"
+    },
+    {
+      "layout": "landscape",
+      "label": "Publication"
+    },
+    {
+      "layout": "desktop",
+      "label": "Research"
+    },
+    {
+      "layout": "desktop",
+      "label": "Compilation"
+    },
+    {
+      "layout": "desktop",
+      "label": "Declassification Review"
+    },
+    {
+      "layout": "desktop",
+      "label": "Annotation"
+    },
+    {
+      "layout": "desktop",
+      "label": "Publication"
+    }
+  ],
+  "errors": []
+}
