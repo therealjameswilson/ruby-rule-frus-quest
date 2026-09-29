@@ -8725,3 +8725,10 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 - Production-preview touch-only earned replay passed saved treatment reload, filing, bracket press, Concurrence Slip, no duplicate reward and proofing arrival without errors. Process handle expired before final poll; completed result.json and final earned storage verified directly.
 - Evidence docs/qa/native-referral-treatment-2026-09-28.{md,json} and native-treatment-earned-2026-09-28.json. Earned checkpoint /tmp/frus-native-treatment-earned/earned-storage.json, origin5221.
 - Local only, not published. Full goal active. Physical hardware, human listening and novice comprehension remain unverified.
+
+## 2026-09-28 — publish readable research desks
+- Previous turn progressed with ebfbe02 referral treatment. User explicitly requested publishing.
+- PR136 merged as d61295012ae36e95e63cd1f8f49624dbbb37031a; Pages run36503204494 succeeded. Includes all eight local gameplay commits since PR135.
+- Local build stalled clearing old dist assets; stopped that build and built unchanged source into fresh /tmp/frus-pages-release-0928 successfully. GitHub clean production build also succeeded.
+- Public index HTML, JS and CSS match fresh Pages-base build byte-for-byte. Public treatment fixture passed desktop, portrait and landscape with touch/keyboard/simulated controller and no browser errors. Evidence /tmp/frus-public-release-0928.json and /tmp/frus-public-treatment-0928/result.json.
+- Physical hardware and human listening/comprehension remain unverified; broad game goal remains active.
