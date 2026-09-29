@@ -1,0 +1,53 @@
+{
+  "scope": "Native SOP decision fixtures; earned route checked separately",
+  "results": [
+    {
+      "name": "desktop",
+      "tasks": [
+        "plan",
+        "research",
+        "first_review",
+        "second_review",
+        "front_matter",
+        "joint_historian",
+        "submission"
+      ],
+      "nativeTouch": true,
+      "keyboardController": true,
+      "cancelAndShutdown": true,
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "tasks": [
+        "plan",
+        "research",
+        "first_review",
+        "second_review",
+        "front_matter",
+        "joint_historian",
+        "submission"
+      ],
+      "nativeTouch": true,
+      "keyboardController": true,
+      "cancelAndShutdown": true,
+      "errors": []
+    },
+    {
+      "name": "landscape",
+      "tasks": [
+        "plan",
+        "research",
+        "first_review",
+        "second_review",
+        "front_matter",
+        "joint_historian",
+        "submission"
+      ],
+      "nativeTouch": true,
+      "keyboardController": true,
+      "cancelAndShutdown": true,
+      "errors": []
+    }
+  ]
+}

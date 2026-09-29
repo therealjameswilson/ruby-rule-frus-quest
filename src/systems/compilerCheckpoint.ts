@@ -32,7 +32,7 @@ export function runCompilerCheckpoint(choice: ChoicePrompt, dialog: DialogBox, c
     } else if (task.id === "revision") {
       choice.showRevisionDesk(gameState.sceneProgress, saveGameNow, () => submit("revise"), cancel);
     } else {
-      choice.show(`${task.question}\n\n${task.context}`, [...task.options], option => submit(option.value), 8, cancel);
+      choice.showCompilerDecision(task, option => submit(option.value), cancel);
     }
   };
   showNext();

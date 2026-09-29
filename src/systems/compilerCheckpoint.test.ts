@@ -10,17 +10,17 @@ vi.mock("./save", () => ({ saveGameNow: vi.fn() }));
 beforeEach(() => { resetGameState(); vi.clearAllMocks(); setSceneState("OfficeScene", "explore", "PLAN"); });
 
 it("saves each accepted task, retries mistakes, and completes only its checkpoint", () => {
-  const showChoice = vi.fn<ChoicePrompt["show"]>();
+  const showChoice = vi.fn<ChoicePrompt["showCompilerDecision"]>();
   const showDialog = vi.fn<DialogBox["show"]>();
   const done = vi.fn();
-  const choice = { show: showChoice } as unknown as ChoicePrompt;
+  const choice = { showCompilerDecision: showChoice } as unknown as ChoicePrompt;
   const dialog = { show: showDialog } as unknown as DialogBox;
   runCompilerCheckpoint(choice, dialog, "research_plan", done);
-  showChoice.mock.lastCall![2]({ key: "A", label: "Wrong", value: "publish" });
+  showChoice.mock.lastCall![1]({ key: "A", label: "Wrong", value: "publish" });
   expect(saveGameNow).not.toHaveBeenCalled();
   showDialog.mock.lastCall![2]?.();
   for (const task of COMPILER_TASKS.slice(0, 2)) {
-    showChoice.mock.lastCall![2](task.options.find(option => option.value === task.correct)!);
+    showChoice.mock.lastCall![1](task.options.find(option => option.value === task.correct)!);
     expect(done).not.toHaveBeenCalled();
     showDialog.mock.lastCall![2]?.();
   }
@@ -45,8 +45,8 @@ it("lets an old assigned save finish both reviews without a required library pac
   const showDesk=vi.fn<ChoicePrompt['showManuscriptDesk']>();
   const showChapter=vi.fn<ChoicePrompt['showChapterDesk']>();
   const showRevision=vi.fn<ChoicePrompt['showRevisionDesk']>();
-  const showChoice=vi.fn<ChoicePrompt['show']>();const showDialog=vi.fn<DialogBox['show']>();const done=vi.fn();
-  runCompilerCheckpoint({show:showChoice, showManuscriptDesk:showDesk,showChapterDesk:showChapter,showRevisionDesk:showRevision} as unknown as ChoicePrompt,{show:showDialog} as unknown as DialogBox,'review_submission',done);
+  const showChoice=vi.fn<ChoicePrompt['showCompilerDecision']>();const showDialog=vi.fn<DialogBox['show']>();const done=vi.fn();
+  runCompilerCheckpoint({showCompilerDecision:showChoice, showManuscriptDesk:showDesk,showChapterDesk:showChapter,showRevisionDesk:showRevision} as unknown as ChoicePrompt,{show:showDialog} as unknown as DialogBox,'review_submission',done);
   expect(showDesk).toHaveBeenCalledOnce();
   showDesk.mock.lastCall![2]();
   showDialog.mock.lastCall![2]?.();
@@ -55,8 +55,8 @@ it("lets an old assigned save finish both reviews without a required library pac
   showDialog.mock.lastCall![2]?.();
   for(const task of COMPILER_TASKS.slice(4)){
     if(task.id==="revision"){expect(showRevision).toHaveBeenCalledOnce();showRevision.mock.lastCall![2]();showDialog.mock.lastCall![2]?.();continue;}
-    expect(showChoice.mock.lastCall![0]).toContain(task.question);
-    showChoice.mock.lastCall![2](task.options.find(o=>o.value===task.correct)!);
+    expect(showChoice.mock.lastCall![0].question).toBe(task.question);
+    showChoice.mock.lastCall![1](task.options.find(o=>o.value===task.correct)!);
     showDialog.mock.lastCall![2]?.();
   }
   expect(done).toHaveBeenCalledExactlyOnceWith();

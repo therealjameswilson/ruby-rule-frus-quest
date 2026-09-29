@@ -1,0 +1,11 @@
+.compiler-decision-desk .manuscript-panel{max-width:900px}
+.compiler-decision-desk .manuscript-body{display:block}
+.compiler-decision-desk .manuscript-heading h1{font-size:32px;line-height:1.2;max-width:650px;padding-right:90px}
+.compiler-decision-content{padding:24px 32px}
+.compiler-decision-context{font-size:18px;line-height:1.6;color:#d7e4df;margin:0 0 24px;padding:16px 20px;border-left:3px solid #dfc078;background:#21373b}
+.compiler-decision-options{display:grid;gap:16px}
+.compiler-decision-options button{min-height:60px;width:100%;padding:20px;text-align:left;border:1px solid #82938b;border-radius:14px;background:#263a3c;color:#f8efd9;font:600 20px/1.45 system-ui;cursor:pointer}
+.compiler-decision-desk .manuscript-close{min-height:48px}
+@media(max-width:760px){.compiler-decision-desk .manuscript-heading h1{font-size:24px;padding-right:0}.compiler-decision-desk .manuscript-eyebrow{padding-right:80px}.compiler-decision-content{padding:20px 22px}.compiler-decision-context{font-size:16px;padding:12px 16px}.compiler-decision-options button{font-size:18px;padding:17px}.compiler-decision-desk .manuscript-footer{padding:16px 22px}}
+@media(max-height:500px) and (min-width:700px){.compiler-decision-desk .manuscript-heading h1{font-size:23px}.compiler-decision-content{padding:16px 20px}.compiler-decision-context{font-size:16px}}
+@media(max-width:760px){.compiler-decision-desk .manuscript-eyebrow{min-height:32px}}

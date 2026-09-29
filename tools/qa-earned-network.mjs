@@ -64,10 +64,21 @@ try{
   await tapElement('.manuscript-close');await hold('ArrowRight',200);await page.waitForSelector('.manuscript-desk');
   assert.equal((await state()).compilerMission.selectionDesk.pages,1320);await shot('selection-restored');
  }
- await completeCompilerCheckpoint(page,mobile);
+ const reviewTrace=[];const seen=new Set();
+ await completeCompilerCheckpoint(page,mobile,async current=>{
+  const native=await page.locator('.manuscript-desk h1').allTextContents();
+  const title=current.choice?.title??native[0];if(!title||seen.has(title))return;seen.add(title);
+  const name='checkpoint-'+String(reviewTrace.length+1).padStart(2,'0');
+  reviewTrace.push({name,title,mode:current.mode,workflow:current.volumeWorkflowState,mission:current.compilerMission});
+  await shot(name);
+ });
+ await writeFile(`${out}/review-trace.json`,JSON.stringify(reviewTrace,null,2));
  if((await state()).scene==='ArchiveScene')await hold('ArrowRight',1000);
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='NetworkScene');
  await page.waitForTimeout(800);await shot('network');
+ const handoff=await state();
+ for(const id of ['first_review','second_review','revision','front_matter','joint_historian','submission'])assert.equal(handoff.sceneProgress['compilerSop_'+id],1,id+' must be completed');
+ assert(!handoff.sceneProgress.finalGatePublished,'Editorial submission must not grant publication');
 
  await context.storageState({path:`${out}/earned-storage.json`});
  await writeFile(`${out}/result.json`,JSON.stringify({mobile,earnedSupportingDocuments:true,manuscriptHandoff:(await state()).compilerMission,networkReached:true,errors},null,2));
