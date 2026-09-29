@@ -453,7 +453,7 @@ export class GameplayMapScene extends Phaser.Scene {
       left: this.fitRect.x + 30,
       right: this.fitRect.x + this.fitRect.width - 30,
       top: TOP_SAFE_BAND + 14,
-      bottom: this.mapKey === "frus_floor" ? this.frusFloorRailY() - 34 : undefined
+      bottom: this.mapKey === "frus_floor" ? this.frusFloorRailY() - 58 : undefined
     }, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
     const actionBadge = getPrimaryActionBadge();
     this.hintText.setText(nearest
@@ -3409,7 +3409,7 @@ export class GameplayMapScene extends Phaser.Scene {
     const showRoutes = !this.danneEnemies.some((enemy) => !enemy.defeated)
       && !hasPendingEncounterWaves(this.danneWaves);
     for (const object of this.snesFlowPlaque) {
-      (object as Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Visible).setVisible(showRoutes);
+      (object as Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Visible).setVisible(showRoutes && this.mapKey !== "frus_floor");
     }
     for (const objects of this.doorRouteBadges.values()) {
       for (const object of objects) {
@@ -3692,52 +3692,25 @@ export class GameplayMapScene extends Phaser.Scene {
 
   private drawFrusFloorGateCountPlaque(context: FrusProductionFloorGateContext, railY: number) {
     const count = frusProductionFloorGateCount(context);
-    const x = snapPixel(this.fitRect.x + this.fitRect.width - 42);
-    const y = snapPixel(railY - 43);
-    const fill = count.complete === count.total ? PALETTE.openNetGreen : PALETTE.deepRuby;
+    const next = frusProductionFloorNextGate(context);
+    const nextAction: Record<string, string> = {
+      "1": "VERIFY SOURCES", "2": "SELECT RECORDS", "3": "REVIEW EQUITIES",
+      "4": "CHECK ANNOTATION", "5": "BIND THE VOLUME"
+    };
+    const x = snapPixel(this.fitRect.x + this.fitRect.width / 2);
+    const y = snapPixel(railY - 39);
     this.frusFloorGateStatusObjects.push(
-      this.add.rectangle(x + 1, y + 1, 47, 14, color(PALETTE.black), 0.56)
-        .setName("frus-production-gate-count-shadow")
-        .setDepth(railY + 23),
-      this.add.rectangle(x, y, 47, 14, color(fill), count.complete === count.total ? 0.88 : 0.94)
-        .setStrokeStyle(1, color(PALETTE.goldStamp), 0.96)
-        .setName("frus-production-gate-count-card")
-        .setData("complete", count.complete)
-        .setData("total", count.total)
-        .setDepth(railY + 24),
-      this.add.text(x - 13, y - 5, `${count.complete}/${count.total}`, {
-        fontFamily: "monospace",
-        fontSize: "6px",
-        color: PALETTE.paleGold,
-        align: "center"
-      }).setOrigin(0.5, 0)
-        .setName("frus-production-gate-count-label")
-        .setData("complete", count.complete)
-        .setData("total", count.total)
-        .setDepth(railY + 25),
-      this.add.text(x + 11, y - 4, "GATE", {
-        fontFamily: "monospace",
-        fontSize: "4px",
-        color: PALETTE.creamPaper,
-        align: "center"
-      }).setOrigin(0.5, 0)
-        .setName("frus-production-gate-count-title")
-        .setData("complete", count.complete)
-        .setData("total", count.total)
-        .setDepth(railY + 25)
+      this.add.rectangle(x, y, 198, 17, color(PALETTE.shadowNavy), .96)
+        .setStrokeStyle(1, color(PALETTE.goldStamp))
+        .setName("frus-production-gate-count-card").setData("complete", count.complete)
+        .setData("total", count.total).setDepth(railY + 24),
+      this.add.text(x - 92, y - 4, `${count.complete}/${count.total}`, {
+        fontFamily: "monospace", fontSize: "7px", color: PALETTE.paleGold
+      }).setName("frus-production-gate-count-label").setDepth(railY + 25),
+      this.add.text(x - 64, y - 4, next ? `NEXT: ${nextAction[next.code]}` : "TO PUBLICATION GATE", {
+        fontFamily: "monospace", fontSize: "6px", color: PALETTE.creamPaper
+      }).setName("frus-production-next-gate-label").setDepth(railY + 25)
     );
-    for (let index = 0; index < count.total; index++) {
-      const pipX = snapPixel(x - 13 + index * 6);
-      const pipY = snapPixel(y + 5);
-      const complete = index < count.complete;
-      this.frusFloorGateStatusObjects.push(
-        this.add.rectangle(pipX, pipY, 4, 2, color(complete ? PALETTE.terminalCyan : PALETTE.stoneGray), complete ? 0.95 : 0.45)
-          .setName("frus-production-gate-count-pip")
-          .setData("pipIndex", index)
-          .setData("complete", complete)
-          .setDepth(railY + 26)
-      );
-    }
   }
 
   private drawFrusFloorNextGateMarker(
@@ -3745,70 +3718,18 @@ export class GameplayMapScene extends Phaser.Scene {
     railY: number
   ) {
     const nodeX = snapPixel(this.fitRect.x + this.fitRect.width * gate.xRatio);
-    const centerX = this.fitRect.x + this.fitRect.width / 2;
-    const labelX = Math.abs(nodeX - centerX) < 44
-      ? nodeX + (nodeX < centerX ? -42 : 42)
-      : nodeX;
-    const x = snapPixel(Phaser.Math.Clamp(labelX, this.fitRect.x + 22, this.fitRect.x + this.fitRect.width - 22));
-    const y = snapPixel(railY - 31);
     this.frusFloorGateStatusObjects.push(
-      this.add.rectangle(x + 1, y + 1, 42, 11, color(PALETTE.black), 0.54)
-        .setName("frus-production-next-gate-shadow")
-        .setDepth(railY + 24),
-      this.add.rectangle(x, y, 42, 11, color(PALETTE.deepRuby), 0.94)
-        .setStrokeStyle(1, color(gate.accent), 0.94)
-        .setName("frus-production-next-gate-card")
-        .setData("gateCode", gate.code)
-        .setDepth(railY + 25),
-      this.add.text(x, y - 4, `NEXT ${gate.requirement}`, {
-        fontFamily: "monospace",
-        fontSize: gate.requirement.length > 3 ? "4px" : "5px",
-        color: gate.accent,
-        align: "center"
-      }).setName("frus-production-next-gate-label")
-        .setData("gateCode", gate.code)
-        .setOrigin(0.5, 0)
-        .setDepth(railY + 26),
-      this.add.triangle(nodeX, railY - 20, -3, -3, 3, -3, 0, 4, color(gate.accent), 0.96)
-        .setName("frus-production-next-gate-arrow")
-        .setData("gateCode", gate.code)
-        .setDepth(railY + 25)
+      this.add.triangle(nodeX, railY - 20, -3, -3, 3, -3, 0, 4, color(gate.accent), .96)
+        .setName("frus-production-next-gate-arrow").setData("gateCode", gate.code).setDepth(railY + 25)
     );
-    this.drawFrusFloorGateToolIcon(gate, x + 27, y);
   }
 
   private drawFrusFloorReadyGateMarker(railY: number) {
     const readyGate = this.frusFloorReadyGateRouteTarget();
     const nodeX = snapPixel(this.fitRect.x + this.fitRect.width * readyGate.xRatio);
-    const x = snapPixel(Phaser.Math.Clamp(nodeX - 27, this.fitRect.x + 26, this.fitRect.x + this.fitRect.width - 26));
-    const y = snapPixel(railY - 31);
     this.frusFloorGateStatusObjects.push(
-      this.add.rectangle(x + 1, y + 1, 52, 11, color(PALETTE.black), 0.54)
-        .setName("frus-production-ready-gate-shadow")
-        .setData("gateCode", readyGate.code)
-        .setDepth(railY + 24),
-      this.add.rectangle(x, y, 52, 11, color(PALETTE.openNetGreen), 0.88)
-        .setStrokeStyle(1, color(PALETTE.goldStamp), 0.96)
-        .setName("frus-production-ready-gate-card")
-        .setData("gateCode", readyGate.code)
-        .setDepth(railY + 25),
-      this.add.rectangle(nodeX, railY - 20, 20, 3, color(PALETTE.goldStamp), 0.86)
-        .setName("frus-production-ready-gate-glow")
-        .setData("gateCode", readyGate.code)
-        .setDepth(railY + 24),
-      this.add.text(x, y - 4, "GATE READY", {
-        fontFamily: "monospace",
-        fontSize: "4px",
-        color: PALETTE.paleGold,
-        align: "center"
-      }).setName("frus-production-ready-gate-label")
-        .setData("gateCode", readyGate.code)
-        .setOrigin(0.5, 0)
-        .setDepth(railY + 26),
-      this.add.triangle(nodeX, railY - 20, -3, -3, 3, -3, 0, 4, color(PALETTE.goldStamp), 0.96)
-        .setName("frus-production-ready-gate-arrow")
-        .setData("gateCode", readyGate.code)
-        .setDepth(railY + 25)
+      this.add.triangle(nodeX, railY - 20, -3, -3, 3, -3, 0, 4, color(PALETTE.goldStamp), .96)
+        .setName("frus-production-ready-gate-arrow").setData("gateCode", readyGate.code).setDepth(railY + 25)
     );
   }
 
@@ -3890,10 +3811,6 @@ export class GameplayMapScene extends Phaser.Scene {
     const x = snapPixel(this.fitRect.x + this.fitRect.width * step.xRatio);
     const y = this.frusFloorRailY();
     const accent = color(step.accent);
-    const label = `NOW ${step.shortLabel}`;
-    const centerX = this.fitRect.x + this.fitRect.width / 2;
-    const sideOffset = x <= centerX ? 43 : -43;
-    const taskX = snapPixel(Phaser.Math.Clamp(x + sideOffset, this.fitRect.x + 33, this.fitRect.x + this.fitRect.width - 33));
     this.frusFloorCurrentStageObjects.push(
       this.add.ellipse(x, y + 2, 22, 13, color(PALETTE.black), 0.42)
         .setName("frus-production-current-stage-shadow")
@@ -3904,27 +3821,7 @@ export class GameplayMapScene extends Phaser.Scene {
         .setDepth(y + 18),
       this.add.triangle(x, y - 15, -4, -4, 4, -4, 0, 4, accent, 0.96)
         .setName("frus-production-current-stage-arrow")
-        .setDepth(y + 19),
-      this.add.rectangle(x, y + 22, 27, 9, color(PALETTE.black), 0.84)
-        .setStrokeStyle(1, accent, 0.92)
-        .setName("frus-production-current-stage-card")
-        .setDepth(y + 20),
-      this.add.text(x, y + 18, label, {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: step.accent,
-        align: "center"
-      }).setName("frus-production-current-stage-label").setOrigin(0.5, 0).setDepth(y + 21),
-      this.add.rectangle(taskX, y + 34, 64, 10, color(PALETTE.black), 0.88)
-        .setStrokeStyle(1, accent, 0.9)
-        .setName("frus-production-current-task-card")
-        .setDepth(y + 20),
-      this.add.text(taskX, y + 30, step.taskLabel, {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: step.accent,
-        align: "center"
-      }).setName("frus-production-current-task-label").setOrigin(0.5, 0).setDepth(y + 21)
+        .setDepth(y + 19)
     );
   }
 

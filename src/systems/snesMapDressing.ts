@@ -562,21 +562,6 @@ function drawFrusProductionFloorRail(scene: Phaser.Scene, fitRect: FitRectLike) 
     drawRailArrow(scene, Math.round((start.x + end.x) / 2), start.y, end.x > start.x ? 1 : -1);
   }
 
-  const titleX = Math.round(fitRect.x + fitRect.width / 2);
-  scene.add.rectangle(titleX + 1, railY - 19, 91, 12, color(PALETTE.black), 0.48)
-    .setName("frus-production-flow-title-shadow")
-    .setDepth(-5);
-  scene.add.rectangle(titleX, railY - 20, 91, 12, color(PALETTE.deepRuby), 0.9)
-    .setStrokeStyle(1, color(PALETTE.goldStamp), 0.88)
-    .setName("frus-production-flow-title-card")
-    .setDepth(-4);
-  scene.add.text(titleX, railY - 24, "FRUS VOLUME PATH", {
-    fontFamily: "monospace",
-    fontSize: "6px",
-    color: PALETTE.creamPaper,
-    align: "center"
-  }).setName("frus-production-flow-title").setOrigin(0.5, 0).setDepth(-3);
-
   for (const node of nodes) drawProductionNode(scene, node.step, node.x, node.y);
 }
 
