@@ -8732,3 +8732,16 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 - Local build stalled clearing old dist assets; stopped that build and built unchanged source into fresh /tmp/frus-pages-release-0928 successfully. GitHub clean production build also succeeded.
 - Public index HTML, JS and CSS match fresh Pages-base build byte-for-byte. Public treatment fixture passed desktop, portrait and landscape with touch/keyboard/simulated controller and no browser errors. Evidence /tmp/frus-public-release-0928.json and /tmp/frus-public-treatment-0928/result.json.
 - Physical hardware and human listening/comprehension remain unverified; broad game goal remains active.
+
+## 2026-09-28 — 30-second gameplay preview
+- Created artifacts/gameplay-preview/Ruby-Rule-30-Second-Preview.mp4 from public d612950 footage: opening mission, Kathy, outdoor movement, DANN-E, proof correction and earned published-volume screen. Clear explanatory side captions and original procedural instrumental score.
+- Exactly 30.000 seconds, 1920x1080 H.264/AAC, 30fps/900frames, about6.5MB. Final six-shot contact sheet visually inspected; no capture page errors; measured audio peak below clipping.
+- Edited/staged montage, not continuous playthrough; native proof screen opened for demonstration, final publication restored from earned checkpoint. No game runtime changes and no publication requested for the video.
+
+## 2026-09-28 — readable archival source-note evidence
+- Previous turn progressed by producing and verifying the requested 30-second gameplay preview; broad game goal remains active.
+- Re-read both supplied official FRUS reference pages. Converted SourceNoteBoard to native SourceNoteDesk with distinct fictional locator and draft readership claim, persistent evidence limit, explicit unknown metadata and deliberate filing. No volume assignment or invented source metadata. Existing source-note correction/review gates preserved.
+- 286 files / 2124 tests, typecheck and fresh-directory build pass. Initial missing Phaser mock fixed; root scan of stale generated dist avoided with full --dir src suite. Removed a CSS selector collision with the existing library source-note screen.
+- Four layouts including 320-wide phone passed touch/keyboard/simulated controller, unsupported filing rejection, separate correction/file, restoration and cleanup. Final compositor screenshots inspected; standard client state inspected with known black native capture limitation.
+- Dev replay interrupted by HMR, not counted. Fixed production touch-only replay from earned fresh-opening save passed source trail, correction, human review, stamp/wall gate, Annotation Stacks entry, reload and movement; errors empty. New save /tmp/frus-native-source-earned-production/earned-storage.json origin5223.
+- Evidence docs/qa/native-source-note-2026-09-28.{md,json} and native-source-note-earned-2026-09-28.json. Local only; not published. Physical hardware, human listening and novice learning remain unverified.

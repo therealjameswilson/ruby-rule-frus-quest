@@ -1,0 +1,41 @@
+{
+  "scope": "Bounded source-note UI fixtures; not earned progression",
+  "results": [
+    {
+      "name": "desktop",
+      "evidenceLimits": true,
+      "separateFiling": true,
+      "restore": true,
+      "touchKeyboardController": true,
+      "cleanup": true,
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "evidenceLimits": true,
+      "separateFiling": true,
+      "restore": true,
+      "touchKeyboardController": true,
+      "cleanup": true,
+      "errors": []
+    },
+    {
+      "name": "small-phone",
+      "evidenceLimits": true,
+      "separateFiling": true,
+      "restore": true,
+      "touchKeyboardController": true,
+      "cleanup": true,
+      "errors": []
+    },
+    {
+      "name": "landscape",
+      "evidenceLimits": true,
+      "separateFiling": true,
+      "restore": true,
+      "touchKeyboardController": true,
+      "cleanup": true,
+      "errors": []
+    }
+  ]
+}
