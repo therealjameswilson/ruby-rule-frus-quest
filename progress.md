@@ -8903,3 +8903,9 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 - Previous goal turn progressed with22f5b5c five-scene baseline. Extendedbenchmark withCPUrate/CDPtrace; comparedArchive/Network1xvs4x. Both1x~60fps;4xP95~33ms. Trace dominatedbygraphicsreadbackwaits,notlayout; freshSystemInfo confirmsSwiftShadersoftwaregraphics. Cannotattributehardwareperformancefromthisrun.
 - Recorded docs/qa/frame-trace-comparison-2026-09-28.{md,json}; raw/tmp/frus-frames-{unthrottled,throttled}. Benchmark nowrecordsGPUenvironmentforfutureinterpretation. InspectedNetworkcompositor,syntax/diffcheckpass. Noruntimechange/needlessbroadtest/build/deployment.
 - Next leaveunchangedsyntheticperformancechecks andresumevisual/interactionqualityreview. Hardwareperformance remainsunverified; noartdowngradejustified. Fullgoalactive; listening/novicecomprehension stillunverified.
+
+## 2026-09-29 — publish accumulated research and presentation changes
+- User explicitlyrequestedpublication; paused unimplementedNetworkexitlabelinvestigation. Previousgoalturn progressed with8cfb726 renderercontext/traceevidence; noNetworklabelchange wasmade.
+- Mergedorigin/main;287files/2145tests,TypeScript andPagesbasebuildpass. Pushed70ef46b;PR137merged/attached at e58db68c6ed110455c16bd8f973f5180f1390e2a. Pagesrun36565619801success.
+- PublicJSassets/index-BeEHaxPP.js andCSSassets/index-HbXF-ZWO.css matchlocal/tmp/frus-release-0929byteforbyte. FieldguideandactualOpenGraphPNGaccessible. FreshpublicstandardclientreachesWarningScene. Three-layoutliveearnedpublication replaypassesReaders/Process/navigation/Title/Continue withnoerrors;phoneReaderscompositorinspected. /tmp/frus-release-0929-public.json and /tmp/frus-release-0929-browser/results.json.
+- Public https://therealjameswilson.github.io/ruby-rule-frus-quest/?v=e58db68 . Fullgoalnotcomplete; nextNetworkexitlabelocclusion remainsunimplemented; hardware/listening/novicecomprehension unverified.
