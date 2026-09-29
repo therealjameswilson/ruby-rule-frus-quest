@@ -33,7 +33,7 @@ describe("FRUS repository coverage", () => {
     ]);
   });
 
-  it("is incomplete until the selected document set covers the full research base", () => {
+  it("is incomplete until the selected document set represents the exercise source families", () => {
     const readout = getResearchCoverageReadout(selected([]));
 
     expect(readout.complete).toBe(false);
@@ -41,7 +41,7 @@ describe("FRUS repository coverage", () => {
     expect(readout.missing).toHaveLength(RESEARCH_COVERAGE_LANES.length);
   });
 
-  it("treats the balanced candidate set as complete research coverage", () => {
+  it("treats the balanced candidate set as a completed exercise, not exhaustive research", () => {
     const documents = selected([
       "telegram_001",
       "source_note_047",
@@ -54,6 +54,7 @@ describe("FRUS repository coverage", () => {
     expect(readout.completed).toBe(readout.total);
     expect(readout.covered.map((lane) => lane.id)).toEqual(RESEARCH_COVERAGE_LANES.map((lane) => lane.id));
     expect(researchCoverageComplete(documents)).toBe(true);
+    expect(readout.summary).toContain("Check remaining leads and access gaps");
   });
 
   it("keeps public-only selection incomplete even if some documents are valid", () => {
@@ -83,8 +84,19 @@ describe("FRUS repository coverage", () => {
 
     expect(researchLanesForDocument(document)).toEqual([
       "defense",
-      "central_intelligence",
-      "other_foreign_affairs"
+      "central_intelligence"
     ]);
   });
+});
+
+it('does not turn review equities or a topical folder label into source provenance',()=>{
+ const document=cloneDocumentCandidate(INITIAL_DOCUMENT_CANDIDATES[0]);
+ Object.assign(document,{id:'state-intelligence-topic',repository:'National Archives',collection:'Department of State central files',folder:'CIA, defense and private papers; agency referrals',equities:[{agencyId:'cia',fictionalName:'Intelligence review',issueType:'intelligence',response:'not_submitted'}]});
+ expect(researchLanesForDocument(document)).toEqual(['state_department']);
+ document.collection='Unidentified collection';
+ expect(researchLanesForDocument(document)).toEqual([]);
+ document.collection='Estate records';
+ expect(researchLanesForDocument(document)).toEqual([]);
+ document.collection='Arms Control and Disarmament Agency records';
+ expect(researchLanesForDocument(document)).toEqual(['other_foreign_affairs']);
 });

@@ -68,6 +68,7 @@ export const RESEARCH_COVERAGE_LANES = [
   }
 ] as const satisfies readonly ResearchCoverageLaneDefinition[];
 
+// Authored source-family bundles for the fictional campaign exercise.
 export const DOCUMENT_RESEARCH_LANES: Partial<Record<string, readonly ResearchCoverageLane[]>> = {
   "doc-001": ["state_department", "defense"],
   telegram_001: ["state_department"],
@@ -85,18 +86,16 @@ export function researchLanesForDocument(document: Pick<DocumentCandidate, "id" 
   const explicit = DOCUMENT_RESEARCH_LANES[document.id];
   if (explicit) return [...explicit];
 
-  const haystack = `${document.repository} ${document.collection} ${document.folder}`.toLowerCase();
+  // A topic or reviewing agency is not provenance. Only repository/collection
+  // descriptions can identify a source family for an unconfigured document.
+  const provenance = `${document.repository} ${document.collection}`.toLowerCase();
   const lanes = new Set<ResearchCoverageLane>();
-  if (haystack.includes("white house") || haystack.includes("nsc") || haystack.includes("national security council")) lanes.add("white_house_nsc");
-  if (haystack.includes("state") || haystack.includes("central foreign policy")) lanes.add("state_department");
-  if (haystack.includes("defense") || document.equities.some((equity) => equity.issueType === "military")) lanes.add("defense");
-  if (haystack.includes("cia") || haystack.includes("intelligence") || document.equities.some((equity) => equity.issueType === "intelligence")) {
-    lanes.add("central_intelligence");
-  }
-  if (haystack.includes("agency") || document.equities.some((equity) => equity.issueType === "foreign_government" || equity.issueType === "privacy")) {
-    lanes.add("other_foreign_affairs");
-  }
-  if (haystack.includes("private papers") || haystack.includes("oral history") || haystack.includes("diary")) lanes.add("private_papers");
+  if (/\b(white house|nsc|national security council)\b/.test(provenance)) lanes.add("white_house_nsc");
+  if (/\b(department of state|state department|central foreign policy|rg[ -]?59)\b/.test(provenance)) lanes.add("state_department");
+  if (/\b(department of defense|defense department|dod|joint chiefs of staff)\b/.test(provenance)) lanes.add("defense");
+  if (/\b(cia|central intelligence agency)\b/.test(provenance)) lanes.add("central_intelligence");
+  if (/\b(usia|usaid|acda|united states information agency|arms control and disarmament agency|department of (commerce|treasury)|agency for international development)\b/.test(provenance)) lanes.add("other_foreign_affairs");
+  if (/\b(private papers|personal papers|oral history|diary|diaries)\b/.test(provenance)) lanes.add("private_papers");
   return [...lanes];
 }
 
@@ -126,8 +125,8 @@ export function getResearchCoverageReadout(documents: readonly DocumentCandidate
     missing: missing.map((lane) => laneDefinition(lane.id)),
     selectedDocumentIds: selectedDocuments.map((document) => document.id),
     summary: complete
-      ? "Repository coverage complete across the national security record."
-      : `Repository coverage missing: ${missingLabels || "none"}.`
+      ? "Exercise source families represented. Check remaining leads and access gaps."
+      : `Exercise source families still unrepresented: ${missingLabels || "none"}.`
   };
 }
 
