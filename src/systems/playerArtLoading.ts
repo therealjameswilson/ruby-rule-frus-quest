@@ -1,3 +1,4 @@
+import { DANNE_BOSS_HD } from '../art/danneBossPresentation';
 import { DANNE_VFX_ASSETS } from '../game/danneAtlas';
 import { WEAPON_VFX_ASSET } from './weaponState';
 import type Phaser from 'phaser';
@@ -11,6 +12,9 @@ export function selectedAttackSheet() {
 }
 
 export function preloadCombatEffects(scene: Phaser.Scene) {
+  if (!scene.textures.exists(DANNE_BOSS_HD.key)) scene.load.spritesheet(DANNE_BOSS_HD.key, DANNE_BOSS_HD.path, {
+    frameWidth: DANNE_BOSS_HD.frameW, frameHeight: DANNE_BOSS_HD.frameH
+  });
   for (const asset of DANNE_VFX_ASSETS) {
     if (!scene.textures.exists(asset.key)) scene.load.spritesheet(asset.key, asset.path, {frameWidth: asset.frameW, frameHeight: asset.frameH});
   }
@@ -22,6 +26,7 @@ export function preloadCombatEffects(scene: Phaser.Scene) {
 export function gameplayArtReady(scene: Phaser.Scene) {
   const sheet = selectedAttackSheet();
   return (!sheet || scene.textures.exists(sheet.key)) && scene.textures.exists(WEAPON_VFX_ASSET.key)
+    && scene.textures.exists(DANNE_BOSS_HD.key)
     && DANNE_VFX_ASSETS.every(asset => scene.textures.exists(asset.key));
 }
 
