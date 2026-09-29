@@ -1,0 +1,13 @@
+.research-journal .manuscript-panel{max-width:900px}
+.research-journal .manuscript-heading h1{font-size:28px;padding:0;margin:0 0 8px}
+.research-journal .manuscript-heading p[data-count]{display:block;font-size:13px}
+.research-journal .manuscript-body{display:block}
+.journal-reading p{font-size:16px;line-height:1.65;color:#d5e1da;margin:0 0 18px}
+.journal-reading h2{font-size:19px;color:#ead194;margin:22px 0 12px}
+.journal-reading .journal-location{color:#ead194}
+.journal-place{width:100%;display:block;min-height:52px;padding:16px;text-align:left;border:1px solid #6c8782;border-radius:10px;background:#20373b;color:#eef1e6;margin:0 0 12px}
+.journal-reading a{display:block;overflow-wrap:anywhere;min-height:44px;padding:10px 0;color:#abdedc;font-size:14px}
+.journal-reading a:focus-visible,.journal-reading a[data-focused=true]{outline:3px solid #f4d78b;outline-offset:3px}
+.research-journal .manuscript-close{position:static;min-height:48px}.research-journal .manuscript-submit{min-height:48px}
+@media(max-width:760px){.research-journal .manuscript-heading{padding:16px 20px}.research-journal .manuscript-body{padding:18px 20px}.research-journal .manuscript-footer{grid-template-columns:1fr 1fr;padding:12px 20px;gap:8px}.research-journal .manuscript-submit{grid-column:2}.research-journal .manuscript-heading h1{font-size:24px}}
+@media(max-height:500px){.research-journal .manuscript-heading{padding:8px 20px}.research-journal .manuscript-heading h1{font-size:20px}.research-journal .manuscript-heading p[data-count]{display:none}.research-journal .manuscript-footer{padding:8px 20px}}
