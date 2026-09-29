@@ -1,3 +1,4 @@
+import { MAP_OBJECTIVES } from "../game/mapPresentation";
 import { SUPPORTING_SPRITES, supportingSprite, MARINE_GUARD_ART } from "../art/supportingSprites";
 import Phaser from "phaser";
 import { tryEquippedToolSwing } from "../systems/toolSwing";
@@ -91,7 +92,7 @@ import {
   nearestInteractable,
   nearestInteractableHint
 } from "../systems/interaction";
-import { InteractionPrompt, promptVerbForKind } from "../systems/interactionPrompt";
+import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { snapPixel } from "../systems/pixelPerfect";
@@ -199,16 +200,6 @@ const MAP_LABELS: Record<GameplayMapKey, string> = {
   capitol_hill: "Capitol Hill Hearing"
 };
 
-const MAP_OBJECTIVES: Record<GameplayMapKey, string> = {
-  historian_office: "Visit the Archive Guide or inspect the FRUS bookshelf.",
-  nara_stacks: "TO CATALOG DESK",
-  foggy_bottom: "Stay on the sidewalks and enter the Truman Building.",
-  west_wing: "Find the Situation Room gate and review room entrances.",
-  black_vault: "Approach the obelisk core when the record is ready.",
-  frus_floor: "Walk through each FRUS production phase room.",
-  embassy: "Enter from the south gate and inspect the chancery door.",
-  capitol_hill: "Use the witness table or inspect the closed-session vault."
-};
 const FRUS_BOOKSHELF_REWARD_TEXTURE: keyof typeof FRUS_VOLUMES = "world_standing";
 const FRUS_BOOKSHELF_REWARD_THUMB = "frus-bookshelf-reward-thumb";
 const NARA_CATALOG_REWARD_TEXTURE: keyof typeof FRUS_VOLUMES = "pickup_microform";
@@ -332,7 +323,7 @@ export class GameplayMapScene extends Phaser.Scene {
     this.drawNpcActors();
     if (isCollisionDebugEnabled()) this.drawCollisionDebug();
     this.createHudChrome();
-    this.prompt = new InteractionPrompt(this, 880);
+    this.prompt = new InteractionPrompt(this, 880, 877, { compact: true });
     this.inventory = new InventoryOverlay(this);
     const rawSpawn = this.findSpawn(this.spawnId) ?? this.findSpawn("entry") ?? { x: this.fitRect.x + this.fitRect.width / 2, y: this.fitRect.y + this.fitRect.height - 20 };
     const spawn = this.adjustSpawnAwayFromWorldExit(rawSpawn);
@@ -466,7 +457,7 @@ export class GameplayMapScene extends Phaser.Scene {
     }, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
     const actionBadge = getPrimaryActionBadge();
     this.hintText.setText(nearest
-      ? `${actionBadge} ${promptVerbForKind(nearest.kind)} ${nearest.label.toUpperCase()}`
+      ? `${actionBadge} ${nearest.label.toUpperCase()}`
       : hintTarget
         ? `STEP CLOSER: ${hintTarget.label.toUpperCase()}`
         : combatCue

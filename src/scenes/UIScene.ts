@@ -1,3 +1,4 @@
+import { mapQuestTitle } from "../game/mapPresentation";
 import type { ResearchWorldScene } from "./ResearchWorldScene";
 import { libraryApproachCue } from "./libraryApproachCue";
 import Phaser from "phaser";
@@ -363,6 +364,7 @@ export class UIScene extends Phaser.Scene {
     if (gameState.heldItem && !hasCarryDestination) {
       return getString("hud.carryItem", { item: gameState.heldItem });
     }
+    if (activeSceneKey === "GameplayMapScene") return mapQuestTitle(gameState.objective);
     const objective = gameState.objective.replace(/^Mission:\s*/i, "");
     const firstSentence = objective.split(".")[0]?.trim() || objective.trim();
     return firstSentence;
@@ -381,6 +383,7 @@ export class UIScene extends Phaser.Scene {
       const vaultAction = blackVaultActionLine(gameState.nearestInteractable, Boolean(gameState.sceneProgress.blackVaultBossCleared));
       if (vaultAction) return vaultAction;
     }
+    if (gameState.currentScene === "GameplayMapScene" && gameState.nearestInteractable) return "USE MARKED TARGET";
     if (gameState.nearestInteractable) return getString("hud.interact", { label: gameState.nearestInteractable.toUpperCase().slice(0, 22) });
     if (gameState.currentScene === "ReferralVaultScene" && gameState.roomTraversal?.currentRoomId === "R3") {
       return getString(dispatchAisleOpen(gameState.sceneProgress) ? "hud.dispatchReturn" : "hud.dispatchAisles");
