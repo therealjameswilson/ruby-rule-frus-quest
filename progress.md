@@ -8893,3 +8893,8 @@ Previousgoalturn madeprogress with306fa9f nativechronology. Replayedearned375tou
 - Next broaderaudiovisual/teachingreview. Fullgoalactive; physicaldevices,humanlistening andnovicecomprehension unverified.
 
 - Final full source suite passed: 287 files / 2145 tests; /tmp/frus-publication-reading-tests.log.
+
+## 2026-09-28 — measured gameplay frame pacing
+- Previous turn progressed withafd7c52 endingmix/statefix and2145tests. Movedbeyondmenufixes to five-scene performancebaseline:390x844,DPR3,4xCPU,5secrightwardinput. Median16.7msall; archive/networkP95~33.3ms versus~16.7msothers. No pageerrors/framesover50ms. Evidence docs/qa/frame-pacing-2026-09-28.{md,json}; reusabletools/qa-frame-pacing.mjs.
+- Inspectedworld/office/archive/networkcompositors. ArchiveCPUprofile ismostlyunattributedprogramtime, withPhaserspritebatching prominentamongnamedfunctions; doesnotproveacodebottleneck. No speculativeoptimization orartdowngrade. No runtimechange/build/testrepeat/deployment.
+- Next capture rendering/compositor trace and unthrottledcomparison forarchive/network; currentevidencechangespriorityfrommenuwork toframepacinginvestigation. Fullgoalactive; hardwareperformance,humanlistening,novicecomprehension unverified.
