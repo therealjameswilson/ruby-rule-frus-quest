@@ -2,6 +2,8 @@ import {retroAudio} from './audio';
 import type {InputState} from '../input/InputState';
 import {swallowNextInputFrame} from '../input/InputState';
 
+type DeskControl = HTMLButtonElement | HTMLAnchorElement;
+
 /** Shared native-resolution desk input, focus, scrolling, and modal lifecycle. */
 export class DeskControls {
   private focusIndex=0;
@@ -10,8 +12,8 @@ export class DeskControls {
   private releaseReadingMix?:()=>void;
   private readonly oldFocus=document.activeElement;
   private readonly touchStyles:Array<[HTMLElement,string]>=[];
-  private readonly bound=new WeakSet<HTMLButtonElement>();
-  private buttons:HTMLButtonElement[]=[];
+  private readonly bound=new WeakSet<DeskControl>();
+  private buttons:DeskControl[]=[];
   get active(){return !this.closed;}
   get focusedKey(){return this.buttons[this.focusIndex]?.dataset.focusKey;}
   private readonly fullscreenChanged=()=>{
@@ -19,7 +21,7 @@ export class DeskControls {
     const focused=this.buttons[this.focusIndex];
     this.root.close();this.root.showModal();focused?.focus({preventScroll:true});
   };
-  constructor(private root:HTMLDialogElement,private getButtons:()=>HTMLButtonElement[],private onCancel:()=>void){
+  constructor(private root:HTMLDialogElement,private getButtons:()=>DeskControl[],private onCancel:()=>void){
     this.refresh();
     this.root.addEventListener('keydown',event=>{
       if(event.ctrlKey||event.metaKey||event.altKey)return;
@@ -49,7 +51,7 @@ export class DeskControls {
     this.buttons[0]?.focus({preventScroll:true});swallowNextInputFrame();
   }
   refresh(preferredKey?:string){
-    this.buttons=this.getButtons().filter(b=>!b.disabled);
+    this.buttons=this.getButtons().filter(b=>!("disabled" in b && b.disabled));
     for(const button of this.buttons){
       if(this.bound.has(button))continue;this.bound.add(button);
       button.addEventListener('focus',()=>{this.focusIndex=this.buttons.indexOf(button);this.markFocus();});

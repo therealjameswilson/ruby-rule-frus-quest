@@ -1,3 +1,4 @@
+import { ProductionOverviewDesk } from "../systems/ProductionOverviewDesk";
 import { addOfficeExteriorDoor } from "../systems/officeExteriorDoor";
 import { addEditorialRoomFloor } from "../systems/editorialRoomFloor";
 import { researchProp, RESEARCH_PROPS } from "../systems/researchProps";
@@ -23,6 +24,7 @@ import {
   getProductionBoardReadout,
   hasDanneItem,
   setHeldItem,
+  clearChoiceState,
   setLatestMessage,
   setDocumentWorkflowState,
   setNearestInteractable,
@@ -134,6 +136,7 @@ export class OfficeScene extends Phaser.Scene {
   private player!: Player;
   private juniorCompiler!: GeneralEditorKathy;
   private dialog!: DialogBox;
+  private productionOverview?: ProductionOverviewDesk;
   private choice!: ChoicePrompt;
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
@@ -162,6 +165,7 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   create(data?: unknown) {
+    this.events.once("shutdown", () => this.closeProductionOverview());
     const arrival = readChapterArrival(data, "OfficeScene", gameState.currentScene);
     setSceneState("OfficeScene", "explore", FRUS_QUEST_FIRST_OBJECTIVE);
     setLatestMessage(FRUS_QUEST_MISSION);
@@ -188,7 +192,7 @@ export class OfficeScene extends Phaser.Scene {
     this.danneLurker = new DanneLurker(this, 218, 78, {
       encounterMode: "foreshadow",
       speechBlocked: () => this.toast.visible || this.prompt.visible || this.dialog.active
-        || this.choice.active || this.inventory.active || this.reliability.active,
+        || this.choice.active || this.inventory.active || this.reliability.active || Boolean(this.productionOverview),
       waypoints: [
         { x: 218, y: 78 },
         { x: 188, y: 58 },
@@ -346,6 +350,12 @@ export class OfficeScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
+    if (this.productionOverview) {
+      this.productionOverview.updateInput(input);
+      this.player.update(delta, false);
+      this.prompt.update(delta, null);
+      return;
+    }
     if (input.menuJustPressed) this.inventory.toggle();
     if (input.soundJustPressed) {
       retroAudio.toggle();
@@ -1475,37 +1485,19 @@ export class OfficeScene extends Phaser.Scene {
     ], () => exhibit.destroy(true));
   }
 
+  private closeProductionOverview() {
+    if (!this.productionOverview) return;
+    this.productionOverview.close();
+    this.productionOverview = undefined;
+    clearChoiceState();
+  }
+
   private openProductionBoard() {
-    const compiler = getCompilerMissionReadout(gameState.sceneProgress);
+    this.closeProductionOverview();
     const board = getProductionBoardReadout();
-    const next = board.nextStep;
-    const statusPages: string[] = [];
-    for (let start = 0; start < board.steps.length; start += 3) {
-      const page = board.steps.slice(start, start + 3)
-        .map((step) => `${step.complete ? "OK" : step.status === "active" ? "GO" : "--"} ${step.shortLabel}: ${step.label}`)
-        .join("\n");
-      if (page.length > 0) statusPages.push(page);
-    }
-    const coveragePage = `COVERAGE: ${board.researchCoverage.completed}/${board.researchCoverage.total}\n${board.researchCoverage.summary}`;
     retroAudio.confirm();
-    setLatestMessage(next ? `Production board next: ${next.label}.` : "Production board complete.");
-    this.dialog.show("FRUS BOARD", [
-      `COMPILER MISSION: ${compiler.completed}/${compiler.total} SOP tasks. ${compiler.nextTask}.`,
-      "Research plan at INBOX. Investigate and annotate in the Archive. The east manuscript desk handles selection, both reviews, revision, and DPD submission.",
-      "First review: supervisor, chapter-level. Second review: GE/AGE, volume-level. Revise after both; DPD handoff is not publication approval.",
-      `FRUS volume board: ${board.completed}/${board.total} production checks complete.`,
-      next
-        ? `NEXT ${next.shortLabel}: ${next.gameplayTask}`
-        : "All production checks are complete. Certify the Buckram Gate.",
-      next
-        ? `WHY: ${next.sourceBasis}`
-        : "The volume is ready only if the record remains complete and standards-clean.",
-      next
-        ? `SOURCE:\n${next.sourceUrl}`
-        : "SOURCE:\nhttps://history.state.gov/historicaldocuments/about-frus",
-      coveragePage,
-      ...statusPages
-    ]);
+    setLatestMessage(board.nextStep ? `Production board next: ${board.nextStep.label}.` : "Production board complete.");
+    this.productionOverview = new ProductionOverviewDesk(board, getCompilerMissionReadout(gameState.sceneProgress), () => this.closeProductionOverview());
   }
 
   private consumeOfficeReturnSpawn() {
